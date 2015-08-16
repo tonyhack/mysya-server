@@ -45,25 +45,25 @@ class Mutex {
   MASYA_DISALLOW_COPY_AND_ASSIGN(Mutex);
 };
 
-template <typename MutexType>
-class MutexLockGuard {
+template <class MutexType>
+class LockGuardTempalte {
  public:
-  explicit MutexLockGuard(MutexType &mutex)
+  explicit LockGuardTempalte(MutexType &mutex)
     : mutex_(mutex) {
     this->mutex_.Lock();
   }
 
-  ~MutexLockGuard() {
+  ~LockGuardTempalte() {
     this->mutex_.Unlock();
   }
 
  private:
   MutexType &mutex_;
 
-  MASYA_DISALLOW_COPY_AND_ASSIGN(MutexLockGuard<MutexType>);
+  MASYA_DISALLOW_COPY_AND_ASSIGN(LockGuardTempalte<MutexType>);
 };
 
-typedef MutexLockGuard<Mutex> LockGuard;
+typedef LockGuardTempalte<Mutex> LockGuard;
 
 }  // namespace masya
 

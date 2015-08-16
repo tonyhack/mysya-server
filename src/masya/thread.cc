@@ -6,8 +6,8 @@
 
 namespace masya {
 
-Thread::Thread() :
-  tid_(0), started_(false), joined_(false) {}
+Thread::Thread()
+  : tid_(0), started_(false), joined_(false) {}
 Thread::~Thread() {}
 
 void Thread::Start(const ThreadFunc &thread_func, bool joinable) {

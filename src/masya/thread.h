@@ -36,6 +36,27 @@ class Thread {
   MASYA_DISALLOW_COPY_AND_ASSIGN(Thread);
 };
 
+template <class ThreadType>
+class ThreadGuardTemplate {
+ public:
+  explicit ThreadGuardTemplate(ThreadType &thread)
+    : thread_(thread) {
+  }
+
+  ~ThreadGuardTemplate() {
+    if (this->thread_.joinable()) {
+      this->thread_.join();
+    }
+  }
+
+ private:
+  ThreadType thread_;
+
+  MASYA_DISALLOW_COPY_AND_ASSIGN(ThreadGuardTemplate<ThreadType>);
+};
+
+typedef ThreadGuardTemplate<Thread> ThreadGuard;
+
 }  // namespace masya
 
 #endif  // MASYA_THREAD_H
