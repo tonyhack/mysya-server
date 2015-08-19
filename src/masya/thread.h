@@ -3,9 +3,9 @@
 
 #include <functional>
 
-#include "masya/condition_variable.h"
-#include "masya/class_util.h"
-#include "masya/mutex.h"
+#include <masya/condition_variable.h>
+#include <masya/class_util.h>
+#include <masya/mutex.h>
 
 namespace masya {
 
@@ -56,6 +56,12 @@ class ThreadGuardTemplate {
 };
 
 typedef ThreadGuardTemplate<Thread> ThreadGuard;
+
+namespace current_thread {
+
+pid_t tid();
+
+}  // namespace current_thread
 
 }  // namespace masya
 

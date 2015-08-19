@@ -3,8 +3,8 @@
 
 #include <pthread.h>
 
-#include "masya/exception.h"
-#include "masya/mutex.h"
+#include <masya/exception.h>
+#include <masya/mutex.h>
 
 namespace masya {
 

@@ -1,10 +1,26 @@
-#include "masya/thread.h"
+#include <masya/thread.h>
 
 #include <pthread.h>
+#include <sys/syscall.h>
 
-#include "masya/exception.h"
+#include <unistd.h>
+
+#include <masya/exception.h>
 
 namespace masya {
+
+namespace current_thread {
+
+__thread pid_t current_thread_id = 0;
+
+pid_t tid() {
+  if (current_thread_id == 0) {
+    current_thread_id = static_cast<pid_t>(::syscall(SYS_gettid));
+  }
+  return current_thread_id;
+}
+
+}  // namespace current_thread
 
 Thread::Thread()
   : tid_(0), started_(false), joined_(false) {}

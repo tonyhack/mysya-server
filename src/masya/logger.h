@@ -5,7 +5,7 @@
 
 #include <functional>
 
-#include "masya/class_util.h"
+#include <masya/class_util.h>
 
 namespace masya {
 

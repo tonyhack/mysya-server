@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "masya/thread.h"
+#include <masya/thread.h>
 
 namespace masya {
 namespace test {

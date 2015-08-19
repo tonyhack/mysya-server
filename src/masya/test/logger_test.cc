@@ -5,9 +5,9 @@
 
 #include <vector>
 
-#include "masya/logger.h"
-#include "masya/mutex.h"
-#include "masya/thread.h"
+#include <masya/logger.h>
+#include <masya/mutex.h>
+#include <masya/thread.h>
 
 namespace masya {
 namespace test {
