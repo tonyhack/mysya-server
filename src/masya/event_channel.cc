@@ -38,13 +38,31 @@ void EventChannel::SetReadCallback(const ReadCallback &cb) {
   this->UpdateEventLoop();
 }
 
+void EventChannel::ResetReadCallback() {
+  ReadCallback cb;
+  this->read_cb_.swap(cb);
+  this->UpdateEventLoop();
+}
+
 void EventChannel::SetWriteCallback(const WriteCallback &cb) {
   this->write_cb_ = cb;
   this->UpdateEventLoop();
 }
 
+void EventChannel::ResetWriteCallback() {
+  WriteCallback cb;
+  this->write_cb_.swap(cb);
+  this->UpdateEventLoop();
+}
+
 void EventChannel::SetErrorCallback(const ErrorCallback &cb) {
   this->error_cb_ = cb;
+  this->UpdateEventLoop();
+}
+
+void EventChannel::ResetErrorCallback() {
+  ErrorCallback cb;
+  this->error_cb_.swap(cb);
   this->UpdateEventLoop();
 }
 

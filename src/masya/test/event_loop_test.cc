@@ -21,6 +21,8 @@ class CommandLine {
 
     this->PrintPrompt();
     this->loop_.Loop();
+
+    this->channel_.ResetReadCallback();
   }
 
  private:

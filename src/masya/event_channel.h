@@ -22,8 +22,13 @@ class EventChannel {
   void DetachEventLoop();
 
   void SetReadCallback(const ReadCallback &cb);
+  void ResetReadCallback();
+
   void SetWriteCallback(const WriteCallback &cb);
+  void ResetWriteCallback();
+
   void SetErrorCallback(const ErrorCallback &cb);
+  void ResetErrorCallback();
 
   const ReadCallback &GetReadCallback() const { return this->read_cb_; }
   const WriteCallback &GetWriteCallback() const { return this->write_cb_; }
