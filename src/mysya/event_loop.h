@@ -1,5 +1,5 @@
-#ifndef MASYA_EVENT_LOOP_H
-#define MASYA_EVENT_LOOP_H
+#ifndef MYSYA_EVENT_LOOP_H
+#define MYSYA_EVENT_LOOP_H
 
 #include <sys/epoll.h>
 
@@ -8,9 +8,9 @@
 
 #include <ext/hash_set>
 
-#include <masya/class_util.h>
+#include <mysya/class_util.h>
 
-namespace masya {
+namespace mysya {
 
 class EventChannel;
 
@@ -51,9 +51,9 @@ class EventLoop {
 
   pid_t thread_id_;
 
-  MASYA_DISALLOW_COPY_AND_ASSIGN(EventLoop);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(EventLoop);
 };
 
-}  // namespace masya
+}  // namespace mysya
 
-#endif  // MASYA_EVENT_LOOP_H
+#endif  // MYSYA_EVENT_LOOP_H

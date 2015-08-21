@@ -1,11 +1,11 @@
-#ifndef MASYA_EVENT_CHANNEL_H
-#define MASYA_EVENT_CHANNEL_H
+#ifndef MYSYA_EVENT_CHANNEL_H
+#define MYSYA_EVENT_CHANNEL_H
 
 #include <functional>
 
-#include <masya/class_util.h>
+#include <mysya/class_util.h>
 
-namespace masya {
+namespace mysya {
 
 class EventLoop;
 
@@ -17,6 +17,8 @@ class EventChannel {
 
   EventChannel();
   ~EventChannel();
+
+  bool SetNonblock();
 
   bool AttachEventLoop(EventLoop *event_loop);
   void DetachEventLoop();
@@ -47,9 +49,9 @@ class EventChannel {
   WriteCallback write_cb_;
   ErrorCallback error_cb_;
 
-  MASYA_DISALLOW_COPY_AND_ASSIGN(EventChannel);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(EventChannel);
 };
 
-}  // namespace masya
+}  // namespace mysya
 
-#endif  // MASYA_EVENT_CHANNEL_H
+#endif  // MYSYA_EVENT_CHANNEL_H

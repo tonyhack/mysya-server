@@ -1,12 +1,12 @@
-#ifndef MASYA_MUTEX_H
-#define MASYA_MUTEX_H
+#ifndef MYSYA_MUTEX_H
+#define MYSYA_MUTEX_H
 
 #include <pthread.h>
 
-#include <masya/class_util.h>
-#include <masya/exception.h>
+#include <mysya/class_util.h>
+#include <mysya/exception.h>
 
-namespace masya {
+namespace mysya {
 
 class Mutex {
  public:
@@ -42,7 +42,7 @@ class Mutex {
  private:
   ::pthread_mutex_t mutex_;
 
-  MASYA_DISALLOW_COPY_AND_ASSIGN(Mutex);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(Mutex);
 };
 
 template <class MutexType>
@@ -60,11 +60,11 @@ class LockGuardTempalte {
  private:
   MutexType &mutex_;
 
-  MASYA_DISALLOW_COPY_AND_ASSIGN(LockGuardTempalte<MutexType>);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(LockGuardTempalte<MutexType>);
 };
 
 typedef LockGuardTempalte<Mutex> LockGuard;
 
-}  // namespace masya
+}  // namespace mysya
 
-#endif  // MASYA_MUTEX_H
+#endif  // MYSYA_MUTEX_H

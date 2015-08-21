@@ -1,16 +1,16 @@
-#ifndef MASYA_CLASS_UTIL_H
-#define MASYA_CLASS_UTIL_H
+#ifndef MYSYA_CLASS_UTIL_H
+#define MYSYA_CLASS_UTIL_H
 
 #include <cstdarg>
 
-#define MASYA_SAFE_BOOL_TYPE(_T)              \
+#define MYSYA_SAFE_BOOL_TYPE(_T)              \
  private:                                     \
     typedef void (_T::*SafeBoolType)() const; \
     void SafeBoolTypeNotNull() const {}       \
  public:                                      \
 
 
-#define MASYA_GET_VAR_PARAMS(str, str_len, pat) \
+#define MYSYA_GET_VAR_PARAMS(str, str_len, pat) \
   do {                                          \
     va_list ap;                                 \
     bzero(str, str_len);                        \
@@ -20,12 +20,12 @@
   } while (false);                              \
 
 
-#define MASYA_DISALLOW_COPY_AND_ASSIGN(_T)    \
+#define MYSYA_DISALLOW_COPY_AND_ASSIGN(_T)    \
   _T(const _T &);                             \
   void operator=(const _T &);                 \
 
 
-#define MASYA_SINGLETON(_T)                   \
+#define MYSYA_SINGLETON(_T)                   \
  public:                                      \
   static _T *GetInstance() {                  \
     if (g_instance_ == NULL) {                \
@@ -47,7 +47,7 @@
   void operator=(const _T &);                 \
 
 
-#define MASYA_SINGLETON2(_T)                  \
+#define MYSYA_SINGLETON2(_T)                  \
  public:                                      \
   static _T *GetInstance() {                  \
     static _T t;                              \
@@ -64,4 +64,4 @@
   void operator=(const _T &);                 \
 
 
-#endif  // MASYA_CLASS_UTIL_H
+#endif  // MYSYA_CLASS_UTIL_H

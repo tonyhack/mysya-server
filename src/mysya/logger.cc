@@ -1,8 +1,8 @@
-#include <masya/logger.h>
+#include <mysya/logger.h>
 
 #include <stdio.h>
 
-namespace masya {
+namespace mysya {
 
 static void DefaultLogFunc(int level, const char *format, va_list args) {
   if (level < LogLevel::MIN || level >= LogLevel::MAX) {
@@ -36,5 +36,5 @@ void Logger::Log(int level, const char *format, ...) {
   va_end(args);
 }
 
-}  // namespace masya
+}  // namespace mysya
 

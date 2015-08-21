@@ -1,10 +1,10 @@
-#ifndef MASYA_EXCEPTION_H
-#define MASYA_EXCEPTION_H
+#ifndef MYSYA_EXCEPTION_H
+#define MYSYA_EXCEPTION_H
 
 #include <stdexcept>
 #include <string>
 
-namespace masya {
+namespace mysya {
 
 class SystemErrorException : public std::runtime_error {
  public:
@@ -12,6 +12,6 @@ class SystemErrorException : public std::runtime_error {
     : std::runtime_error(arg) {}
 };
 
-}  // namespace masya
+}  // namespace mysya
 
-#endif  // MASYA_EXCEPTION_H
+#endif  // MYSYA_EXCEPTION_H

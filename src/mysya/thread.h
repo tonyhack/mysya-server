@@ -1,13 +1,13 @@
-#ifndef MASYA_THREAD_H
-#define MASYA_THREAD_H
+#ifndef MYSYA_THREAD_H
+#define MYSYA_THREAD_H
 
 #include <functional>
 
-#include <masya/condition_variable.h>
-#include <masya/class_util.h>
-#include <masya/mutex.h>
+#include <mysya/condition_variable.h>
+#include <mysya/class_util.h>
+#include <mysya/mutex.h>
 
-namespace masya {
+namespace mysya {
 
 class Thread {
  public:
@@ -33,7 +33,7 @@ class Thread {
   bool started_;
   bool joined_;
 
-  MASYA_DISALLOW_COPY_AND_ASSIGN(Thread);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(Thread);
 };
 
 template <class ThreadType>
@@ -52,7 +52,7 @@ class ThreadGuardTemplate {
  private:
   ThreadType thread_;
 
-  MASYA_DISALLOW_COPY_AND_ASSIGN(ThreadGuardTemplate<ThreadType>);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(ThreadGuardTemplate<ThreadType>);
 };
 
 typedef ThreadGuardTemplate<Thread> ThreadGuard;
@@ -63,6 +63,6 @@ pid_t tid();
 
 }  // namespace current_thread
 
-}  // namespace masya
+}  // namespace mysya
 
-#endif  // MASYA_THREAD_H
+#endif  // MYSYA_THREAD_H

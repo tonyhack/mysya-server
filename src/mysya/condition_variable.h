@@ -1,12 +1,12 @@
-#ifndef MASYA_CONDITION_VARIABLE_H
-#define MASYA_CONDITION_VARIABLE_H
+#ifndef MYSYA_CONDITION_VARIABLE_H
+#define MYSYA_CONDITION_VARIABLE_H
 
 #include <pthread.h>
 
-#include <masya/exception.h>
-#include <masya/mutex.h>
+#include <mysya/exception.h>
+#include <mysya/mutex.h>
 
-namespace masya {
+namespace mysya {
 
 class ConditionVariable {
  public:
@@ -42,9 +42,9 @@ class ConditionVariable {
  private:
   ::pthread_cond_t cond_;
 
-  MASYA_DISALLOW_COPY_AND_ASSIGN(ConditionVariable);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(ConditionVariable);
 };
 
-}  // namespace masya
+}  // namespace mysya
 
-#endif  // MASYA_CONDITION_VARIABLE_H
+#endif  // MYSYA_CONDITION_VARIABLE_H

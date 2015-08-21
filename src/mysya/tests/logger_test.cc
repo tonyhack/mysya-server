@@ -5,27 +5,27 @@
 
 #include <vector>
 
-#include <masya/logger.h>
-#include <masya/mutex.h>
-#include <masya/thread.h>
+#include <mysya/logger.h>
+#include <mysya/mutex.h>
+#include <mysya/thread.h>
 
-namespace masya {
+namespace mysya {
 namespace test {
 
 void NativeLoggerTestFunc() {
-  MASYA_DEBUG("Logger test1.");
-  MASYA_INFO("Logger test2.");
-  MASYA_WARNING("Logger test3.");
-  MASYA_ERROR("Logger test4.");
+  MYSYA_DEBUG("Logger test1.");
+  MYSYA_INFO("Logger test2.");
+  MYSYA_WARNING("Logger test3.");
+  MYSYA_ERROR("Logger test4.");
 }
 
 
 void ThreadFunc() {
   for (size_t i = 0; i < 9999; ++i) {
-    MASYA_DEBUG("Logger test1, thread_id=%d", ::pthread_self());
-    MASYA_INFO("Logger test2, thread_id=%d.", ::pthread_self());
-    MASYA_WARNING("Logger test3, thread_id=%d.", ::pthread_self());
-    MASYA_ERROR("Logger test4, thread_id=%d.", ::pthread_self());
+    MYSYA_DEBUG("Logger test1, thread_id=%d", ::pthread_self());
+    MYSYA_INFO("Logger test2, thread_id=%d.", ::pthread_self());
+    MYSYA_WARNING("Logger test3, thread_id=%d.", ::pthread_self());
+    MYSYA_ERROR("Logger test4, thread_id=%d.", ::pthread_self());
   }
 }
 
@@ -83,11 +83,11 @@ void MultiThreadTestFunc(size_t thread_num) {
 }
 
 }  // namespace test
-}  // namespace masya
+}  // namespace mysya
 
 int main(int argc, char *argv[]) {
-  ::masya::test::NativeLoggerTestFunc();
-  ::masya::test::MultiThreadTestFunc(10);
+  ::mysya::test::NativeLoggerTestFunc();
+  ::mysya::test::MultiThreadTestFunc(10);
 
   return 0;
 }

@@ -1,4 +1,4 @@
-#include <masya/event_loop.h>
+#include <mysya/event_loop.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -10,11 +10,11 @@
 
 #include <unistd.h>
 
-#include <masya/exception.h>
-#include <masya/event_channel.h>
-#include <masya/logger.h>
+#include <mysya/exception.h>
+#include <mysya/event_channel.h>
+#include <mysya/logger.h>
 
-namespace masya {
+namespace mysya {
 
 #ifdef EPOLLRDHUP
 const int EventLoop::kReadEventMask = EPOLLIN | EPOLLPRI | EPOLLRDHUP;
@@ -60,7 +60,7 @@ void EventLoop::Loop() {
       if (errno == EINTR) {
         continue;
       } else {
-        MASYA_ERROR("epoll_wait() failed, error(%s)", ::strerror(errno));
+        MYSYA_ERROR("epoll_wait() failed, error(%s)", ::strerror(errno));
         break;
       }
     }
@@ -113,15 +113,15 @@ bool EventLoop::AddEventChannel(EventChannel *channel) {
   event.data.ptr = channel;
 
   if (channel->GetReadCallback()) {
-    event.events |= EPOLLIN | EPOLLPRI;
+    event.events |= EPOLLIN | EPOLLPRI | EPOLLET;
   }
   if (channel->GetWriteCallback()) {
-    event.events |= EPOLLOUT;
+    event.events |= EPOLLOUT | EPOLLET;
   }
 
   if (::epoll_ctl(this->epoll_fd_, EPOLL_CTL_ADD,
         channel->GetFileDescriptor(), &event) != 0) {
-    MASYA_ERROR("epoll_ctl() failed, EPOLL_CTL_ADD fd(%d) error(%s)",
+    MYSYA_ERROR("epoll_ctl() failed, EPOLL_CTL_ADD fd(%d) error(%s)",
         channel->GetFileDescriptor(), ::strerror(errno));
     return false;
   }
@@ -135,7 +135,7 @@ bool EventLoop::RemoveEventChannel(EventChannel *channel) {
 
   if (::epoll_ctl(this->epoll_fd_, EPOLL_CTL_DEL,
         channel->GetFileDescriptor(), &event) != 0) {
-    MASYA_ERROR("epoll_ctl*( failed, EPOLL_CTL_DEL fd(%d) errno(%s)",
+    MYSYA_ERROR("epoll_ctl*( failed, EPOLL_CTL_DEL fd(%d) errno(%s)",
         channel->GetFileDescriptor(), ::strerror(errno));
     return false;
   }
@@ -153,15 +153,15 @@ bool EventLoop::UpdateEventChannel(EventChannel *channel) {
   event.data.ptr = channel;
 
   if (channel->GetReadCallback()) {
-    event.events |= EPOLLIN | EPOLLPRI;
+    event.events |= EPOLLIN | EPOLLPRI | EPOLLET;
   }
   if (channel->GetWriteCallback()) {
-    event.events |= EPOLLOUT;
+    event.events |= EPOLLOUT | EPOLLET;
   }
 
   if (::epoll_ctl(this->epoll_fd_, EPOLL_CTL_MOD,
         channel->GetFileDescriptor(), &event) != 0) {
-    MASYA_ERROR("epoll_ctl() failed, EPOLL_CTL_MOD fd(%d) errno(%s)",
+    MYSYA_ERROR("epoll_ctl() failed, EPOLL_CTL_MOD fd(%d) errno(%s)",
         channel->GetFileDescriptor(), ::strerror(errno));
     return false;
   }
@@ -185,4 +185,4 @@ bool EventLoop::CheckEventChannelRemoved(EventChannel *channel) const {
     this->removed_event_channels_.end();
 }
 
-}  // namespace masya
+}  // namespace mysya

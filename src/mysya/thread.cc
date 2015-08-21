@@ -1,13 +1,13 @@
-#include <masya/thread.h>
+#include <mysya/thread.h>
 
 #include <pthread.h>
 #include <sys/syscall.h>
 
 #include <unistd.h>
 
-#include <masya/exception.h>
+#include <mysya/exception.h>
 
-namespace masya {
+namespace mysya {
 
 namespace current_thread {
 
@@ -108,4 +108,4 @@ void *Thread::StartThread(void *arg) {
   return thread;
 }
 
-}  // namespace masya
+}  // namespace mysya

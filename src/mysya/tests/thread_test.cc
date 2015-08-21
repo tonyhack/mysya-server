@@ -2,17 +2,17 @@
 
 #include <vector>
 
-#include <masya/thread.h>
+#include <mysya/thread.h>
 
-namespace masya {
+namespace mysya {
 namespace test {
 
 void ThreadFunc() {
 }
 
 void SimpleTestFunc() {
-  ::masya::Thread t1;
-  ::masya::Thread t2;
+  ::mysya::Thread t1;
+  ::mysya::Thread t2;
 
   t1.Start(std::bind(ThreadFunc));
   t2.Start(std::bind(ThreadFunc));
@@ -127,11 +127,11 @@ void JoinTestFunc() {
 }
 
 }  // namespace test
-}  // namespace masya
+}  // namespace mysya
 
 int main(int argc, char *argv[]) {
-  ::masya::test::SimpleTestFunc();
-  ::masya::test::JoinTestFunc();
+  ::mysya::test::SimpleTestFunc();
+  ::mysya::test::JoinTestFunc();
 
   return 0;
 }

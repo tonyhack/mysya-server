@@ -1,13 +1,25 @@
-#include <masya/event_channel.h>
+#include <mysya/event_channel.h>
 
-#include <masya/logger.h>
-#include <masya/event_loop.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-namespace masya {
+#include <mysya/logger.h>
+#include <mysya/event_loop.h>
+
+namespace mysya {
 
 EventChannel::EventChannel()
   : fd_(-1), event_loop_(NULL) {}
 EventChannel::~EventChannel() {}
+
+bool EventChannel::SetNonblock() {
+  int flags = ::fcntl(this->fd_, F_GETFL, 0);
+  if (::fcntl(this->fd_, F_SETFL, flags | O_NONBLOCK) != 0) {
+    return false;
+  }
+
+  return true;
+}
 
 bool EventChannel::AttachEventLoop(EventLoop *event_loop) {
   if (this->event_loop_ != NULL) {
@@ -15,7 +27,7 @@ bool EventChannel::AttachEventLoop(EventLoop *event_loop) {
   }
 
   if (event_loop->AddEventChannel(this) == false) {
-    MASYA_ERROR("EventLoop::AddEventChannel() failed.");
+    MYSYA_ERROR("EventLoop::AddEventChannel() failed.");
     return false;
   }
 
@@ -72,4 +84,4 @@ void EventChannel::UpdateEventLoop() {
   }
 }
 
-}  // namespace masya
+}  // namespace mysya
