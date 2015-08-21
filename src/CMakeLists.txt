@@ -1,4 +1,4 @@
 
-set(SRC_MASYA_PATH ${PROJECT_SOURCE_DIR}/src/masya)
+set(SRC_MYSYA_PATH ${PROJECT_SOURCE_DIR}/src/mysya)
 
-add_subdirectory(masya)
+add_subdirectory(mysya)
