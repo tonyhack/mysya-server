@@ -46,24 +46,24 @@ class Mutex {
 };
 
 template <class MutexType>
-class LockGuardTempalte {
+class LockGuardTemplate {
  public:
-  explicit LockGuardTempalte(MutexType &mutex)
+  explicit LockGuardTemplate(MutexType &mutex)
     : mutex_(mutex) {
     this->mutex_.Lock();
   }
 
-  ~LockGuardTempalte() {
+  ~LockGuardTemplate() {
     this->mutex_.Unlock();
   }
 
  private:
   MutexType &mutex_;
 
-  MYSYA_DISALLOW_COPY_AND_ASSIGN(LockGuardTempalte<MutexType>);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(LockGuardTemplate<MutexType>);
 };
 
-typedef LockGuardTempalte<Mutex> LockGuard;
+typedef LockGuardTemplate<Mutex> LockGuard;
 
 }  // namespace mysya
 
