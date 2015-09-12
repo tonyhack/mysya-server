@@ -37,6 +37,7 @@ class DynamicBuffer {
  private:
   std::vector<char> buffer_;
 
+  size_t init_size_;
   size_t expand_size_;
   size_t read_index_;
   size_t write_index_;

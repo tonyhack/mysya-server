@@ -74,14 +74,14 @@ void EventLoop::Loop() {
         if (this->CheckEventChannelRemoved(event_channel) == true) {
           continue;
         }
-        event_channel->GetReadCallback()();
+        event_channel->GetReadCallback()(event_channel);
       }
 
       if (event->events & EventLoop::kWriteEventMask) {
         if (this->CheckEventChannelRemoved(event_channel) == true) {
           continue;
         }
-        event_channel->GetWriteCallback()();
+        event_channel->GetWriteCallback()(event_channel);
       }
 
       if (event->events & EventLoop::kErrorEventMask) {
@@ -89,7 +89,7 @@ void EventLoop::Loop() {
           continue;
         }
         if (event_channel->GetErrorCallback()) {
-          event_channel->GetErrorCallback()();
+          event_channel->GetErrorCallback()(event_channel);
         }
       }
     }

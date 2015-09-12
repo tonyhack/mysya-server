@@ -23,7 +23,7 @@ class CommandLine {
     this->channel_.SetFileDescriptor(0);
     this->channel_.SetNonblock();
     this->channel_.SetReadCallback(
-        std::bind(&CommandLine::OnStdinCallback, this));
+        std::bind(&CommandLine::OnStdinCallback, this, std::placeholders::_1));
 
     this->channel_.AttachEventLoop(&this->loop_);
 
@@ -34,10 +34,11 @@ class CommandLine {
   }
 
  private:
-  void OnStdinCallback() {
+  void OnStdinCallback(EventChannel *channel) {
     for (;;) {
       this->buffer_.ReserveWritableBytes(8);
-      int bytes = ::read(0, this->buffer_.WriteBegin(), this->buffer_.WritableBytes());
+      int bytes = ::read(channel->GetFileDescriptor(), this->buffer_.WriteBegin(),
+          this->buffer_.WritableBytes());
       if (bytes == 0) {
         return;
       } else if (bytes == -1) {
@@ -87,7 +88,7 @@ class CommandLine {
 
   void PrintPrompt() {
     ::printf("\033[;36m");
-    ::printf("robot> ");
+    ::printf("mysya> ");
     ::printf("\033[0m");
     fflush(stdout);
   }
