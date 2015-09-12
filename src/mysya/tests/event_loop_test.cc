@@ -34,7 +34,9 @@ class CommandLine {
   }
 
  private:
-  void OnStdinCallback(EventChannel *channel) {
+  void OnStdinCallback(void *channel_data) {
+    EventChannel *channel = (EventChannel *)(channel_data);
+
     for (;;) {
       this->buffer_.ReserveWritableBytes(8);
       int bytes = ::read(channel->GetFileDescriptor(), this->buffer_.WriteBegin(),

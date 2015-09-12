@@ -11,14 +11,15 @@ class EventLoop;
 
 class EventChannel {
  public:
-  typedef std::function<void (EventChannel *)> ReadCallback;
-  typedef std::function<void (EventChannel *)> WriteCallback;
-  typedef std::function<void (EventChannel *)> ErrorCallback;
+  typedef std::function<void (void *)> ReadCallback;
+  typedef std::function<void (void *)> WriteCallback;
+  typedef std::function<void (void *)> ErrorCallback;
 
   EventChannel();
   ~EventChannel();
 
   bool SetNonblock();
+  bool SetCloseExec();
 
   bool AttachEventLoop(EventLoop *event_loop);
   void DetachEventLoop();

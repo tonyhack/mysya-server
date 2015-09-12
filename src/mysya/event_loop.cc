@@ -27,14 +27,15 @@ const int EventLoop::kErrorEventMask = EPOLLERR | EPOLLHUP;
 
 EventLoop::EventLoop()
   : quit_(false), epoll_fd_(-1), active_events_(32) {
-  epoll_fd_ = epoll_create(10240);
-  if (-1 == epoll_fd_) {
+  this->epoll_fd_ = epoll_create(10240);
+
+  if (-1 == this->epoll_fd_) {
     throw SystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in epoll_create");
   }
 
-  int flags = ::fcntl(epoll_fd_, F_GETFD, 0);
-  if (::fcntl(epoll_fd_, F_SETFD, flags | FD_CLOEXEC) != 0) {
+  int flags = ::fcntl(this->epoll_fd_, F_GETFD, 0);
+  if (::fcntl(this->epoll_fd_, F_SETFD, flags | FD_CLOEXEC) != 0) {
     throw SystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in fcntl");
   }
