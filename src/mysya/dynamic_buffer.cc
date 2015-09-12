@@ -5,7 +5,7 @@
 namespace mysya {
 
 DynamicBuffer::DynamicBuffer(size_t init_size, size_t expand_size) :
-  buffer_(init_size), expand_size_(expand_size),
+  buffer_(init_size), init_size_(init_size), expand_size_(expand_size),
   read_index_(0), write_index_(0) {}
 DynamicBuffer::~DynamicBuffer() {}
 
@@ -107,7 +107,7 @@ void DynamicBuffer::ReduceWritableBytes(size_t size) {
 
   size_t readable_size = this->ReadableBytes();
 
-  size_t free_size = this->DeprecatedBytes() + readable_size;
+  // size_t free_size = this->DeprecatedBytes() + readable_size;
 
   if (readable_size <= this->init_size_) {
     size_t expand_multiple = (this->CapacityBytes() - this->init_size_) / this->expand_size_;
@@ -123,7 +123,7 @@ void DynamicBuffer::ReduceWritableBytes(size_t size) {
     size_t readable_expand_size = readable_size - this->init_size_;
     size_t readable_expand_multiple = (readable_expand_size + this->expand_size_) / this->expand_size_;
     size_t expand_multiple =
-      (((this->CapacityBytes() - readable_size) / this->expand_size_) - readable_expand_multiple) / 2
+      (((this->CapacityBytes() - readable_size) / this->expand_size_) - readable_expand_multiple) / 2;
 
     std::vector<char> new_buffer(this->init_size_ + expand_multiple * this->expand_size_);
     ::memcpy(&new_buffer[0], this->ReadBegin(), readable_size);

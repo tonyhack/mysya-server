@@ -11,9 +11,9 @@ class EventLoop;
 
 class EventChannel {
  public:
-  typedef std::function<void ()> ReadCallback;
-  typedef std::function<void ()> WriteCallback;
-  typedef std::function<void ()> ErrorCallback;
+  typedef std::function<void (EventChannel *)> ReadCallback;
+  typedef std::function<void (EventChannel *)> WriteCallback;
+  typedef std::function<void (EventChannel *)> ErrorCallback;
 
   EventChannel();
   ~EventChannel();
