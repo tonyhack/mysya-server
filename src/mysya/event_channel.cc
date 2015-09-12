@@ -15,6 +15,17 @@ EventChannel::~EventChannel() {}
 bool EventChannel::SetNonblock() {
   int flags = ::fcntl(this->fd_, F_GETFL, 0);
   if (::fcntl(this->fd_, F_SETFL, flags | O_NONBLOCK) != 0) {
+    MYSYA_ERROR("::fcntl O_NONBLOCK failed.");
+    return false;
+  }
+
+  return true;
+}
+
+bool EventChannel::SetCloseExec() {
+  int flags = ::fcntl(this->fd_, F_GETFD, 0);
+  if (::fcntl(this->fd_, F_SETFD, flags | FD_CLOEXEC) != 0) {
+    MYSYA_ERROR("::fcntl FD_CLOEXEC failed.");
     return false;
   }
 
