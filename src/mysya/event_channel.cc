@@ -9,7 +9,9 @@
 namespace mysya {
 
 EventChannel::EventChannel()
-  : fd_(-1), event_loop_(NULL) {}
+  : fd_(-1), event_loop_(NULL), app_handle_(NULL) {}
+EventChannel::EventChannel(void *handle)
+  : fd_(-1), event_loop_(NULL), app_handle_(handle) {}
 EventChannel::~EventChannel() {}
 
 bool EventChannel::SetNonblock() {

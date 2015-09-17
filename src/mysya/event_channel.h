@@ -16,6 +16,7 @@ class EventChannel {
   typedef std::function<void (void *)> ErrorCallback;
 
   EventChannel();
+  explicit EventChannel(void *handle);
   ~EventChannel();
 
   bool SetNonblock();
@@ -40,6 +41,9 @@ class EventChannel {
   void SetFileDescriptor(int value) { this->fd_ = value; }
   int GetFileDescriptor() const { return this->fd_; }
 
+  void *GetAppHandle() { return this->app_handle_; }
+  void SetAppHandle(void *handle) { this->app_handle_ = handle; }
+
  private:
   void UpdateEventLoop();
 
@@ -49,6 +53,8 @@ class EventChannel {
   ReadCallback read_cb_;
   WriteCallback write_cb_;
   ErrorCallback error_cb_;
+
+  void *app_handle_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(EventChannel);
 };

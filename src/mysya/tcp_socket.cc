@@ -9,7 +9,7 @@
 
 namespace mysya {
 
-TcpSocket::TcpSocket() {}
+TcpSocket::TcpSocket() : event_channel_(this) {}
 TcpSocket::~TcpSocket() {}
 
 bool TcpSocket::Open() {
@@ -49,8 +49,7 @@ bool TcpSocket::Connect(const SocketAddress &peer_addr) {
   int fd = this->GetFileDescriptor();
 
   if (::connect(fd, (const struct sockaddr *)peer_addr.GetNativeHandle(),
-        peer_addr.GetNativeHandleSize()) != 0 &&
-      errno != EINPROGRESS && errno != EISCONN) {
+        peer_addr.GetNativeHandleSize()) != 0) {
     this->Close();
     MYSYA_ERROR("::connect errno(%d).", errno);
     return false;
@@ -70,7 +69,9 @@ bool TcpSocket::AsyncConnect(const SocketAddress &peer_addr) {
   }
 
   if (::connect(fd, (const struct sockaddr *)peer_addr.GetNativeHandle(),
-        peer_addr.GetNativeHandleSize()) != 0) {
+        peer_addr.GetNativeHandleSize()) != 0 &&
+      errno != EINPROGRESS && errno != EISCONN) {
+    this->Close();
     MYSYA_ERROR("::connect errno(%d).", errno);
     return false;
   }
@@ -167,6 +168,36 @@ bool TcpSocket::SetTcpNoDelay() {
     MYSYA_ERROR("::setsockopt IPPROTO_TCP TCP_NODELAY errno(%d)", errno);
     return false;
   }
+
+  return true;
+}
+
+bool TcpSocket::GetLocalAddress(SocketAddress *addr) const {
+  int fd = this->GetFileDescriptor();
+
+  struct sockaddr_in sock_addr;
+  socklen_t addr_len = sizeof(sock_addr);
+  if (::getsockname(fd, (struct sockaddr *)&sock_addr, &addr_len) != 0) {
+    MYSYA_ERROR("::getsockname errno(%d)", errno);
+    return false;
+  }
+
+  addr->SetNativeHandle(sock_addr);
+
+  return true;
+}
+
+bool TcpSocket::GetPeerAddress(SocketAddress *addr) const {
+  int fd = this->GetFileDescriptor();
+
+  struct sockaddr_in sock_addr;
+  socklen_t addr_len = sizeof(sock_addr);
+  if (::getpeername(fd, (struct sockaddr *)&sock_addr, &addr_len) != 0) {
+    MYSYA_ERROR("::getpeername errno(%d)", errno);
+    return false;
+  }
+
+  addr->SetNativeHandle(sock_addr);
 
   return true;
 }

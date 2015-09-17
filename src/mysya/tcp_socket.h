@@ -29,6 +29,9 @@ class TcpSocket {
   bool SetReuseAddr();
   bool SetTcpNoDelay();
 
+  bool GetLocalAddress(SocketAddress *addr) const;
+  bool GetPeerAddress(SocketAddress *addr) const;
+
   EventChannel *GetEventChannel() { return &this->event_channel_; }
 
   int GetFileDescriptor() const { return this->event_channel_.GetFileDescriptor(); }
