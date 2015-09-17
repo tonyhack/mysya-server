@@ -6,23 +6,21 @@ FILE(MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/mysya/tests)
 set(EXECUTABLE_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/mysya/tests)
 
 set(THREAD_TEST_SOURCES
-    ${SRC_MYSYA_PATH}/thread.cc
     ${SRC_MYSYA_PATH}/tests/thread_test.cc)
 add_executable(thread_test ${THREAD_TEST_SOURCES})
-target_link_libraries(thread_test pthread rt dl)
+target_link_libraries(thread_test ${MYSYA_LINK_LIBRARIES})
 
 set(LOGGER_TEST_SOURCES
-    ${SRC_MYSYA_PATH}/thread.cc
-    ${SRC_MYSYA_PATH}/logger.cc
     ${SRC_MYSYA_PATH}/tests/logger_test.cc)
 add_executable(logger_test ${LOGGER_TEST_SOURCES})
-target_link_libraries(logger_test rt pthread dl)
+target_link_libraries(logger_test ${MYSYA_LINK_LIBRARIES})
 
 set(EVENT_LOOP_TEST_SOURCES
-    ${SRC_MYSYA_PATH}/dynamic_buffer.cc
-    ${SRC_MYSYA_PATH}/event_channel.cc
-    ${SRC_MYSYA_PATH}/event_loop.cc
-    ${SRC_MYSYA_PATH}/logger.cc
     ${SRC_MYSYA_PATH}/tests/event_loop_test.cc)
 add_executable(event_loop_test ${EVENT_LOOP_TEST_SOURCES})
-target_link_libraries(event_loop_test rt dl)
+target_link_libraries(event_loop_test ${MYSYA_LINK_LIBRARIES})
+
+set(TCP_SOCKET_TEST_SOURCES
+    ${SRC_MYSYA_PATH}/tests/tcp_socket_test.cc)
+add_executable(tcp_socket_test ${TCP_SOCKET_TEST_SOURCES})
+target_link_libraries(tcp_socket_test ${MYSYA_LINK_LIBRARIES})

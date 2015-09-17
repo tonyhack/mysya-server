@@ -2,6 +2,7 @@
 #define MYSYA_TCP_SOCKET_H
 
 #include <mysya/class_util.h>
+#include <mysya/event_channel.h>
 #include <mysya/socket_address.h>
 
 namespace mysya {
@@ -12,7 +13,7 @@ class TcpSocket {
   ~TcpSocket();
 
   bool Open();
-  void Close()
+  void Close();
 
   bool Connect(const SocketAddress &peer_addr);
   bool AsyncConnect(const SocketAddress &peer_addr);
@@ -28,7 +29,7 @@ class TcpSocket {
   bool SetReuseAddr();
   bool SetTcpNoDelay();
 
-  EventChannel *GetEventChannel() { return this->event_channel_; }
+  EventChannel *GetEventChannel() { return &this->event_channel_; }
 
   int GetFileDescriptor() const { return this->event_channel_.GetFileDescriptor(); }
   void SetFileDescriptor(int value) { this->event_channel_.SetFileDescriptor(value); }

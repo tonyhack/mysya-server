@@ -8,9 +8,9 @@
 namespace mysya {
 
 class SocketAddress {
-  typedef NativeAddress struct sockaddr_in;
-
  public:
+  typedef struct sockaddr_in NativeAddress;
+
   SocketAddress();
   SocketAddress(const std::string &host, uint16_t port);
   SocketAddress(const SocketAddress &from);
@@ -34,13 +34,13 @@ class SocketAddress {
 
  private:
   void CopyFrom(const SocketAddress &from);
-  void GenerateNativeHandle();
+  void GenerateNativeHandle() const;
 
   std::string host_;
   uint16_t port_;
 
-  bool generated_;
-  NativeAddress native_handle_;
+  mutable bool generated_;
+  mutable NativeAddress native_handle_;
 };
 
 }  // namespace mysya

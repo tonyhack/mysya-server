@@ -1,11 +1,14 @@
 #include <mysya/socket_address.h>
 
 #include <errno.h>
+#include <string.h>
 #include <arpa/inet.h>
 
 #include <mysya/logger.h>
 
 namespace mysya {
+
+typedef SocketAddress::NativeAddress NativeAddress;
 
 SocketAddress::SocketAddress() : port_(0), generated_(false) {}
 
@@ -48,13 +51,13 @@ void SocketAddress::SetNativeHandle(const NativeAddress &value) {
   char host[1024];
 
   if (::inet_ntop(AF_INET, &value.sin_addr, host, sizeof(host)) == NULL) {
-    MYSYA_ERROR("::inet_ntop() failed.")
-    return false;
+    MYSYA_ERROR("::inet_ntop() failed.");
+    return;
   }
 
   this->host_ = host;
   this->port_ = ::htons(value.sin_port);
-  ::memcpy(this->native_handle_, &value, sizeof(this->native_handle_));
+  ::memcpy(&this->native_handle_, &value, sizeof(this->native_handle_));
 
   this->generated_ = true;
 }
@@ -74,15 +77,15 @@ void SocketAddress::CopyFrom(const SocketAddress &from) {
   this->port_ = from.port_;
 
   this->generated_ = from.generated_;
-  ::memcpy(&this->native_handle_, from.native_handle_,
+  ::memcpy(&this->native_handle_, &from.native_handle_,
       sizeof(from.native_handle_));
 }
 
-void SocketAddress::GenerateNativeHandle() {
+void SocketAddress::GenerateNativeHandle() const {
   ::memset(&this->native_handle_, 0, sizeof(this->native_handle_));
 
   if (::inet_pton(AF_INET, this->host_.data(), &this->native_handle_.sin_addr) != 1) {
-    MYSYA_ERROR("::inet_pton() failed.")
+    MYSYA_ERROR("::inet_pton() failed.");
     return;
   }
 

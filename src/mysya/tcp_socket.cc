@@ -1,5 +1,12 @@
 #include <mysya/tcp_socket.h>
 
+#include <errno.h>
+#include <unistd.h>
+#include <netinet/tcp.h>
+#include <sys/ioctl.h>
+
+#include <mysya/logger.h>
+
 namespace mysya {
 
 TcpSocket::TcpSocket() {}
@@ -12,7 +19,8 @@ bool TcpSocket::Open() {
 
   int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1) {
-    MYSYA_ERROR("::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) failed.")
+    MYSYA_ERROR("::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) errno(%d).",
+        errno);
     return false;
   }
 
@@ -31,7 +39,7 @@ void TcpSocket::Close() {
     return;
   }
 
-  this->DetachEventLoop();
+  this->event_channel_.DetachEventLoop();
 
   ::close(fd);
   this->SetFileDescriptor(-1);
@@ -40,11 +48,11 @@ void TcpSocket::Close() {
 bool TcpSocket::Connect(const SocketAddress &peer_addr) {
   int fd = this->GetFileDescriptor();
 
-  if (::connect(fd, peer_addr.GetNativeHandle(),
+  if (::connect(fd, (const struct sockaddr *)peer_addr.GetNativeHandle(),
         peer_addr.GetNativeHandleSize()) != 0 &&
-      errno != EINPROGRESS && error != EISCONN) {
+      errno != EINPROGRESS && errno != EISCONN) {
     this->Close();
-    MYSYA_ERROR("::connect failed.");
+    MYSYA_ERROR("::connect errno(%d).", errno);
     return false;
   }
 
@@ -54,16 +62,16 @@ bool TcpSocket::Connect(const SocketAddress &peer_addr) {
 bool TcpSocket::AsyncConnect(const SocketAddress &peer_addr) {
   int fd = this->GetFileDescriptor();
 
-  if (this->event_channel_->SetNonblock() == false ||
+  if (this->event_channel_.SetNonblock() == false ||
       this->SetReuseAddr() == false ||
       this->SetTcpNoDelay() == false) {
     MYSYA_ERROR("Nonblock|ReuseAddr|TcpNoDelay failed.");
     return false;
   }
 
-  if (::connect(fd, peer_addr.GetNativeHandle(),
+  if (::connect(fd, (const struct sockaddr *)peer_addr.GetNativeHandle(),
         peer_addr.GetNativeHandleSize()) != 0) {
-    MYSYA_ERROR("::connect failed.");
+    MYSYA_ERROR("::connect errno(%d).", errno);
     return false;
   }
 
@@ -71,27 +79,96 @@ bool TcpSocket::AsyncConnect(const SocketAddress &peer_addr) {
 }
 
 bool TcpSocket::Bind(const SocketAddress &addr) {
+  int fd = this->GetFileDescriptor();
+
+  if (::bind(fd, (const struct sockaddr *)addr.GetNativeHandle(),
+        addr.GetNativeHandleSize()) != 0) {
+    this->Close();
+    MYSYA_ERROR("::bind addr(%s:%d) errno(%d).",
+        addr.GetHost().data(), addr.GetPort(), errno);
+    return false;
+  }
+
+  return true;
 }
 
 bool TcpSocket::Listen(int backlog) {
+  int fd = this->GetFileDescriptor();
+
+  if (::listen(fd, backlog) != 0) {
+    this->Close();
+    MYSYA_ERROR("::listen errno(%d).", errno);
+    return false;
+  }
+
+  return true;
 }
 
 int TcpSocket::Accept(TcpSocket *peer_socket) {
+  int fd = this->GetFileDescriptor();
+
+  int sockfd = ::accept(fd, NULL, NULL);
+  if (sockfd == -1) {
+    MYSYA_ERROR("::accept errno(%d).", errno);
+    return false;
+  }
+
+  peer_socket->SetFileDescriptor(sockfd);
+  if (peer_socket->GetEventChannel()->SetCloseExec() == false) {
+    peer_socket->Close();
+    MYSYA_ERROR("TcpSocket::SetCloseExec() errno(%d).", errno);
+    return false;
+  }
+
+  return true;
 }
 
 int TcpSocket::ReadableSize() const {
+  int fd = this->GetFileDescriptor();
+  int readable_size = 0;
+
+  if (::ioctl(fd, FIONREAD, &readable_size) == -1) {
+    MYSYA_ERROR("::ioctl errno(%d)", errno);
+    return -1;
+  }
+
+  return readable_size;
 }
 
 int TcpSocket::Read(char *data, size_t size) {
+  int fd = this->GetFileDescriptor();
+
+  return ::recv(fd, data, size, MSG_NOSIGNAL);
 }
 
 int TcpSocket::Write(const char *data, size_t size) {
+  int fd = this->GetFileDescriptor();
+
+  return ::send(fd, data, size, MSG_NOSIGNAL);
 }
 
 bool TcpSocket::SetReuseAddr() {
+  int opt = 1;
+  int fd = this->GetFileDescriptor();
+
+  if (::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) != 0) {
+    MYSYA_ERROR("::setsockopt SOL_SOCKET SO_REUSEADDR errno(%d)", errno);
+    return false;
+  }
+
+  return true;
 }
 
 bool TcpSocket::SetTcpNoDelay() {
+  int opt = 1;
+  int fd = this->GetFileDescriptor();
+
+  if (::setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) != 0) {
+    MYSYA_ERROR("::setsockopt IPPROTO_TCP TCP_NODELAY errno(%d)", errno);
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace mysya
