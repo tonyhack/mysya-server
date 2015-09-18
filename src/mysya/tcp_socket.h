@@ -20,7 +20,7 @@ class TcpSocket {
 
   bool Bind(const SocketAddress &addr);
   bool Listen(int backlog);
-  int Accept(TcpSocket *peer_socket);
+  bool Accept(TcpSocket *peer_socket);
 
   int ReadableSize() const;
   int Read(char *data, size_t size);

@@ -105,7 +105,7 @@ bool TcpSocket::Listen(int backlog) {
   return true;
 }
 
-int TcpSocket::Accept(TcpSocket *peer_socket) {
+bool TcpSocket::Accept(TcpSocket *peer_socket) {
   int fd = this->GetFileDescriptor();
 
   int sockfd = ::accept(fd, NULL, NULL);

@@ -53,6 +53,7 @@ bool EventLoop::Looping() const {
 
 void EventLoop::Loop() {
   int event_count = 0;
+  this->quit_ = false;
 
   while (this->quit_ == false) {
     event_count = ::epoll_wait(this->epoll_fd_, &this->active_events_[0],
