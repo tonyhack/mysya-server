@@ -50,7 +50,6 @@ bool TcpSocket::Connect(const SocketAddress &peer_addr) {
 
   if (::connect(fd, (const struct sockaddr *)peer_addr.GetNativeHandle(),
         peer_addr.GetNativeHandleSize()) != 0) {
-    this->Close();
     MYSYA_ERROR("::connect errno(%d).", errno);
     return false;
   }
@@ -71,7 +70,6 @@ bool TcpSocket::AsyncConnect(const SocketAddress &peer_addr) {
   if (::connect(fd, (const struct sockaddr *)peer_addr.GetNativeHandle(),
         peer_addr.GetNativeHandleSize()) != 0 &&
       errno != EINPROGRESS && errno != EISCONN) {
-    this->Close();
     MYSYA_ERROR("::connect errno(%d).", errno);
     return false;
   }
@@ -84,7 +82,6 @@ bool TcpSocket::Bind(const SocketAddress &addr) {
 
   if (::bind(fd, (const struct sockaddr *)addr.GetNativeHandle(),
         addr.GetNativeHandleSize()) != 0) {
-    this->Close();
     MYSYA_ERROR("::bind addr(%s:%d) errno(%d).",
         addr.GetHost().data(), addr.GetPort(), errno);
     return false;
@@ -97,7 +94,6 @@ bool TcpSocket::Listen(int backlog) {
   int fd = this->GetFileDescriptor();
 
   if (::listen(fd, backlog) != 0) {
-    this->Close();
     MYSYA_ERROR("::listen errno(%d).", errno);
     return false;
   }
@@ -170,6 +166,14 @@ bool TcpSocket::SetTcpNoDelay() {
   }
 
   return true;
+}
+
+bool TcpSocket::SetNonblock() {
+  return this->event_channel_.SetNonblock();
+}
+
+bool TcpSocket::SetCloseExec() {
+  return this->event_channel_.SetCloseExec();
 }
 
 bool TcpSocket::GetLocalAddress(SocketAddress *addr) const {

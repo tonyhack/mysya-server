@@ -25,6 +25,7 @@ void TestFunc() {
 
   if (socket.Connect(peer_addr) == 0) {
     MYSYA_ERROR("TcpSocket::Connect() failed.");
+    socket.Close();
     return;
   }
 
@@ -62,6 +63,7 @@ void TestFunc() {
 
   if (socket.AsyncConnect(peer_addr) == 0) {
     MYSYA_ERROR("TcpSocket::Connect() failed.");
+    socket.Close();
     return;
   }
 
@@ -183,18 +185,21 @@ void TestFunc() {
 
   if (socket.SetReuseAddr() == false) {
     MYSYA_ERROR("TcpSocket::SetReuseAddr() failed.");
+    socket.Close();
     return;
   }
 
   if (socket.Bind(sock_addr) == false) {
     MYSYA_ERROR("TcpSocket::Bind addr(%s:%d) failed.",
         sock_addr.GetHost().data(), sock_addr.GetPort());
+    socket.Close();
     return;
   }
 
   if (socket.Listen(1024) == false) {
     MYSYA_ERROR("TcpSocket::Listen addr(%s:%d) failed.",
         sock_addr.GetHost().data(), sock_addr.GetPort());
+    socket.Close();
     return;
   }
 
@@ -205,6 +210,7 @@ void TestFunc() {
 
   if (server_event_channel->AttachEventLoop(&g_event_loop) == false) {
     MYSYA_ERROR("EventLoop::AttachEventLoop() failed.");
+    socket.Close();
     return;
   }
 

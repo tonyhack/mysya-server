@@ -28,6 +28,8 @@ class TcpSocket {
 
   bool SetReuseAddr();
   bool SetTcpNoDelay();
+  bool SetNonblock();
+  bool SetCloseExec();
 
   bool GetLocalAddress(SocketAddress *addr) const;
   bool GetPeerAddress(SocketAddress *addr) const;
