@@ -9,10 +9,12 @@
 #include <ext/hash_set>
 
 #include <mysya/class_util.h>
+#include <mysya/timestamp.h>
 
 namespace mysya {
 
 class EventChannel;
+class TimingWheel;
 
 class EventLoop {
  public:
@@ -33,9 +35,11 @@ class EventLoop {
   bool RemoveEventChannel(EventChannel *channel);
   bool UpdateEventChannel(EventChannel *channel);
 
-  int64_t StartTimer(int timeout_ms, const TimerCallback &cb,
+  int64_t StartTimer(int expire_ms, const TimerCallback &cb,
       int call_times = -1);
   void StopTimer(int64_t timer_id);
+
+  const Timestamp &GetTimestamp() const { return this->timestamp_; }
 
  private:
   bool CheckEventChannelRemoved(EventChannel *channel) const;
@@ -50,6 +54,9 @@ class EventLoop {
   EventChannelHashset removed_event_channels_;
 
   pid_t thread_id_;
+
+  TimingWheel *timing_wheel_;
+  Timestamp timestamp_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(EventLoop);
 };

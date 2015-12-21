@@ -129,10 +129,13 @@ void TimingWheel::Wheel::AddTimer(Timer *timer, size_t tick_counts) {
     wheel_step_tick_counts *= wheel->GetBucketNum();
   }
 
+  assert(tick_counts < wheel_step_tick_counts * this->GetBucketNum());
+
   // Position to put in.
   size_t bucket =
     (tick_counts / wheel_step_tick_counts + this->GetCurrentBucket()) %
     this->GetBucketNum();
+  bucket = bucket > 0 ? bucket - 1 : this->GetBucketNum() - 1;
 
   assert(bucket < this->GetBucketNum());
 
@@ -159,8 +162,9 @@ int TimingWheel::Wheel::OnExpired() {
   this->SetCurrentBucket((bucket + 1) % this->GetBucketNum());
 
   for (TimerList::iterator iter = this->buckets_[bucket].begin();
-      iter != this->buckets_[bucket].end(); ++iter) {
+      iter != this->buckets_[bucket].end();) {
     Timer *timer = *iter;
+    iter = this->buckets_[bucket].erase(iter);
 
     // Undo tick count.
     if (timer->GetUndoTickCounts() > 0) {
@@ -211,6 +215,8 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
       throw SystemErrorException(
           "TimingWheel::TimingWheel(): allocate Wheel failed.");
     }
+
+    this->wheels_.push_back(wheel);
   }
 
   int timer_fd = ::timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
@@ -223,6 +229,11 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
   this->event_channel_->SetFileDescriptor(timer_fd);
   this->event_channel_->SetReadCallback(
       std::bind(&TimingWheel::OnRead, this, std::placeholders::_1));
+
+  if (this->event_channel_->AttachEventLoop(this->event_loop_) == false) {
+    throw SystemErrorException(
+          "TimingWheel::TimingWheel(): EventChannel::AttachEventLoop() failed.");
+  }
 
   struct itimerspec new_value;
   bzero(&new_value, sizeof(new_value));
@@ -260,8 +271,8 @@ int64_t TimingWheel::AddTimer(const Timestamp &now, int expire_ms,
     return -1;
   }
 
-  if (this->timers_.find(timer_id) == this->timers_.end()) {
-    MYSYA_ERROR("Timer id(%d) duplicated.");
+  if (this->timers_.find(timer_id) != this->timers_.end()) {
+    MYSYA_ERROR("Timer id(%d) duplicated.", timer_id);
     return -1;
   }
 
@@ -296,7 +307,7 @@ void TimingWheel::RemoveTimer(int64_t timer_id) {
   delete timer;
 }
 
-TimingWheel::Wheel *TimingWheel::GetWheel(int index) {
+TimingWheel::Wheel *TimingWheel::GetWheel(int index) const {
   if (index < 0 || index >= (int)this->wheels_.size()) {
     return NULL;
   }
@@ -307,6 +318,7 @@ TimingWheel::Wheel *TimingWheel::GetWheel(int index) {
 void TimingWheel::AddWheel(Timer *timer, int expire_tick_counts) {
   int undo_tick_counts = 0;
   int wheel_max_tick_counts = 1;
+  int wheel_step_tick_counts = 1;
 
   for (int i = 0; i < kTimingWheelNum; ++i) {
     Wheel *wheel = this->GetWheel(i);
@@ -318,13 +330,13 @@ void TimingWheel::AddWheel(Timer *timer, int expire_tick_counts) {
       break;
     }
 
-    int wheel_step_tick_counts = 1;
-    for (int j = i - 1; j >= 0; ++j) {
-      wheel_step_tick_counts *= kTimingWheelBucketNum[j];
-    }
-
     undo_tick_counts += wheel->GetCurrentBucket() * wheel_step_tick_counts;
+
+    // The next wheel step tick counts.
+    wheel_step_tick_counts = wheel_max_tick_counts;
   }
+
+  undo_tick_counts += expire_tick_counts % wheel_step_tick_counts;
 
   timer->SetUndoTickCounts(undo_tick_counts);
 }
@@ -340,6 +352,10 @@ void TimingWheel::RemoveWheel(Timer *timer) {
 }
 
 void TimingWheel::OnRead(EventChannel *event_channel) {
+  uint64_t read_value = 0;
+  ::read(this->event_channel_->GetFileDescriptor(),
+      &read_value, sizeof(read_value));
+
   EventLoop *event_loop = event_channel->GetEventLoop();
   this->OnExpired(event_loop->GetTimestamp());
 }
@@ -354,7 +370,7 @@ void TimingWheel::OnExpired(const Timestamp &timestamp) {
     undo_tick_counts = 1;
   }
 
-  while (--undo_tick_counts) {
+  while (undo_tick_counts-- > 0) {
     for (int i = 0; i < kTimingWheelNum; ++i) {
       Wheel *wheel = this->GetWheel(i);
       if (wheel->OnExpired() > 0) {

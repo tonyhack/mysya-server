@@ -12,6 +12,8 @@ set(MYSYA_SOURCES
     ${SRC_MYSYA_PATH}/logger.cc
     ${SRC_MYSYA_PATH}/socket_address.cc
     ${SRC_MYSYA_PATH}/tcp_socket.cc
+    ${SRC_MYSYA_PATH}/timestamp.cc
+    ${SRC_MYSYA_PATH}/timing_wheel.cc
     ${SRC_MYSYA_PATH}/thread.cc)
 
 add_library(mysya SHARED ${MYSYA_SOURCES})

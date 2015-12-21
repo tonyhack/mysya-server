@@ -57,7 +57,10 @@ class TcpSocketApp {
   bool BuildAsyncConnectSocket(std::unique_ptr<TcpSocket> &socket, int timeout_ms = 0);
 
   void OnListenRead(EventChannel *event_channel);
+  void OnListenError(EventChannel *event_channel);
+
   void OnConnectWrite(EventChannel *event_channel);
+  void OnConnectError(EventChannel *event_channel);
 
   void OnSocketRead(EventChannel *event_channel);
   void OnSocketWrite(EventChannel *event_channel);

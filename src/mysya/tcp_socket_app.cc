@@ -208,7 +208,7 @@ bool TcpSocketApp::BuildListenSocket(std::unique_ptr<TcpSocket> &socket, const S
   socket->GetEventChannel()->SetReadCallback(
       std::bind(&TcpSocketApp::OnListenRead, this, std::placeholders::_1));
   socket->GetEventChannel()->SetErrorCallback(
-      std::bind(&TcpSocketApp::OnSocketError, this, std::placeholders::_1));
+      std::bind(&TcpSocketApp::OnListenError, this, std::placeholders::_1));
 
   if (socket->GetEventChannel()->AttachEventLoop(this->event_loop_) == false) {
     MYSYA_ERROR("EventChannel::AttachEventLoop() failed.");
@@ -293,7 +293,7 @@ bool TcpSocketApp::BuildAsyncConnectSocket(std::unique_ptr<TcpSocket> &socket, i
   socket->GetEventChannel()->SetWriteCallback(
       std::bind(&TcpSocketApp::OnConnectWrite, this, std::placeholders::_1));
   socket->GetEventChannel()->SetErrorCallback(
-      std::bind(&TcpSocketApp::OnSocketError, this, std::placeholders::_1));
+      std::bind(&TcpSocketApp::OnConnectError, this, std::placeholders::_1));
 
   if (socket->GetEventChannel()->AttachEventLoop(this->event_loop_) == false) {
     MYSYA_ERROR("EventChannel::AttachEventLoop() failed.");
@@ -321,10 +321,21 @@ bool TcpSocketApp::BuildAsyncConnectSocket(std::unique_ptr<TcpSocket> &socket, i
 }
 
 void TcpSocketApp::OnListenRead(EventChannel *event_channel) {
+  TcpSocket *listen_socket = (TcpSocket *)event_channel->GetAppHandle();
+
+  for (;;) {
+    std::unique_ptr<TcpSocket> socket = new (std::nothrow) TcpSocket();
+  }
+}
+
+void TcpSocketApp::OnListenError(EventChannel *event_channel) {
   TcpSocket *socket = (TcpSocket *)event_channel->GetAppHandle();
 }
 
 void TcpSocketApp::OnConnectWrite(EventChannel *event_channel) {
+}
+
+void TcpSocketApp::OnConnectError(EventChannel *event_channel) {
 }
 
 void TcpSocketApp::OnSocketRead(EventChannel *event_channel) {

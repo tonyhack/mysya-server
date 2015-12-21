@@ -34,7 +34,7 @@ class TimingWheel {
   void RemoveTimer(int64_t timer_id);
 
  private:
-  Wheel *GetWheel(int index);
+  Wheel *GetWheel(int index) const;
 
   void AddWheel(Timer *timer, int expire_tick_cout);
   void RemoveWheel(Timer *timer);

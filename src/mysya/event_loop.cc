@@ -13,6 +13,7 @@
 #include <mysya/exception.h>
 #include <mysya/event_channel.h>
 #include <mysya/logger.h>
+#include <mysya/timing_wheel.h>
 
 namespace mysya {
 
@@ -26,7 +27,10 @@ const int EventLoop::kWriteEventMask = EPOLLOUT;
 const int EventLoop::kErrorEventMask = EPOLLERR | EPOLLHUP;
 
 EventLoop::EventLoop()
-  : quit_(false), epoll_fd_(-1), active_events_(32) {
+  : quit_(false), epoll_fd_(-1), active_events_(32),
+    timing_wheel_(NULL) {
+  this->timestamp_.SetNow();
+
   this->epoll_fd_ = epoll_create(10240);
 
   if (-1 == this->epoll_fd_) {
@@ -39,9 +43,17 @@ EventLoop::EventLoop()
     throw SystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in fcntl");
   }
+
+  this->timing_wheel_ = new (std::nothrow) TimingWheel(1, this);
+  if (this->timing_wheel_ == NULL) {
+    throw SystemErrorException(
+        "EventLoop::EventLoop(): create event loop failed in allocate TimingWheel.");
+  }
 }
 
 EventLoop::~EventLoop() {
+  delete this->timing_wheel_;
+
   if (this->epoll_fd_ != -1) {
     ::close(this->epoll_fd_);
   }
@@ -66,6 +78,8 @@ void EventLoop::Loop() {
         break;
       }
     }
+
+    this->timestamp_.SetNow();
 
     // event callback.
     for (int i = 0; i < event_count; ++i) {
@@ -172,13 +186,16 @@ bool EventLoop::UpdateEventChannel(EventChannel *channel) {
 }
 
 // TODO
-int64_t EventLoop::StartTimer(int timeout_ms, const TimerCallback &cb,
+int64_t EventLoop::StartTimer(int expire_ms, const TimerCallback &cb,
     int call_times) {
-  return -1;
+  return this->timing_wheel_->AddTimer(this->timestamp_,
+      expire_ms, cb, call_times);
 }
 
 // TODO
-void EventLoop::StopTimer(int64_t timer_id) {}
+void EventLoop::StopTimer(int64_t timer_id) {
+  this->timing_wheel_->RemoveTimer(timer_id);
+}
 
 // Event channel should not be use if it has been removed from epoll.
 //   See in member function EventLoop::RemoveEventChannel and EventLoop::Loop.

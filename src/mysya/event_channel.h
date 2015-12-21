@@ -41,6 +41,8 @@ class EventChannel {
   void SetFileDescriptor(int value) { this->fd_ = value; }
   int GetFileDescriptor() const { return this->fd_; }
 
+  EventLoop *GetEventLoop() const { return this->event_loop_; }
+
   void SetAppHandle(void *handle) { this->app_handle_ = handle; }
   void *GetAppHandle() const { return this->app_handle_; }
 
