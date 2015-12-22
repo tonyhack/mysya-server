@@ -2,6 +2,7 @@
 #define MYSYA_MUTEX_H
 
 #include <pthread.h>
+#include <string.h>
 
 #include <mysya/class_util.h>
 #include <mysya/exception.h>
@@ -12,8 +13,9 @@ class Mutex {
  public:
   Mutex() {
     if (::pthread_mutex_init(&this->mutex_, NULL) != 0) {
-      throw SystemErrorException(
-          "Mutex::Mutex() failed in pthread_mutex_init.");
+      ThrowSystemErrorException(
+          "Mutex::Mutex() failed in pthread_mutex_init, strerror(%s).",
+          ::strerror(errno));
     }
   }
 
@@ -23,15 +25,17 @@ class Mutex {
 
   void Lock() {
     if (::pthread_mutex_lock(&this->mutex_) != 0) {
-      throw SystemErrorException(
-          "Mutex::Lock() failed in pthread_mutex_lock.");
+      ThrowSystemErrorException(
+          "Mutex::Lock() failed in pthread_mutex_lock, strerror(%s).",
+          ::strerror(errno));
     }
   }
 
   void Unlock() {
     if (::pthread_mutex_unlock(&this->mutex_) != 0) {
-      throw SystemErrorException(
-          "Mutex::Unlock() failed in pthread_mutex_lock.");
+      ThrowSystemErrorException(
+          "Mutex::Unlock() failed in pthread_mutex_lock, strerror(%s).",
+          ::strerror(errno));
     }
   }
 

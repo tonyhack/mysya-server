@@ -9,6 +9,7 @@ set(MYSYA_SOURCES
     ${SRC_MYSYA_PATH}/dynamic_buffer.cc
     ${SRC_MYSYA_PATH}/event_channel.cc
     ${SRC_MYSYA_PATH}/event_loop.cc
+    ${SRC_MYSYA_PATH}/exception.cc
     ${SRC_MYSYA_PATH}/logger.cc
     ${SRC_MYSYA_PATH}/socket_address.cc
     ${SRC_MYSYA_PATH}/tcp_socket.cc

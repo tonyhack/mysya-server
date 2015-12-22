@@ -2,6 +2,7 @@
 #define MYSYA_CONDITION_VARIABLE_H
 
 #include <pthread.h>
+#include <string.h>
 
 #include <mysya/exception.h>
 #include <mysya/mutex.h>
@@ -12,8 +13,9 @@ class ConditionVariable {
  public:
    ConditionVariable() {
      if (::pthread_cond_init(&this->cond_, NULL) != 0) {
-       throw SystemErrorException(
-           "ConditionVariable::ConditionVariable() failed in pthread_cond_init");
+       ThrowSystemErrorException(
+           "ConditionVariable::ConditionVariable() failed in pthread_cond_init, strerror(%s).",
+          ::strerror(errno));
      }
   }
   ~ConditionVariable() {
@@ -22,8 +24,9 @@ class ConditionVariable {
 
   void Wait(Mutex &mutex) {
     if (::pthread_cond_wait(&this->cond_, mutex.GetNativeHandle()) != 0) {
-      throw SystemErrorException(
-          "ConditionVariable::Wait() failed in pthread_cond_init");
+      ThrowSystemErrorException(
+          "ConditionVariable::Wait() failed in pthread_cond_init, strerror(%s).",
+          ::strerror(errno));
     }
   }
 

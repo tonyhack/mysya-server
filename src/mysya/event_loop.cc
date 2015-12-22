@@ -32,21 +32,23 @@ EventLoop::EventLoop()
   this->epoll_fd_ = epoll_create(10240);
 
   if (-1 == this->epoll_fd_) {
-    throw SystemErrorException(
-        "EventLoop::EventLoop(): create event loop failed in epoll_create");
+    ThrowSystemErrorException(
+        "EventLoop::EventLoop(): create event loop failed in epoll_create, strerror(%s).",
+        ::strerror(errno));
   }
 
   int flags = ::fcntl(this->epoll_fd_, F_GETFD, 0);
   if (::fcntl(this->epoll_fd_, F_SETFD, flags | FD_CLOEXEC) != 0) {
-    throw SystemErrorException(
-        "EventLoop::EventLoop(): create event loop failed in fcntl");
+    ThrowSystemErrorException(
+        "EventLoop::EventLoop(): create event loop failed in fcntl, strerror(%s).",
+        ::strerror(errno));
   }
 
   this->timestamp_.SetNow();
 
   this->timing_wheel_ = new (std::nothrow) TimingWheel(10, this);
   if (this->timing_wheel_ == NULL) {
-    throw SystemErrorException(
+    ThrowSystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in allocate TimingWheel.");
   }
 

@@ -12,6 +12,8 @@ class SystemErrorException : public std::runtime_error {
     : std::runtime_error(arg) {}
 };
 
+void ThrowSystemErrorException(const char *format, ...);
+
 }  // namespace mysya
 
 #endif  // MYSYA_EXCEPTION_H

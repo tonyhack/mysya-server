@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <string.h>
 #include <strings.h>
 #include <unistd.h>
 #include <sys/timerfd.h>
@@ -111,7 +112,7 @@ TimingWheel::Wheel::Wheel(TimingWheel *timing_wheel,
     buckets_(NULL) {
   this->buckets_ = new (std::nothrow) TimerList[this->GetBucketNum()];
   if (this->buckets_ == NULL) {
-    throw SystemErrorException(
+    ThrowSystemErrorException(
         "Wheel::Wheel(): allocate TimerList failed.");
   }
 }
@@ -206,14 +207,14 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
   // TODO: unique_ptr<> ?
   this->event_channel_ = new (std::nothrow) EventChannel();
   if (this->event_channel_ == NULL) {
-    throw SystemErrorException(
+    ThrowSystemErrorException(
         "TimingWheel::TimingWheel(): allocate EventChannel failed.");
   }
 
   // TODO: unique_ptr<> ?
   this->timer_ids_ = new (std::nothrow) TimerIdAllocator();
   if (this->timer_ids_ == NULL) {
-    throw SystemErrorException(
+    ThrowSystemErrorException(
         "TimingWheel::TimingWheel(): allocate TimerIdAllocator failed.");
   }
 
@@ -223,7 +224,7 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
     Wheel *wheel =
       new (std::nothrow) Wheel(this, i, kTimingWheelBucketNum[i]);
     if (wheel == NULL) {
-      throw SystemErrorException(
+      ThrowSystemErrorException(
           "TimingWheel::TimingWheel(): allocate Wheel failed.");
     }
 
@@ -233,8 +234,9 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
   int timer_fd = ::timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
   if (timer_fd == -1) {
     MYSYA_ERROR("timerfd_create failed, errno=%d.", errno);
-    throw SystemErrorException(
-        "TimingWheel::TimingWheel(): timerfd_create failed");
+    ThrowSystemErrorException(
+        "TimingWheel::TimingWheel(): timerfd_create failed, strerror(%s).",
+        ::strerror(errno));
   }
 
   this->event_channel_->SetFileDescriptor(timer_fd);
@@ -242,7 +244,7 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
       std::bind(&TimingWheel::OnRead, this, std::placeholders::_1));
 
   if (this->event_channel_->AttachEventLoop(this->event_loop_) == false) {
-    throw SystemErrorException(
+    ThrowSystemErrorException(
           "TimingWheel::TimingWheel(): EventChannel::AttachEventLoop() failed.");
   }
 
@@ -254,8 +256,9 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
 
   if (::timerfd_settime(this->event_channel_->GetFileDescriptor(), 0, &new_value, NULL) != 0) {
     MYSYA_ERROR("timerfd_settime failed, errno=%d.", errno);
-    throw SystemErrorException(
-          "TimingWheel::TimingWheel(): timerfd_settime failed.");
+    ThrowSystemErrorException(
+          "TimingWheel::TimingWheel(): timerfd_settime failed, strerror(%s).",
+          ::strerror(errno));
   }
 }
 

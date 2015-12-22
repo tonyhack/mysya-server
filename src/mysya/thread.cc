@@ -30,7 +30,7 @@ void Thread::Start(const ThreadFunc &thread_func, bool joinable) {
   LockGuard lock(this->mutex_);
 
   if (this->started_ == true) {
-    throw SystemErrorException("Thread::Start(): thread has already started");
+    ThrowSystemErrorException("Thread::Start(): thread has already started.");
   }
 
   this->thread_func_ = thread_func;
@@ -40,14 +40,16 @@ void Thread::Start(const ThreadFunc &thread_func, bool joinable) {
 
   if (joinable == false) {
     if (::pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0) {
-      throw SystemErrorException(
-          "Thread::Start(): failed in pthread_attr_setdetachstate");
+      ThrowSystemErrorException(
+          "Thread::Start(): failed in pthread_attr_setdetachstate, strerror(%s).",
+          ::strerror(errno));
     }
     this->joined_ = true;
   }
 
   if (::pthread_create(&this->tid_, &attr, &StartThread, this) != 0) {
-    throw SystemErrorException("Thread::Start(): failed in pthread_create");
+    ThrowSystemErrorException("Thread::Start(): failed in pthread_create, strerror(%s).",
+        ::strerror(errno));
   }
 
   started_ = true;
@@ -59,7 +61,8 @@ void Thread::Start(const ThreadFunc &thread_func, bool joinable) {
 
 bool Thread::Join() {
   if (::pthread_equal(this->tid_, ::pthread_self())) {
-    throw SystemErrorException("Thread::Join(): thread try to join itself");
+    ThrowSystemErrorException("Thread::Join(): thread try to join itself, strerror(%s).",
+        ::strerror(errno));
   }
 
   LockGuard lock(this->mutex_);
