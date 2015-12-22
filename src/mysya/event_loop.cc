@@ -29,8 +29,6 @@ const int EventLoop::kErrorEventMask = EPOLLERR | EPOLLHUP;
 EventLoop::EventLoop()
   : quit_(false), epoll_fd_(-1), active_events_(32),
     timing_wheel_(NULL) {
-  this->timestamp_.SetNow();
-
   this->epoll_fd_ = epoll_create(10240);
 
   if (-1 == this->epoll_fd_) {
@@ -44,11 +42,15 @@ EventLoop::EventLoop()
         "EventLoop::EventLoop(): create event loop failed in fcntl");
   }
 
-  this->timing_wheel_ = new (std::nothrow) TimingWheel(1, this);
+  this->timestamp_.SetNow();
+
+  this->timing_wheel_ = new (std::nothrow) TimingWheel(10, this);
   if (this->timing_wheel_ == NULL) {
     throw SystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in allocate TimingWheel.");
   }
+
+  this->timing_wheel_->SetTimestamp(this->timestamp_);
 }
 
 EventLoop::~EventLoop() {
@@ -66,6 +68,9 @@ bool EventLoop::Looping() const {
 void EventLoop::Loop() {
   int event_count = 0;
   this->quit_ = false;
+
+  Timestamp timestamp = this->timestamp_;
+  this->timestamp_.SetNow();
 
   while (this->quit_ == false) {
     event_count = ::epoll_wait(this->epoll_fd_, &this->active_events_[0],
@@ -185,17 +190,25 @@ bool EventLoop::UpdateEventChannel(EventChannel *channel) {
   return true;
 }
 
-// TODO
 int64_t EventLoop::StartTimer(int expire_ms, const TimerCallback &cb,
     int call_times) {
   return this->timing_wheel_->AddTimer(this->timestamp_,
       expire_ms, cb, call_times);
 }
 
-// TODO
 void EventLoop::StopTimer(int64_t timer_id) {
   this->timing_wheel_->RemoveTimer(timer_id);
 }
+
+#ifndef _MYSYA_DEBUG_
+int64_t EventLoop::GetTimerDebugTickCounts() const {
+  return this->timing_wheel_->GetDebugTickCounts();
+}
+
+void EventLoop::SetTimerDebugTickCounts(int64_t value) const {
+  this->timing_wheel_->SetDebugTickCounts(value);
+}
+#endif  // _MYSYA_DEBUG_
 
 // Event channel should not be use if it has been removed from epoll.
 //   See in member function EventLoop::RemoveEventChannel and EventLoop::Loop.

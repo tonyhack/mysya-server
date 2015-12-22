@@ -89,7 +89,7 @@ class TimingWheel::Wheel {
   void AddTimer(Timer *timer, size_t tick_counts);
   void RemoveTimer(size_t bucket, int64_t timer_id);
 
-  int OnExpired();
+  int OnExpired(const Timestamp &now_timestamp);
 
   size_t GetCurrentBucket() const { return this->current_bucket_; }
   void SetCurrentBucket(size_t value) { this->current_bucket_ = value; }
@@ -157,7 +157,7 @@ void TimingWheel::Wheel::RemoveTimer(size_t bucket, int64_t timer_id) {
   }
 }
 
-int TimingWheel::Wheel::OnExpired() {
+int TimingWheel::Wheel::OnExpired(const Timestamp &now_timestamp) {
   size_t bucket = this->GetCurrentBucket();
   this->SetCurrentBucket((bucket + 1) % this->GetBucketNum());
 
@@ -168,21 +168,28 @@ int TimingWheel::Wheel::OnExpired() {
 
     // Undo tick count.
     if (timer->GetUndoTickCounts() > 0) {
+      // undo.
       this->host_->AddWheel(timer, timer->GetUndoTickCounts());
       continue;
-    }
-
-    int64_t timer_id = timer->GetID();
-    ExpireCallback callback = timer->GetExpireCallback();
-
-    if (timer->GetCallTimes() < 0 || timer->DecCallTimes() > 0) {
-      // Add timer again.
-      this->host_->AddWheel(timer, timer->GetExpireTickCounts());
+    } else if (now_timestamp < timer->GetExpireTimestamp()) {
+      // not expired.
+      timer->SetUndoTickCounts(1);
+      this->host_->AddWheel(timer, timer->GetUndoTickCounts());
+      continue;
     } else {
-      this->host_->RemoveTimer(timer_id);
-    }
+      // expired and callback.
+      int64_t timer_id = timer->GetID();
+      ExpireCallback callback = timer->GetExpireCallback();
 
-    callback(timer_id);
+      if (timer->GetCallTimes() < 0 || timer->DecCallTimes() > 0) {
+        // Add timer again.
+        this->host_->AddWheel(timer, timer->GetExpireTickCounts());
+      } else {
+        this->host_->RemoveTimer(timer_id);
+      }
+
+      callback(timer_id);
+    }
   }
 
   return this->GetCurrentBucket();
@@ -190,8 +197,12 @@ int TimingWheel::Wheel::OnExpired() {
 
 
 TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
-  : tick_ms_(tick_ms), event_loop_(event_loop),
+  : tick_ms_(tick_ms), undo_nsec_(0), event_loop_(event_loop),
     event_channel_(NULL), timer_ids_(NULL) {
+#ifndef _MYSYA_DEBUG_
+  this->debug_tick_counts_ = 0;
+#endif  // _MYSYA_DEBUG_
+
   // TODO: unique_ptr<> ?
   this->event_channel_ = new (std::nothrow) EventChannel();
   if (this->event_channel_ == NULL) {
@@ -246,8 +257,6 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
     throw SystemErrorException(
           "TimingWheel::TimingWheel(): timerfd_settime failed.");
   }
-
-  this->timestamp_ = this->event_loop_->GetTimestamp();
 }
 
 TimingWheel::~TimingWheel() {
@@ -264,6 +273,9 @@ TimingWheel::~TimingWheel() {
 int64_t TimingWheel::AddTimer(const Timestamp &now, int expire_ms,
     const ExpireCallback &cb, int call_times) {
   int expire_tick_counts = expire_ms / this->tick_ms_;
+  if (expire_ms % this->tick_ms_ > 0) {
+    expire_tick_counts += 1;
+  }
 
   int64_t timer_id = this->timer_ids_->Allocate();
   if (timer_id <= 0) {
@@ -277,7 +289,7 @@ int64_t TimingWheel::AddTimer(const Timestamp &now, int expire_ms,
   }
 
   std::unique_ptr<Timer> timer(
-    new (std::nothrow) Timer(timer_id, now + expire_tick_counts,
+    new (std::nothrow) Timer(timer_id, now + expire_ms,
         expire_tick_counts, call_times, cb));
   if (timer.get() == NULL) {
     MYSYA_ERROR("Allocate Timer failed.");
@@ -316,9 +328,9 @@ TimingWheel::Wheel *TimingWheel::GetWheel(int index) const {
 }
 
 void TimingWheel::AddWheel(Timer *timer, int expire_tick_counts) {
-  int undo_tick_counts = 0;
-  int wheel_max_tick_counts = 1;
-  int wheel_step_tick_counts = 1;
+  int64_t undo_tick_counts = 0;
+  int64_t wheel_max_tick_counts = 1;
+  int64_t wheel_step_tick_counts = 1;
 
   for (int i = 0; i < kTimingWheelNum; ++i) {
     Wheel *wheel = this->GetWheel(i);
@@ -360,20 +372,23 @@ void TimingWheel::OnRead(EventChannel *event_channel) {
   this->OnExpired(event_loop->GetTimestamp());
 }
 
-void TimingWheel::OnExpired(const Timestamp &timestamp) {
-  const Timestamp &now_timestamp = this->event_loop_->GetTimestamp();
+void TimingWheel::OnExpired(const Timestamp &now_timestamp) {
+  int undo_tick_counts = 0;
+  int tick_ns = this->tick_ms_ * 1000000;
 
-  int64_t distance_ms = now_timestamp.DistanceMillisecond(this->timestamp_);
-  int undo_tick_counts = distance_ms / this->tick_ms_;
+  int64_t distance_ns = now_timestamp.DistanceNanoSecond(this->timestamp_);
 
-  if (undo_tick_counts <= 0) {
-    undo_tick_counts = 1;
-  }
+  this->undo_nsec_ += distance_ns;
+  undo_tick_counts = this->undo_nsec_ / tick_ns;
+  this->undo_nsec_ %= tick_ns;
 
-  while (undo_tick_counts-- > 0) {
+  while (--undo_tick_counts >= 0) {
+#ifndef _MYSYA_DEBUG_
+    ++this->debug_tick_counts_;
+#endif  // _MYSYA_DEBUG_
+
     for (int i = 0; i < kTimingWheelNum; ++i) {
-      Wheel *wheel = this->GetWheel(i);
-      if (wheel->OnExpired() > 0) {
+      if (this->GetWheel(i)->OnExpired(now_timestamp) > 0) {
         break;
       }
     }

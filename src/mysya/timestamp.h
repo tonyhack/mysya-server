@@ -22,6 +22,8 @@ class Timestamp {
   // Absolute distance.
   int64_t DistanceSecond(const Timestamp &other) const;
   int64_t DistanceMillisecond(const Timestamp &other) const;
+  int64_t DistanceMicroSecond(const Timestamp &other) const;
+  int64_t DistanceNanoSecond(const Timestamp &other) const;
 
   Timestamp &operator=(const Timestamp &other);
   bool operator<(const Timestamp &other) const;
@@ -29,6 +31,7 @@ class Timestamp {
   Timestamp &operator=(int64_t millisecond);
   Timestamp &operator+=(int64_t millisecond);
   Timestamp operator+(int64_t millisecond) const;
+  Timestamp operator-(const Timestamp &other) const;
 
  private:
   time_t second_;

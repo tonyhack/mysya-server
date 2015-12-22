@@ -39,6 +39,11 @@ class EventLoop {
       int call_times = -1);
   void StopTimer(int64_t timer_id);
 
+#ifndef _MYSYA_DEBUG_
+  int64_t GetTimerDebugTickCounts() const;
+  void SetTimerDebugTickCounts(int64_t value) const;
+#endif  // _MYSYA_DEBUG_
+
   const Timestamp &GetTimestamp() const { return this->timestamp_; }
 
  private:

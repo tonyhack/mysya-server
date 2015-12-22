@@ -59,6 +59,38 @@ int64_t Timestamp::DistanceMillisecond(const Timestamp &other) const {
     (bigger->nanosecond_ - smaller->nanosecond_) / 1000000;
 }
 
+int64_t Timestamp::DistanceMicroSecond(const Timestamp &other) const {
+  const Timestamp *bigger = NULL;
+  const Timestamp *smaller = NULL;
+
+  if (*this < other) {
+    bigger = &other;
+    smaller = this;
+  } else {
+    bigger = this;
+    smaller = &other;
+  }
+
+  return (bigger->second_ - smaller->second_) * 1000000 +
+    (bigger->nanosecond_ - smaller->nanosecond_) / 1000;
+}
+
+int64_t Timestamp::DistanceNanoSecond(const Timestamp &other) const {
+  const Timestamp *bigger = NULL;
+  const Timestamp *smaller = NULL;
+
+  if (*this < other) {
+    bigger = &other;
+    smaller = this;
+  } else {
+    bigger = this;
+    smaller = &other;
+  }
+
+  return (bigger->second_ - smaller->second_) * 1000000000 +
+    (bigger->nanosecond_ - smaller->nanosecond_);
+}
+
 Timestamp &Timestamp::operator=(const Timestamp &other) {
   this->second_ = other.second_;
   this->nanosecond_ = other.nanosecond_;
