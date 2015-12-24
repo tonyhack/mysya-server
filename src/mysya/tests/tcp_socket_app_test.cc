@@ -104,6 +104,9 @@ void OnConnection(TcpSocketApp *app, int sockfd) {
 
   MYSYA_INFO("New connection(%s:%d) sockfd(%d)!",
       peer_addr.GetHost().data(), peer_addr.GetPort(), sockfd);
+
+  const char *kNodifyConnectedStr = "This is a socket server test from mysya-server: connection has been established.\n";
+  app->SendMessage(sockfd, kNodifyConnectedStr, strlen(kNodifyConnectedStr));
 }
 
 void OnReceive(TcpSocketApp *app, int sockfd, DynamicBuffer *buffer) {
