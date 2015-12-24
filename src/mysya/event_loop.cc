@@ -13,7 +13,6 @@
 #include <mysya/exception.h>
 #include <mysya/event_channel.h>
 #include <mysya/logger.h>
-#include <mysya/timing_wheel.h>
 
 namespace mysya {
 
@@ -25,6 +24,22 @@ const int EventLoop::kReadEventMask = EPOLLIN | EPOLLPRI;
 
 const int EventLoop::kWriteEventMask = EPOLLOUT;
 const int EventLoop::kErrorEventMask = EPOLLERR | EPOLLHUP;
+
+class EventLoop::AttachIdAllocator {
+ public:
+  AttachIdAllocator(EventLoop *event_loop)
+    : event_loop_(event_loop), id_(0) {}
+  ~AttachIdAllocator() {}
+
+  uint64_t Allocate() {
+    const Timestamp &timestamp = this->event_loop_->GetTimestamp();
+    return ((uint64_t)timestamp.GetSecond() << 32) + this->id_++;
+  }
+
+ private:
+  EventLoop *event_loop_;
+  uint32_t id_;
+};
 
 EventLoop::EventLoop()
   : quit_(false), epoll_fd_(-1), active_events_(32),
@@ -45,6 +60,12 @@ EventLoop::EventLoop()
   }
 
   this->timestamp_.SetNow();
+
+  this->attach_ids_ = new (std::nothrow) AttachIdAllocator(this);
+  if (this->attach_ids_ == NULL) {
+    ThrowSystemErrorException(
+        "EventLoop::EventLoop(): create event loop failed in allocate AttachIdAllocator.");
+  }
 
   this->timing_wheel_ = new (std::nothrow) TimingWheel(10, this);
   if (this->timing_wheel_ == NULL) {
@@ -164,7 +185,7 @@ bool EventLoop::RemoveEventChannel(EventChannel *channel) {
   }
 
   // removed event channels.
-  this->removed_event_channels_.insert((intptr_t)channel);
+  this->removed_event_channels_.insert(channel->GetAttachID());
 
   return true;
 }
@@ -192,7 +213,11 @@ bool EventLoop::UpdateEventChannel(EventChannel *channel) {
   return true;
 }
 
-int64_t EventLoop::StartTimer(int expire_ms, const TimerCallback &cb,
+uint64_t EventLoop::AllocateAttachID() {
+  return this->attach_ids_->Allocate();
+}
+
+int64_t EventLoop::StartTimer(int expire_ms, const ExpireCallback &cb,
     int call_times) {
   return this->timing_wheel_->AddTimer(this->timestamp_,
       expire_ms, cb, call_times);
@@ -215,7 +240,7 @@ void EventLoop::SetTimerDebugTickCounts(int64_t value) const {
 // Event channel should not be use if it has been removed from epoll.
 //   See in member function EventLoop::RemoveEventChannel and EventLoop::Loop.
 bool EventLoop::CheckEventChannelRemoved(EventChannel *channel) const {
-  return this->removed_event_channels_.find((intptr_t)channel) !=
+  return this->removed_event_channels_.find(channel->GetAttachID()) !=
     this->removed_event_channels_.end();
 }
 

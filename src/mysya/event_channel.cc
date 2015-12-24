@@ -9,9 +9,9 @@
 namespace mysya {
 
 EventChannel::EventChannel()
-  : fd_(-1), event_loop_(NULL), app_handle_(NULL) {}
+  : fd_(-1), event_loop_(NULL), attach_id_(0), app_handle_(NULL) {}
 EventChannel::EventChannel(void *handle)
-  : fd_(-1), event_loop_(NULL), app_handle_(handle) {}
+  : fd_(-1), event_loop_(NULL), attach_id_(0), app_handle_(handle) {}
 EventChannel::~EventChannel() {}
 
 bool EventChannel::SetNonblock() {
@@ -45,6 +45,7 @@ bool EventChannel::AttachEventLoop(EventLoop *event_loop) {
   }
 
   this->event_loop_ = event_loop;
+  this->attach_id_ = this->event_loop_->AllocateAttachID();
 
   return true;
 }

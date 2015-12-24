@@ -10,7 +10,9 @@
 namespace mysya {
 
 TcpSocket::TcpSocket() : event_channel_(this) {}
-TcpSocket::~TcpSocket() {}
+TcpSocket::~TcpSocket() {
+  this->Close();
+}
 
 bool TcpSocket::Open() {
   if (this->GetFileDescriptor() != -1) {
@@ -106,7 +108,6 @@ bool TcpSocket::Accept(TcpSocket *peer_socket) {
 
   int sockfd = ::accept(fd, NULL, NULL);
   if (sockfd == -1) {
-    MYSYA_ERROR("::accept errno(%d).", errno);
     return false;
   }
 

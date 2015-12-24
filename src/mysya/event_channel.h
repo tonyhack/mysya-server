@@ -1,6 +1,8 @@
 #ifndef MYSYA_EVENT_CHANNEL_H
 #define MYSYA_EVENT_CHANNEL_H
 
+#include <stdint.h>
+
 #include <functional>
 
 #include <mysya/class_util.h>
@@ -43,6 +45,9 @@ class EventChannel {
 
   EventLoop *GetEventLoop() const { return this->event_loop_; }
 
+  void SetAttachID(uint64_t value) { this->attach_id_ = value; }
+  uint64_t GetAttachID() const { return this->attach_id_; }
+
   void SetAppHandle(void *handle) { this->app_handle_ = handle; }
   void *GetAppHandle() const { return this->app_handle_; }
 
@@ -51,6 +56,7 @@ class EventChannel {
 
   int fd_;
   EventLoop *event_loop_;
+  uint64_t attach_id_;
 
   ReadCallback read_cb_;
   WriteCallback write_cb_;

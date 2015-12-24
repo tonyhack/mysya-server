@@ -10,6 +10,7 @@
 
 #include <mysya/class_util.h>
 #include <mysya/timestamp.h>
+#include <mysya/timing_wheel.h>
 
 namespace mysya {
 
@@ -19,8 +20,8 @@ class TimingWheel;
 class EventLoop {
  public:
   typedef std::vector<struct epoll_event> EventVector;
-  typedef std::function<void (int64_t)> TimerCallback;
-  typedef __gnu_cxx::hash_set<intptr_t> EventChannelHashset;
+  typedef TimingWheel::ExpireCallback ExpireCallback;
+  typedef __gnu_cxx::hash_set<uint64_t> EventChannelHashset;
 
   EventLoop();
   ~EventLoop();
@@ -35,7 +36,9 @@ class EventLoop {
   bool RemoveEventChannel(EventChannel *channel);
   bool UpdateEventChannel(EventChannel *channel);
 
-  int64_t StartTimer(int expire_ms, const TimerCallback &cb,
+  uint64_t AllocateAttachID();
+
+  int64_t StartTimer(int expire_ms, const ExpireCallback &cb,
       int call_times = -1);
   void StopTimer(int64_t timer_id);
 
@@ -62,6 +65,9 @@ class EventLoop {
 
   TimingWheel *timing_wheel_;
   Timestamp timestamp_;
+
+  class AttachIdAllocator;
+  AttachIdAllocator *attach_ids_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(EventLoop);
 };

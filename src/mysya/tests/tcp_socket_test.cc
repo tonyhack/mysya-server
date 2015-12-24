@@ -42,7 +42,7 @@ void OnConnection(EventChannel *channel) {
 
   SocketAddress peer_addr;
   if (tcp_socket->GetPeerAddress(&peer_addr) == false) {
-    MYSYA_ERROR("SocketAddress::GetPeerAddress() failed.)");
+    MYSYA_ERROR("SocketAddress::GetPeerAddress() failed.");
     return;
   }
 
