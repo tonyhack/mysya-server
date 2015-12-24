@@ -83,7 +83,7 @@ void TestFunc() {
   app.SetCloseCallback(OnClose);
   app.SetErrorCallback(OnError);
 
-  if (app.AsyncConnect(peer_addr, 4000) == false) {
+  if (app.AsyncConnect(peer_addr, 4000) < 0) {
     MYSYA_ERROR("TcpSocketApp::AsyncConnect() failed.");
     return;
   }

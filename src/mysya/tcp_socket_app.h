@@ -63,7 +63,7 @@ class TcpSocketApp {
   void Close(int sockfd);
 
   int Connect(const SocketAddress &addr);
-  bool AsyncConnect(const SocketAddress &addr, int timeout_ms);
+  int AsyncConnect(const SocketAddress &addr, int timeout_ms);
 
   bool SendMessage(int sockfd, const char *data, size_t size);
 

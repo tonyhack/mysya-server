@@ -230,32 +230,34 @@ int TcpSocketApp::Connect(const SocketAddress &addr) {
   return sockfd;
 }
 
-bool TcpSocketApp::AsyncConnect(const SocketAddress &addr, int timeout_ms) {
+int TcpSocketApp::AsyncConnect(const SocketAddress &addr, int timeout_ms) {
   std::unique_ptr<TcpSocket> socket(new (std::nothrow) TcpSocket());
   if (socket.get() == NULL) {
     MYSYA_ERROR("Allocate TcpSocket failed.");
-    return false;
+    return -1;
   }
 
   if (socket->Open() == false) {
     MYSYA_ERROR("TcpSocket::Open() failed.");
-    return false;
+    return -1;
   }
 
   if (socket->AsyncConnect(addr) == false) {
     MYSYA_ERROR("TcpSocket::AsyncConnect(%s:%d) failed.",
         addr.GetHost().data(), addr.GetPort());
     socket->Close();
-    return false;
+    return -1;
   }
+
+  int connect_sockfd = socket->GetFileDescriptor();
 
   if (this->BuildAsyncConnectSocket(socket, timeout_ms) == false) {
     MYSYA_ERROR("TcpSocketApp::BuildAsyncConnectSocket() failed.");
     socket->Close();
-    return false;
+    return -1;
   }
 
-  return true;
+  return connect_sockfd;
 }
 
 bool TcpSocketApp::SendMessage(int sockfd, const char *data, size_t size) {
