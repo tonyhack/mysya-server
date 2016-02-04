@@ -18,20 +18,6 @@ MessageQueue::MessageQueue(::mysya::ioevent::EventLoop *consumer_event_loop,
 
 MessageQueue::~MessageQueue() {}
 
-int MessageQueue::Write(int host, const char *data, int size) {
-  size_t write_size = size + sizeof(MessageQueueElement);
-  this->producer_->ReserveWritableBytes(write_size);
-
-  MessageQueueElement *element = (MessageQueueElement *)this->producer_->WriteBegin();
-  element->host_ = host;
-  element->size_ = size;
-  memcpy(element->data_, data, size);
-
-  this->producer_->WrittenBytes(write_size);
-
-  return size;
-}
-
 int MessageQueue::Read(int &host, char *data, int size) {
   if (this->consumer_->ReadableBytes() <= 0) {
     return 0;
@@ -69,6 +55,20 @@ int MessageQueue::Read(int &host, ::mysya::ioevent::DynamicBuffer &buffer) {
   this->consumer_->ReadBytes(ret_size + sizeof(MessageQueueElement));
 
   return ret_size;
+}
+
+int MessageQueue::Write(int host, const char *data, int size) {
+  size_t write_size = size + sizeof(MessageQueueElement);
+  this->producer_->ReserveWritableBytes(write_size);
+
+  MessageQueueElement *element = (MessageQueueElement *)this->producer_->WriteBegin();
+  element->host_ = host;
+  element->size_ = size;
+  memcpy(element->data_, data, size);
+
+  this->producer_->WrittenBytes(write_size);
+
+  return size;
 }
 
 void MessageQueue::Exchange() {
