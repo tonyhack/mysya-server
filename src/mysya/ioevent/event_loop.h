@@ -23,6 +23,8 @@ class EventLoop {
   typedef std::vector<struct epoll_event> EventVector;
   typedef TimingWheel::ExpireCallback ExpireCallback;
   typedef __gnu_cxx::hash_set<uint64_t> EventChannelHashset;
+  typedef std::function<void ()> WakeupCallback;
+  typedef std::vector<WakeupCallback> WakeupCallbackVector;
 
   EventLoop();
   ~EventLoop();
@@ -43,6 +45,8 @@ class EventLoop {
       int call_times = -1);
   void StopTimer(int64_t timer_id);
 
+  void WakeupCallback(const WakeupCallback &cb);
+
 #ifndef _MYSYA_DEBUG_
   int64_t GetTimerDebugTickCounts() const;
   void SetTimerDebugTickCounts(int64_t value) const;
@@ -52,6 +56,9 @@ class EventLoop {
 
  private:
   bool CheckEventChannelRemoved(EventChannel *channel) const;
+
+  void OnWakeupRead(EventChannel *event_channel);
+  void DoWakeupCallback();
 
   static const int kReadEventMask;
   static const int kWriteEventMask;
@@ -66,6 +73,11 @@ class EventLoop {
 
   TimingWheel *timing_wheel_;
   ::mysya::util::Timestamp timestamp_;
+
+  int wakeup_fd_;
+  Mutex wakeup_mutex_;
+  EventChannel *wakeup_event_channel_;
+  WakeupCallbackVector wakeup_cbs_;
 
   class AttachIdAllocator;
   AttachIdAllocator *attach_ids_;

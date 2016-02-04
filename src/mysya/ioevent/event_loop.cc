@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <errno.h>
-#include <fcntl.h>
-
 #include <vector>
 
+#include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <sys/eventfd.h>
 
 #include <mysya/ioevent/event_channel.h>
 #include <mysya/ioevent/logger.h>
@@ -44,7 +44,7 @@ class EventLoop::AttachIdAllocator {
 
 EventLoop::EventLoop()
   : quit_(false), epoll_fd_(-1), active_events_(32),
-    timing_wheel_(NULL) {
+    timing_wheel_(NULL), wakeup_fd_(-1), wakeup_event_channel_(NULL)  {
   this->epoll_fd_ = epoll_create(10240);
 
   if (-1 == this->epoll_fd_) {
@@ -62,23 +62,49 @@ EventLoop::EventLoop()
 
   this->timestamp_.SetNow();
 
-  this->attach_ids_ = new (std::nothrow) AttachIdAllocator(this);
-  if (this->attach_ids_ == NULL) {
+  std::unique_ptr<AttachIdAllocator> attack_ids(new (std::nothrow) AttachIdAllocator(this));
+  if (attach_ids.get() == NULL) {
     ::mysya::util::ThrowSystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in allocate AttachIdAllocator.");
   }
 
-  this->timing_wheel_ = new (std::nothrow) TimingWheel(10, this);
-  if (this->timing_wheel_ == NULL) {
+  std::unique_ptr<TimingWheel> timing_wheel(new (std::nothrow) TimingWheel(10, this));
+  if (timing_wheel.get() == NULL) {
     ::mysya::util::ThrowSystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in allocate TimingWheel.");
   }
 
+  std::unique_ptr<EventChannel> wakeup_event_chanel(new (std::nothrow) EventChannel());
+  if (wakeup_event_chanel.get() == NULL) {
+    ::mysya::util::ThrowSystemErrorException(
+        "EventLoop::EventLoop(): create event loop failed in allocate EventChannel.");
+  }
+
+  this->attach_ids_ = attach_ids.get();
+
+  this->timing_wheel_ = timing_wheel.get();
   this->timing_wheel_->SetTimestamp(this->timestamp_);
+
+  this->wakeup_event_channel_ = wakeup_event_chanel.get();
+  this->wakeup_event_channel_.SetFileDescriptor(this->wakeup_fd_);
+  this->wakeup_event_channel_.SetReadCallback();
+  this->wakeup_event_channel_.AttachEventLoop(this);
+
+  attach_ids.release();
+  timing_wheel.release();
+  wakeup_event_chanel.release();
 }
 
 EventLoop::~EventLoop() {
+  this->wakeup_event_channel_->DetachEventLoop();
+  this->wakeup_event_channel_->ResetReadCallback();
+  delete this->wakeup_event_channel_;
+  if (this->wakeup_fd_ != -1) {
+    ::close(this->wakeup_fd_);
+  }
+
   delete this->timing_wheel_;
+  delete this->attach_ids_;
 
   if (this->epoll_fd_ != -1) {
     ::close(this->epoll_fd_);
@@ -140,6 +166,8 @@ void EventLoop::Loop() {
     }
 
     this->removed_event_channels_.clear();
+
+    this->DoWakeupCallback();
   }
 }
 
@@ -149,6 +177,12 @@ void EventLoop::Quit() {
 
 // TODO
 void EventLoop::Wakeup() {
+  eventfd_t data = 1;
+  ssize_t ret = ::write(this->wakeup_fd_, $data, sizeof(data));
+  if (ret == -1 && errno != EAGAIN) {
+    MYSYA_ERROR("::write(%d) failed, strerror(%s).",
+        this->wakeup_fd_, ::strerror(errno));
+  }
 }
 
 bool EventLoop::AddEventChannel(EventChannel *channel) {
@@ -228,6 +262,15 @@ void EventLoop::StopTimer(int64_t timer_id) {
   this->timing_wheel_->RemoveTimer(timer_id);
 }
 
+void EventLoop::WakeupCallback(const WakeupCallback &cb) {
+  do {
+    LockGuard lock(this->wakeup_mutex_);
+    this->wakeup_cbs_.push_back(cb);
+  } while (false);
+
+  this->Wakeup();
+}
+
 #ifndef _MYSYA_DEBUG_
 int64_t EventLoop::GetTimerDebugTickCounts() const {
   return this->timing_wheel_->GetDebugTickCounts();
@@ -243,6 +286,29 @@ void EventLoop::SetTimerDebugTickCounts(int64_t value) const {
 bool EventLoop::CheckEventChannelRemoved(EventChannel *channel) const {
   return this->removed_event_channels_.find(channel->GetAttachID()) !=
     this->removed_event_channels_.end();
+}
+
+void EventLoop::OnWakeupRead(EventChannel *event_channel) {
+  eventfd_t data = 1;
+  ssize_t ret = ::read(this->wakeup_fd_, &data, sizeof(data));
+  if (ret == -1 && errno != EAGAIN) {
+    MYSYA_ERROR("::read(%d) failed, strerror(%s).",
+        this->wakeup_fd_, ::strerror(errno));
+  }
+}
+
+void EventLoop::DoWakeupCallback() {
+  WakeupCallbackVector cbs;
+
+  do {
+    LockGuard lock(this->wakeup_mutex_);
+    cbs.swap(this->wakeup_cbs_);
+  } while (false);
+
+  for (WakeupCallbackVector::iterator iter = cbs.begin();
+      iter != cbs.end(); ++iter) {
+    (*iter)();
+  }
 }
 
 }  // namespace ioevent
