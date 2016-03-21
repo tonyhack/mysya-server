@@ -1,5 +1,11 @@
 #include <mysya/qservice/tcp_service.h>
 
+#include <mysya/ioevent/event_channel.h>
+#include <mysya/ioevent/event_loop.h>
+#include <mysya/ioevent/logger.h>
+#include <mysya/qservice/event_loop_thread_pool.h>
+#include <mysya/qservice/transport_agent.h>
+
 namespace mysya {
 namespace qservice {
 
@@ -15,7 +21,7 @@ TcpService::TcpService(const ::mysya::ioevent::SocketAddress &listen_addr,
         "TcpService::TcpService(): failed in TcpSocket::Open.");
   }
 
-  if (this->BuildListenSocket(this->listen_socket_) == false) {
+  if (this->BuildListenSocket(listen_addr) == false) {
     this->listen_socket_.Close();
     ::mysya::util::ThrowSystemErrorException(
         "TcpService::TcpService(): failed in BuildListenSocket.");
@@ -23,10 +29,10 @@ TcpService::TcpService(const ::mysya::ioevent::SocketAddress &listen_addr,
 
   typedef EventLoopThreadPool::EventLoopThreadVector EventLoopThreadVector;
   EventLoopThreadVector &threads = this->thread_pool_->GetThreads();
-  for (EventLoopThreadVector::const_iterator iter = threads.begin();
+  for (EventLoopThreadVector::iterator iter = threads.begin();
       iter != threads.end(); ++iter) {
     TransportAgent *transport_agent =
-      new (std::nothrow) TransportAgent(*iter, this->app_event_loop_);
+      new (std::nothrow) TransportAgent(&(*iter)->event_loop_, this->app_event_loop_);
     if (transport_agent == NULL) {
       ::mysya::util::ThrowSystemErrorException(
           "TcpService::TcpService(): failed in allocate TransportAgent.");
@@ -45,39 +51,39 @@ TcpService::~TcpService() {
 }
 
 bool TcpService::BuildListenSocket(const ::mysya::ioevent::SocketAddress &listen_addr) {
-  if (this->listen_socket_->SetReuseAddr() == false) {
+  if (this->listen_socket_.SetReuseAddr() == false) {
     MYSYA_ERROR("TcpSocket::SetReuseAddr() failed.");
     return false;
   }
 
-  if (this->listen_socket_->SetTcpNoDelay() == false) {
+  if (this->listen_socket_.SetTcpNoDelay() == false) {
     MYSYA_ERROR("TcpSocket::SetTcpNoDelay() failed.");
     return false;
   }
 
-  if (this->listen_socket_->Bind(addr) == false) {
+  if (this->listen_socket_.Bind(listen_addr) == false) {
     MYSYA_ERROR("TcpSocket::Bind() failed.");
     return false;
   }
 
-  if (this->listen_socket_->Listen(256) == false) {
+  if (this->listen_socket_.Listen(256) == false) {
     MYSYA_ERROR("TcpSocket::Listen() failed.");
     return false;
   }
 
-  if (this->listen_socket_->SetNonblock() == false) {
+  if (this->listen_socket_.SetNonblock() == false) {
     MYSYA_ERROR("TcpSocket::SetNonblock() failed.");
     return false;
   }
 
-  ::mysya::ioevent::EventLoop *event_loop = thread_pool->Allocate();
+  ::mysya::ioevent::EventLoop *event_loop = this->thread_pool_->Allocate();
 
-  this->listen_socket_->GetEventChannel()->SetReadCallback(
+  this->listen_socket_.GetEventChannel()->SetReadCallback(
       std::bind(&TcpService::OnListenRead, this, std::placeholders::_1));
-  this->listen_socket_->GetEventChannel()->SetErrorCallback(
+  this->listen_socket_.GetEventChannel()->SetErrorCallback(
       std::bind(&TcpService::OnListenError, this, std::placeholders::_1));
 
-  if (this->listen_socket_->GetEventChannel()->AttachEventLoop(event_loop) == false) {
+  if (this->listen_socket_.GetEventChannel()->AttachEventLoop(event_loop) == false) {
     MYSYA_ERROR("EventChannel::AttachEventLoop() failed.");
     return false;
   }
@@ -85,7 +91,7 @@ bool TcpService::BuildListenSocket(const ::mysya::ioevent::SocketAddress &listen
   return true;
 }
 
-bool TcpService::BuildConnectedSocket(std::unique_ptr<::mysya::ioevent::TcpSocket> &socket) {
+bool TcpService::BuildConnectedSocket(std::unique_ptr< ::mysya::ioevent::TcpSocket> &socket) {
   if (socket->SetReuseAddr() == false) {
     MYSYA_ERROR("TcpSocket::SetReuseAddr() failed.");
     return false;
@@ -107,7 +113,10 @@ bool TcpService::BuildConnectedSocket(std::unique_ptr<::mysya::ioevent::TcpSocke
     return false;
   }
 
-  transport_agent->PushPending(socket);
+  if (transport_agent->AddTcpSocket(socket.get()) == false) {
+    MYSYA_ERROR("TransportAgent::AddTcpSocket() failed.");
+    return false;
+  }
 
   return true;
 }
@@ -122,7 +131,8 @@ void TcpService::OnListenRead(::mysya::ioevent::EventChannel *event_channel) {
   int listen_sockfd = listen_socket->GetFileDescriptor();
 
   for (;;) {
-    std::unique_ptr<TcpSocket> tcp_socket(new (std::nothrow) TcpSocket());
+    std::unique_ptr< ::mysya::ioevent::TcpSocket> tcp_socket(
+        new (std::nothrow) ::mysya::ioevent::TcpSocket());
     if (tcp_socket.get() == NULL) {
       MYSYA_ERROR("Allocate TcpSocket failed.");
       return;
@@ -139,8 +149,6 @@ void TcpService::OnListenRead(::mysya::ioevent::EventChannel *event_channel) {
         return;
       }
     }
-
-    int sockfd = tcp_socket->GetFileDescriptor();
 
     if (this->BuildConnectedSocket(tcp_socket) == false) {
       MYSYA_WARNING("BuildConnectedSocket failed.");

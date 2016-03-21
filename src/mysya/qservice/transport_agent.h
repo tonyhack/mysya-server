@@ -8,6 +8,7 @@
 namespace mysya {
 namespace ioevent {
 
+class EventChannel;
 class EventLoop;
 class TcpSocket;
 
@@ -22,6 +23,7 @@ class TransportAgent {
   typedef std::function<void (int, TransportAgent *)> ConnectCallback;
   typedef std::function<void (int, const char *, size_t)> ReceiveCallback;
   typedef std::function<void (int)> CloseCallback;
+  typedef std::function<void (int/*, int*/)> ErrorCallback;
 
   class TransportChannel;
   typedef std::unordered_map<int, TransportChannel *> TransportChannelHashmap;
@@ -30,33 +32,46 @@ class TransportAgent {
       ::mysya::ioevent::EventLoop *app_event_loop);
   ~TransportAgent();
 
-  void PushPending(::mysya::ioevent::TcpSocket *tcp_socket);
-  bool SendMessage(int sockfd, const char *data, size_t size);
-
-  void FlushReceiveQueue();
-  void FlushSendQueue();
-
   ::mysya::ioevent::EventLoop *GetNetworkEventLoop() const;
   ::mysya::ioevent::EventLoop *GetAppEventLoop() const;
 
-  void SetConnectCallback(const ConnectCallback &cb);
-  void ResetConnectCallback();
-  void SetReceiveCallback(const ReceiveCallback &cb);
-  void ResetReceiveCallback();
-  void SetCloseCallback(const CloseCallback &cb);
-  void ResetCloseCallback();
+  // running in network event loop.
+  bool AddTcpSocket(::mysya::ioevent::TcpSocket *tcp_socket);
+  // running in app event loop.
+  bool SendMessage(int sockfd, const char *data, size_t size);
+
+  // running in app event loop.
+  void FlushReceiveQueue();
+  // running in network event loop.
+  void FlushSendQueue();
+
+  // running in app event loop.
+  void SetConnectAppCallback(const ConnectCallback &cb);
+  void ResetConnectAppCallback();
+  void SetReceiveAppCallback(const ReceiveCallback &cb);
+  void ResetReceiveAppCallback();
+  void SetCloseAppCallback(const CloseCallback &cb);
+  void ResetCloseAppCallback();
+  void SetErrorAppCallback(const ErrorCallback &cb);
+  void ResetErrorAppCallback();
 
  private:
   void SetNextFlushReceiveQueueTimer();
   void SetNextFlushSendQueueTimer();
 
   ::mysya::ioevent::TcpSocket *RemoveTcpSocket(int sockfd);
+  void CloseTcpSocket(int sockfd);
+
+  void OnSocketRead(::mysya::ioevent::EventChannel *event_channel);
+  void OnSocketWrite(::mysya::ioevent::EventChannel *event_channel);
+  void OnSocketError(::mysya::ioevent::EventChannel *event_channel);
 
   void OnFlushReceiveQueue(int64_t timer_id);
   void OnFlushSendQueue(int64_t timer_id);
 
-  void OnHandlePending(::mysya::ioevent::TcpSocket *tcp_socket);
-  void OnRemoveCallback();
+  void OnHandleConnected(int sockfd);
+  void OnHandleClosed(int sockfd);
+  void OnHandleError(int sockfd/*, int errno*/);
 
   ::mysya::ioevent::EventLoop *network_event_loop_;
   ::mysya::ioevent::EventLoop *app_event_loop_;
@@ -65,7 +80,11 @@ class TransportAgent {
   MessageQueue receive_queue_;
   MessageQueue send_queue_;
 
-  ReceiveCallback receive_cb_;
+  // callbacks for app event loop.
+  ConnectCallback connect_app_cb_;
+  ReceiveCallback receive_app_cb_;
+  CloseCallback close_app_cb_;
+  ErrorCallback error_app_cb_;
 
   int64_t flush_receive_queue_timer_id_;
   int64_t flush_send_queue_timer_id_;

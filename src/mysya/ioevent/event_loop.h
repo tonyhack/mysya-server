@@ -8,6 +8,7 @@
 
 #include <ext/hash_set>
 
+#include <mysya/ioevent/mutex.h>
 #include <mysya/ioevent/timing_wheel.h>
 #include <mysya/util/class_util.h>
 #include <mysya/util/timestamp.h>
@@ -45,7 +46,7 @@ class EventLoop {
       int call_times = -1);
   void StopTimer(int64_t timer_id);
 
-  void WakeupCallback(const WakeupCallback &cb);
+  void PushWakeupCallback(const WakeupCallback &cb);
 
 #ifndef _MYSYA_DEBUG_
   int64_t GetTimerDebugTickCounts() const;

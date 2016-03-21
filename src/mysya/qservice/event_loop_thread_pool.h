@@ -6,6 +6,9 @@
 #include <atomic>
 #include <vector>
 
+#include <mysya/ioevent/event_loop.h>
+#include <mysya/ioevent/thread.h>
+
 namespace mysya {
 namespace ioevent {
 
@@ -17,15 +20,24 @@ class EventLoop;
 namespace mysya {
 namespace qservice {
 
+class EventLoopThread {
+ public:
+  EventLoopThread() {}
+  ~EventLoopThread() {}
+
+  ::mysya::ioevent::EventLoop event_loop_;
+  ::mysya::ioevent::Thread thread_;
+};
+
 class EventLoopThreadPool {
  public:
-  class EventLoopThread;
   typedef std::vector<EventLoopThread *> EventLoopThreadVector;
 
   EventLoopThreadPool(size_t thread_num);
   ~EventLoopThreadPool();
 
   ::mysya::ioevent::EventLoop *Allocate();
+  EventLoopThreadVector &GetThreads();
   const EventLoopThreadVector &GetThreads() const;
   void Quit();
 

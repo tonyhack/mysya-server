@@ -10,7 +10,8 @@
 namespace mysya {
 namespace ioevent {
 
-TcpSocket::TcpSocket() : event_channel_(this) {}
+TcpSocket::TcpSocket()
+  : event_channel_(this), app_handle_(NULL) {}
 TcpSocket::~TcpSocket() {
   this->Close();
 }

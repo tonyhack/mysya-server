@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <memory>
 #include <vector>
 
 #include <errno.h>
@@ -62,7 +63,7 @@ EventLoop::EventLoop()
 
   this->timestamp_.SetNow();
 
-  std::unique_ptr<AttachIdAllocator> attack_ids(new (std::nothrow) AttachIdAllocator(this));
+  std::unique_ptr<AttachIdAllocator> attach_ids(new (std::nothrow) AttachIdAllocator(this));
   if (attach_ids.get() == NULL) {
     ::mysya::util::ThrowSystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in allocate AttachIdAllocator.");
@@ -86,9 +87,10 @@ EventLoop::EventLoop()
   this->timing_wheel_->SetTimestamp(this->timestamp_);
 
   this->wakeup_event_channel_ = wakeup_event_chanel.get();
-  this->wakeup_event_channel_.SetFileDescriptor(this->wakeup_fd_);
-  this->wakeup_event_channel_.SetReadCallback();
-  this->wakeup_event_channel_.AttachEventLoop(this);
+  this->wakeup_event_channel_->SetFileDescriptor(this->wakeup_fd_);
+  this->wakeup_event_channel_->SetReadCallback(
+      std::bind(&EventLoop::OnWakeupRead, this, std::placeholders::_1));
+  this->wakeup_event_channel_->AttachEventLoop(this);
 
   attach_ids.release();
   timing_wheel.release();
@@ -178,7 +180,7 @@ void EventLoop::Quit() {
 // TODO
 void EventLoop::Wakeup() {
   eventfd_t data = 1;
-  ssize_t ret = ::write(this->wakeup_fd_, $data, sizeof(data));
+  ssize_t ret = ::write(this->wakeup_fd_, &data, sizeof(data));
   if (ret == -1 && errno != EAGAIN) {
     MYSYA_ERROR("::write(%d) failed, strerror(%s).",
         this->wakeup_fd_, ::strerror(errno));
@@ -262,7 +264,7 @@ void EventLoop::StopTimer(int64_t timer_id) {
   this->timing_wheel_->RemoveTimer(timer_id);
 }
 
-void EventLoop::WakeupCallback(const WakeupCallback &cb) {
+void EventLoop::PushWakeupCallback(const WakeupCallback &cb) {
   do {
     LockGuard lock(this->wakeup_mutex_);
     this->wakeup_cbs_.push_back(cb);

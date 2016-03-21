@@ -9,8 +9,7 @@ struct MessageQueueElement {
   char data_[0];
 };
 
-MessageQueue::MessageQueue(::mysya::ioevent::EventLoop *consumer_event_loop,
-    size_t init_size, size_t ext_size)
+MessageQueue::MessageQueue(size_t init_size, size_t ext_size)
   : buffer1_(init_size, ext_size),
     buffer2_(init_size, ext_size),
     consumer_(&buffer1_),
@@ -25,7 +24,7 @@ int MessageQueue::Read(int &host, char *data, int size) {
 
   const MessageQueueElement *element =
     (const MessageQueueElement *)this->consumer_->ReadBegin();
-  if (element->size_ > size) {
+  if (element->size_ > (size_t)size) {
     return -1;
   }
 
@@ -44,9 +43,6 @@ int MessageQueue::Read(int &host, ::mysya::ioevent::DynamicBuffer &buffer) {
 
   const MessageQueueElement *element =
     (const MessageQueueElement *)this->consumer_->ReadBegin();
-  if (element->size_ > size) {
-    return -1;
-  }
 
   int ret_size = element->size_;
   host = element->host_;
@@ -73,7 +69,7 @@ int MessageQueue::Write(int host, const char *data, int size) {
 
 void MessageQueue::Exchange() {
   ::mysya::ioevent::DynamicBuffer *swap = this->consumer_;
-  this->consumer_ = this->producer_
+  this->consumer_ = this->producer_;
   this->producer_ = swap;
 }
 

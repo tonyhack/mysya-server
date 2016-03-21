@@ -4,6 +4,7 @@
 #include <functional>
 
 #include <mysya/ioevent/dynamic_buffer.h>
+#include <mysya/ioevent/mutex.h>
 
 namespace mysya {
 namespace qservice {
@@ -13,14 +14,14 @@ class MessageQueue {
   MessageQueue(size_t init_size = 1024, size_t ext_size = 256);
   ~MessageQueue();
 
-  int Read(char *data, int size);
-  int Read(::mysya::ioevent::DynamicBuffer &buffer);
-  int Write(const char *data, int size);
+  int Read(int &host, char *data, int size);
+  int Read(int &host, ::mysya::ioevent::DynamicBuffer &buffer);
+  int Write(int host, const char *data, int size);
 
   void Exchange();
 
-  ::mysya::ioevent::Mutex &GetReadMutex() const { return this->read_mutex_; }
-  ::mysya::ioevent::Mutex &GetWriteMutex() const { return this->write_mutex_; }
+  ::mysya::ioevent::Mutex &GetReadMutex() { return this->read_mutex_; }
+  ::mysya::ioevent::Mutex &GetWriteMutex() { return this->write_mutex_; }
 
  private:
   ::mysya::ioevent::DynamicBuffer buffer1_;

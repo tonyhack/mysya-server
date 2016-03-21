@@ -3,20 +3,8 @@
 #include <functional>
 #include <memory>
 
-#include <mysya/ioevent/event_loop.h>
-#include <mysya/ioevent/thread.h>
-
 namespace mysya {
 namespace qservice {
-
-class EventLoopThreadPool::EventLoopThread {
- public:
-  EventLoopThread() {}
-  ~EventLoopThread() {}
-
-  ::mysya::ioevent::EventLoop event_loop_;
-  ::mysya::ioevent::Thread thread_;
-};
 
 EventLoopThreadPool::EventLoopThreadPool(size_t thread_num)
   : quit_(false), current_(0) {
@@ -47,6 +35,10 @@ EventLoopThreadPool::~EventLoopThreadPool() {
 ::mysya::ioevent::EventLoop *EventLoopThreadPool::Allocate() {
   size_t current_pos = this->current_.fetch_add(1);
   return &this->threads_[current_pos % this->threads_.size()]->event_loop_;
+}
+
+EventLoopThreadPool::EventLoopThreadVector &EventLoopThreadPool::GetThreads() {
+  return this->threads_;
 }
 
 const EventLoopThreadPool::EventLoopThreadVector &EventLoopThreadPool::GetThreads() const {

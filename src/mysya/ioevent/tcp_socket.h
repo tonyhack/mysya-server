@@ -40,8 +40,12 @@ class TcpSocket {
   int GetFileDescriptor() const { return this->event_channel_.GetFileDescriptor(); }
   void SetFileDescriptor(int value) { this->event_channel_.SetFileDescriptor(value); }
 
+  void SetAppHandle(void *handle) { this->app_handle_ = handle; }
+  void *GetAppHandle() const { return this->app_handle_; }
+
  private:
   EventChannel event_channel_;
+  void *app_handle_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(TcpSocket);
 };

@@ -7,4 +7,5 @@ set(MYSYA_UTIL_SOURCES
 
 add_subdirectory(util)
 add_subdirectory(ioevent)
+add_subdirectory(qservice)
 add_subdirectory(codec)
