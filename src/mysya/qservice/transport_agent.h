@@ -23,7 +23,7 @@ class TransportAgent {
   typedef std::function<void (int, TransportAgent *)> ConnectCallback;
   typedef std::function<void (int, const char *, size_t)> ReceiveCallback;
   typedef std::function<void (int)> CloseCallback;
-  typedef std::function<void (int/*, int*/)> ErrorCallback;
+  typedef std::function<void (int, int)> ErrorCallback;
 
   class TransportChannel;
   typedef std::unordered_map<int, TransportChannel *> TransportChannelHashmap;
@@ -71,7 +71,10 @@ class TransportAgent {
 
   void OnHandleConnected(int sockfd);
   void OnHandleClosed(int sockfd);
-  void OnHandleError(int sockfd/*, int errno*/);
+  void OnHandleError(int sockfd, int sys_errno);
+
+  void OnHandleTest(int a, int b) {
+  }
 
   ::mysya::ioevent::EventLoop *network_event_loop_;
   ::mysya::ioevent::EventLoop *app_event_loop_;

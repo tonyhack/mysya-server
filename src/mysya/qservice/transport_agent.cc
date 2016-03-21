@@ -314,7 +314,7 @@ void TransportAgent::OnSocketError(::mysya::ioevent::EventChannel *event_channel
   transport_channel->SetErrno(errno);
 
   this->app_event_loop_->PushWakeupCallback(
-      std::bind(&TransportAgent::OnHandleError, this, sockfd/*, errno*/));
+      std::bind(&TransportAgent::OnHandleError, this, sockfd, errno));
 
   this->CloseTcpSocket(sockfd);
 }
@@ -337,8 +337,8 @@ void TransportAgent::OnHandleClosed(int sockfd) {
   this->close_app_cb_(sockfd);
 }
 
-void TransportAgent::OnHandleError(int sockfd/*, int errno*/) {
-  this->error_app_cb_(sockfd/*, errno*/);
+void TransportAgent::OnHandleError(int sockfd, int sys_errno) {
+  this->error_app_cb_(sockfd, sys_errno);
 }
 
 }  // namespace qservice
