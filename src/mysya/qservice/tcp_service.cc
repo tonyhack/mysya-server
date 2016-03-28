@@ -50,6 +50,10 @@ TcpService::~TcpService() {
   this->transport_agents_.clear();
 }
 
+TcpService::TransportAgentVector &TcpService::GetTransportAgents() {
+  return this->transport_agents_;
+}
+
 bool TcpService::BuildListenSocket(const ::mysya::ioevent::SocketAddress &listen_addr) {
   if (this->listen_socket_.SetReuseAddr() == false) {
     MYSYA_ERROR("TcpSocket::SetReuseAddr() failed.");
@@ -154,6 +158,8 @@ void TcpService::OnListenRead(::mysya::ioevent::EventChannel *event_channel) {
       MYSYA_WARNING("BuildConnectedSocket failed.");
       continue;
     }
+
+    tcp_socket.release();
   }
 }
 

@@ -21,9 +21,10 @@ namespace qservice {
 class TransportAgent {
  public:
   typedef std::function<void (int, TransportAgent *)> ConnectCallback;
-  typedef std::function<void (int, const char *, size_t)> ReceiveCallback;
+  typedef std::function<void (int, const char *, int)> ReceiveCallback;
   typedef std::function<void (int)> CloseCallback;
   typedef std::function<void (int, int)> ErrorCallback;
+  typedef std::function<void (int, ::mysya::ioevent::DynamicBuffer *)> ReceiveDecodeCallback;
 
   class TransportChannel;
   typedef std::unordered_map<int, TransportChannel *> TransportChannelHashmap;
@@ -55,6 +56,13 @@ class TransportAgent {
   void SetErrorAppCallback(const ErrorCallback &cb);
   void ResetErrorAppCallback();
 
+  // running in network event loop.
+  void SetReceiveDecodeCallback(const ReceiveDecodeCallback &cb);
+  void ResetReceiveDecodeCallback();
+
+  // running in ReceiveDecodeCallback.
+  int DoReceive(int sockfd, const char *data, int size);
+
  private:
   void SetNextFlushReceiveQueueTimer();
   void SetNextFlushSendQueueTimer();
@@ -73,9 +81,6 @@ class TransportAgent {
   void OnHandleClosed(int sockfd);
   void OnHandleError(int sockfd, int sys_errno);
 
-  void OnHandleTest(int a, int b) {
-  }
-
   ::mysya::ioevent::EventLoop *network_event_loop_;
   ::mysya::ioevent::EventLoop *app_event_loop_;
   TransportChannelHashmap channels_;
@@ -88,6 +93,8 @@ class TransportAgent {
   ReceiveCallback receive_app_cb_;
   CloseCallback close_app_cb_;
   ErrorCallback error_app_cb_;
+
+  ReceiveDecodeCallback receive_decode_cb_;
 
   int64_t flush_receive_queue_timer_id_;
   int64_t flush_send_queue_timer_id_;

@@ -48,7 +48,7 @@ EventLoop::EventLoop()
     timing_wheel_(NULL), wakeup_fd_(-1), wakeup_event_channel_(NULL)  {
   this->epoll_fd_ = epoll_create(10240);
 
-  if (-1 == this->epoll_fd_) {
+  if (this->epoll_fd_ == -1) {
     ::mysya::util::ThrowSystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in epoll_create, strerror(%s).",
         ::strerror(errno));
@@ -61,6 +61,13 @@ EventLoop::EventLoop()
         ::strerror(errno));
   }
 
+  this->wakeup_fd_ = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+  if (this->wakeup_fd_ == -1) {
+    ::mysya::util::ThrowSystemErrorException(
+        "EventLoop::EventLoop(): create event loop failed in eventfd, strerror(%s).",
+        ::strerror(errno));
+  }
+
   this->timestamp_.SetNow();
 
   std::unique_ptr<AttachIdAllocator> attach_ids(new (std::nothrow) AttachIdAllocator(this));
@@ -68,6 +75,7 @@ EventLoop::EventLoop()
     ::mysya::util::ThrowSystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in allocate AttachIdAllocator.");
   }
+  this->attach_ids_ = attach_ids.get();
 
   std::unique_ptr<TimingWheel> timing_wheel(new (std::nothrow) TimingWheel(10, this));
   if (timing_wheel.get() == NULL) {
@@ -80,8 +88,6 @@ EventLoop::EventLoop()
     ::mysya::util::ThrowSystemErrorException(
         "EventLoop::EventLoop(): create event loop failed in allocate EventChannel.");
   }
-
-  this->attach_ids_ = attach_ids.get();
 
   this->timing_wheel_ = timing_wheel.get();
   this->timing_wheel_->SetTimestamp(this->timestamp_);

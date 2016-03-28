@@ -17,4 +17,4 @@ add_library(mysya-qservice SHARED ${MYSYA_QSERVICE_SOURCES} ${MYSYA_UTIL_SOURCES
 
 set(MYSYA_QSERVICE_LINK_LIBRARIES mysya-qservice pthread rt dl)
 
-# add_subdirectory(tests)
+add_subdirectory(tests)

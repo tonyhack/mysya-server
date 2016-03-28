@@ -78,7 +78,9 @@ TransportAgent::TransportAgent(::mysya::ioevent::EventLoop *network_event_loop,
   : network_event_loop_(network_event_loop),
     app_event_loop_(app_event_loop),
     flush_receive_queue_timer_id_(0),
-    flush_send_queue_timer_id_(0) {}
+    flush_send_queue_timer_id_(0) {
+  this->SetNextFlushReceiveQueueTimer();
+}
 
 TransportAgent::~TransportAgent() {}
 
@@ -116,6 +118,11 @@ bool TransportAgent::AddTcpSocket(::mysya::ioevent::TcpSocket *tcp_socket) {
       std::bind(&TransportAgent::OnSocketWrite, this, std::placeholders::_1));
   event_channel->SetErrorCallback(
       std::bind(&TransportAgent::OnSocketError, this, std::placeholders::_1));
+
+  if (event_channel->AttachEventLoop(this->network_event_loop_) == false) {
+    MYSYA_ERROR("sockfd(%d) EventChannel::AttachEventLoop() failed.", sockfd);
+    return false;
+  }
 
   this->app_event_loop_->PushWakeupCallback(
       std::bind(&TransportAgent::OnHandleConnected, this, sockfd));
@@ -212,6 +219,23 @@ void TransportAgent::ResetErrorAppCallback() {
   this->error_app_cb_.swap(cb);
 }
 
+void TransportAgent::SetReceiveDecodeCallback(const ReceiveDecodeCallback &cb) {
+  this->receive_decode_cb_ = cb;
+}
+
+void TransportAgent::ResetReceiveDecodeCallback() {
+  ReceiveDecodeCallback cb;
+  this->receive_decode_cb_.swap(cb);
+}
+
+int TransportAgent::DoReceive(int sockfd, const char *data, int size) {
+  int write_size = this->receive_queue_.Write(sockfd, data, size);
+
+  // TODO: set received timestamp.
+
+  return write_size;
+}
+
 void TransportAgent::SetNextFlushReceiveQueueTimer() {
   // TODO: set expire time according to received timestamp.
   this->app_event_loop_->StartTimer(10,
@@ -238,6 +262,8 @@ void TransportAgent::SetNextFlushSendQueueTimer() {
 }
 
 void TransportAgent::CloseTcpSocket(int sockfd) {
+  this->app_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleClosed, this, sockfd));
   delete this->RemoveTcpSocket(sockfd);
 }
 
@@ -265,6 +291,7 @@ void TransportAgent::OnSocketRead(::mysya::ioevent::EventChannel *event_channel)
         receive_buffer->WritableBytes());
     if (received_bytes > 0) {
       receive_buffer->WrittenBytes(received_bytes);
+      received = true;
     } else if (received_bytes == 0) {
       peer_closed = true;
     } else if (errno != EAGAIN) {
@@ -274,15 +301,19 @@ void TransportAgent::OnSocketRead(::mysya::ioevent::EventChannel *event_channel)
     } else {
       // do nothing.
     }
+
+    break;
   }
 
-  if (received == true) {
-    // TODO: set received timestamp.
+  // received callback.
+  if (received == true and this->receive_decode_cb_) {
+    this->receive_decode_cb_(sockfd, receive_buffer);
   }
 
   if (peer_closed == true) {
     this->app_event_loop_->PushWakeupCallback(
         std::bind(&TransportAgent::OnHandleClosed, this, sockfd));
+    this->CloseTcpSocket(sockfd);
   }
 }
 
@@ -330,15 +361,21 @@ void TransportAgent::OnFlushSendQueue(int64_t timer_id) {
 }
 
 void TransportAgent::OnHandleConnected(int sockfd) {
-  this->connect_app_cb_(sockfd, this);
+  if (this->connect_app_cb_) {
+    this->connect_app_cb_(sockfd, this);
+  }
 }
 
 void TransportAgent::OnHandleClosed(int sockfd) {
-  this->close_app_cb_(sockfd);
+  if (this->close_app_cb_) {
+    this->close_app_cb_(sockfd);
+  }
 }
 
 void TransportAgent::OnHandleError(int sockfd, int sys_errno) {
-  this->error_app_cb_(sockfd, sys_errno);
+  if (this->error_app_cb_) {
+    this->error_app_cb_(sockfd, sys_errno);
+  }
 }
 
 }  // namespace qservice

@@ -32,6 +32,8 @@ class TcpService {
       ::mysya::ioevent::EventLoop *app_event_loop, EventLoopThreadPool *thread_pool);
   ~TcpService();
 
+  TransportAgentVector &GetTransportAgents();
+
  private:
   bool BuildListenSocket(const ::mysya::ioevent::SocketAddress &listen_addr);
   bool BuildConnectedSocket(std::unique_ptr< ::mysya::ioevent::TcpSocket> &socket);
