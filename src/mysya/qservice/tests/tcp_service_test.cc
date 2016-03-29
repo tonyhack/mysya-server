@@ -77,6 +77,18 @@ class EchoServer {
     return true;
   }
 
+  EchoConnection *RemoveConnection(int sockfd) {
+    EchoConnection *connection = NULL;
+
+    ConnectionMap::iterator iter = this->connections_.find(sockfd);
+    if (iter != this->connections_.end()) {
+      connection = iter->second;
+      this->connections_.erase(iter);
+    }
+
+    return connection;
+  }
+
   EchoConnection *GetConnection(int sockfd) {
     EchoConnection *connection = NULL;
 
@@ -142,10 +154,14 @@ class EchoServer {
   }
 
   void OnClose(int sockfd) {
+    delete this->RemoveConnection(sockfd);
+
     MYSYA_DEBUG("[ECHO] OnClose.");
   }
 
   void OnError(int sockfd, int sys_errno) {
+    delete this->RemoveConnection(sockfd);
+
     MYSYA_DEBUG("[ECHO] OnError errno(%d).", sys_errno);
   }
 

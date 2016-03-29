@@ -1,9 +1,11 @@
 #ifndef MYSYA_QSERVICE_TRANSPORT_AGENT_H
 #define MYSYA_QSERVICE_TRANSPORT_AGENT_H
 
+#include <atomic>
 #include <unordered_map>
 
 #include <mysya/qservice/message_queue.h>
+#include <mysya/util/timestamp.h>
 
 namespace mysya {
 namespace ioevent {
@@ -95,6 +97,17 @@ class TransportAgent {
   ErrorCallback error_app_cb_;
 
   ReceiveDecodeCallback receive_decode_cb_;
+
+  static const int kMinFlushExporedMsec_ = 1;
+  static const int kMaxFlushExporedMsec_ = 1000;
+
+  int next_flush_receive_expired_msec_;
+  ::mysya::util::Timestamp last_flush_receive_timestamp_;
+  std::atomic<int> pending_receive_num_;
+
+  int next_flush_send_expired_msec_;
+  ::mysya::util::Timestamp last_flush_send_timestamp_;
+  std::atomic<int> pending_send_num_;
 
   int64_t flush_receive_queue_timer_id_;
   int64_t flush_send_queue_timer_id_;
