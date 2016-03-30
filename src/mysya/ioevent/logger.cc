@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#include <mysya/ioevent/mutex.h>
+
 namespace mysya {
 namespace ioevent {
 
@@ -16,6 +18,9 @@ static void DefaultLogFunc(int level, const char *format, va_list args) {
     "WARNING",
     "ERROR",
   };
+
+  static Mutex mutex;
+  LockGuard lock(mutex);
 
   ::fprintf(stderr, "[%s] ", log_level_string[level]);
   ::vfprintf(stderr, format, args);

@@ -77,15 +77,12 @@ TransportAgent::TransportAgent(::mysya::ioevent::EventLoop *network_event_loop,
     ::mysya::ioevent::EventLoop *app_event_loop)
   : network_event_loop_(network_event_loop),
     app_event_loop_(app_event_loop),
-    next_flush_receive_expired_msec_(kMaxFlushExporedMsec_),
-    pending_receive_num_(0),
-    next_flush_send_expired_msec_(kMaxFlushExporedMsec_),
-    pending_send_num_(0),
-    flush_receive_queue_timer_id_(0),
-    flush_send_queue_timer_id_(0) {
-  this->SetNextFlushSendQueueTimer();
-  this->SetNextFlushReceiveQueueTimer();
-}
+    receive_queue_(network_event_loop_, app_event_loop_,
+        std::bind(&TransportAgent::OnReceiveQueueReady, this,
+          std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 10),
+    send_queue_(app_event_loop_, network_event_loop_,
+        std::bind(&TransportAgent::OnSendQueueReady, this,
+          std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 10) {}
 
 TransportAgent::~TransportAgent() {}
 
@@ -138,63 +135,7 @@ bool TransportAgent::AddTcpSocket(::mysya::ioevent::TcpSocket *tcp_socket) {
 }
 
 bool TransportAgent::SendMessage(int sockfd, const char *data, size_t size) {
-  this->pending_send_num_.fetch_add(1);
-  ::mysya::ioevent::LockGuard lock(this->send_queue_.GetWriteMutex());
-  return this->send_queue_.Write(sockfd, data, size) != (int)size;
-}
-
-void TransportAgent::FlushReceiveQueue() {
-  this->pending_receive_num_.store(0);
-
-  this->last_flush_receive_timestamp_ = this->app_event_loop_->GetTimestamp();
-
-  int sockfd = -1;
-  ::mysya::ioevent::DynamicBuffer buffer;
-
-  ::mysya::ioevent::LockGuard lock_read(this->receive_queue_.GetReadMutex());
-  for (;;) {
-    int read_size = this->receive_queue_.Read(sockfd, buffer);
-    if (read_size <= 0) {
-      break;
-    }
-
-    if (this->receive_app_cb_) {
-      this->receive_app_cb_(sockfd, buffer.ReadBegin(), (size_t)read_size);
-    }
-    buffer.ReadBytes(read_size);
-  }
-
-  ::mysya::ioevent::LockGuard lock_write(this->receive_queue_.GetWriteMutex());
-  this->receive_queue_.Exchange();
-}
-
-void TransportAgent::FlushSendQueue() {
-  this->pending_send_num_.store(0);
-
-  this->last_flush_send_timestamp_ = this->network_event_loop_->GetTimestamp();
-
-  int sockfd = -1;
-  ::mysya::ioevent::DynamicBuffer buffer;
-
-  ::mysya::ioevent::LockGuard lock_read(this->send_queue_.GetReadMutex());
-  for (;;) {
-    int read_size = this->send_queue_.Read(sockfd, buffer);
-    if (read_size <= 0) {
-      break;
-    }
-
-    TransportChannelHashmap::iterator iter = this->channels_.find(sockfd);
-    if (iter == this->channels_.end()) {
-      continue;
-    }
-
-    TransportChannel *transport_channel = iter->second;
-    transport_channel->SendMessage(buffer.ReadBegin(), read_size);
-    buffer.ReadBytes(read_size);
-  }
-
-  ::mysya::ioevent::LockGuard lock_write(this->send_queue_.GetWriteMutex());
-  this->send_queue_.Exchange();
+  return this->send_queue_.Push(sockfd, data, size) != (int)size;
 }
 
 void TransportAgent::SetConnectAppCallback(const ConnectCallback &cb) {
@@ -243,59 +184,7 @@ void TransportAgent::ResetReceiveDecodeCallback() {
 }
 
 int TransportAgent::DoReceive(int sockfd, const char *data, int size) {
-  this->pending_receive_num_.fetch_add(1);
-  ::mysya::ioevent::LockGuard lock_write(this->receive_queue_.GetWriteMutex());
-  return this->receive_queue_.Write(sockfd, data, size);
-}
-
-void TransportAgent::SetNextFlushReceiveQueueTimer() {
-  ::mysya::util::Timestamp now_timestamp = this->app_event_loop_->GetTimestamp();
-
-  int pending_num = this->pending_receive_num_.load();
-  int64_t distance_msec = now_timestamp.DistanceMillisecond(this->last_flush_receive_timestamp_);
-
-  // estimate next one.
-  if (pending_num <= 0) {
-    this->next_flush_receive_expired_msec_ *= 2;
-  } else {
-    this->next_flush_receive_expired_msec_ = distance_msec / pending_num;
-  }
-
-  if (this->next_flush_receive_expired_msec_ > this->kMaxFlushExporedMsec_) {
-    this->next_flush_receive_expired_msec_ = this->kMaxFlushExporedMsec_;
-  } else if (this->next_flush_receive_expired_msec_ < this->kMinFlushExporedMsec_) {
-    this->next_flush_receive_expired_msec_ = this->kMinFlushExporedMsec_;
-  }
-
-  this->app_event_loop_->StartTimer(this->next_flush_receive_expired_msec_,
-      std::bind(&TransportAgent::OnFlushReceiveQueue, this, std::placeholders::_1), 1);
-
-  MYSYA_DEBUG("[TransportAgent] StartTimer(%d) OnFlushReceiveQueue", this->next_flush_receive_expired_msec_);
-}
-
-void TransportAgent::SetNextFlushSendQueueTimer() {
-  ::mysya::util::Timestamp now_timestamp = this->network_event_loop_->GetTimestamp();
-
-  int pending_num = this->pending_send_num_.load();
-  int64_t distance_msec = now_timestamp.DistanceMillisecond(this->last_flush_send_timestamp_);
-
-  // estimate next one.
-  if (pending_num <= 0) {
-    this->next_flush_send_expired_msec_ *= 2;
-  } else {
-    this->next_flush_send_expired_msec_ = distance_msec / pending_num;
-  }
-
-  if (this->next_flush_send_expired_msec_ > this->kMaxFlushExporedMsec_) {
-    this->next_flush_send_expired_msec_ = this->kMaxFlushExporedMsec_;
-  } else if (this->next_flush_send_expired_msec_ < this->kMinFlushExporedMsec_) {
-    this->next_flush_send_expired_msec_ = this->kMinFlushExporedMsec_;
-  }
-
-  this->network_event_loop_->StartTimer(this->next_flush_send_expired_msec_,
-      std::bind(&TransportAgent::OnFlushSendQueue, this, std::placeholders::_1), 1);
-
-  MYSYA_DEBUG("[TransportAgent] StartTimer(%d) OnFlushSendQueue", this->next_flush_send_expired_msec_);
+  return this->receive_queue_.Push(sockfd, data, size);
 }
 
 ::mysya::ioevent::TcpSocket *TransportAgent::RemoveTcpSocket(int sockfd) {
@@ -403,16 +292,6 @@ void TransportAgent::OnSocketError(::mysya::ioevent::EventChannel *event_channel
   this->CloseTcpSocket(sockfd);
 }
 
-void TransportAgent::OnFlushReceiveQueue(int64_t timer_id) {
-  this->SetNextFlushReceiveQueueTimer();
-  this->FlushReceiveQueue();
-}
-
-void TransportAgent::OnFlushSendQueue(int64_t timer_id) {
-  this->SetNextFlushSendQueueTimer();
-  this->FlushSendQueue();
-}
-
 void TransportAgent::OnHandleConnected(int sockfd) {
   if (this->connect_app_cb_) {
     this->connect_app_cb_(sockfd, this);
@@ -429,6 +308,22 @@ void TransportAgent::OnHandleError(int sockfd, int sys_errno) {
   if (this->error_app_cb_) {
     this->error_app_cb_(sockfd, sys_errno);
   }
+}
+
+void TransportAgent::OnReceiveQueueReady(int host, const char *data, int size) {
+  if (this->receive_app_cb_) {
+    this->receive_app_cb_(host, data, size);
+  }
+}
+
+void TransportAgent::OnSendQueueReady(int host, const char *data, int size) {
+    TransportChannelHashmap::iterator iter = this->channels_.find(host);
+    if (iter == this->channels_.end()) {
+      return;
+    }
+
+    TransportChannel *transport_channel = iter->second;
+    transport_channel->SendMessage(data, size);
 }
 
 }  // namespace qservice

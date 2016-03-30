@@ -1,7 +1,7 @@
 #ifndef MYSYA_QSERVICE_TRANSPORT_AGENT_H
 #define MYSYA_QSERVICE_TRANSPORT_AGENT_H
 
-#include <atomic>
+#include <functional>
 #include <unordered_map>
 
 #include <mysya/qservice/message_queue.h>
@@ -66,9 +66,6 @@ class TransportAgent {
   int DoReceive(int sockfd, const char *data, int size);
 
  private:
-  void SetNextFlushReceiveQueueTimer();
-  void SetNextFlushSendQueueTimer();
-
   ::mysya::ioevent::TcpSocket *RemoveTcpSocket(int sockfd);
   void CloseTcpSocket(int sockfd);
 
@@ -76,12 +73,12 @@ class TransportAgent {
   void OnSocketWrite(::mysya::ioevent::EventChannel *event_channel);
   void OnSocketError(::mysya::ioevent::EventChannel *event_channel);
 
-  void OnFlushReceiveQueue(int64_t timer_id);
-  void OnFlushSendQueue(int64_t timer_id);
-
   void OnHandleConnected(int sockfd);
   void OnHandleClosed(int sockfd);
   void OnHandleError(int sockfd, int sys_errno);
+
+  void OnReceiveQueueReady(int host, const char *data, int size);
+  void OnSendQueueReady(int host, const char *data, int size);
 
   ::mysya::ioevent::EventLoop *network_event_loop_;
   ::mysya::ioevent::EventLoop *app_event_loop_;
@@ -97,20 +94,6 @@ class TransportAgent {
   ErrorCallback error_app_cb_;
 
   ReceiveDecodeCallback receive_decode_cb_;
-
-  static const int kMinFlushExporedMsec_ = 1;
-  static const int kMaxFlushExporedMsec_ = 1000;
-
-  int next_flush_receive_expired_msec_;
-  ::mysya::util::Timestamp last_flush_receive_timestamp_;
-  std::atomic<int> pending_receive_num_;
-
-  int next_flush_send_expired_msec_;
-  ::mysya::util::Timestamp last_flush_send_timestamp_;
-  std::atomic<int> pending_send_num_;
-
-  int64_t flush_receive_queue_timer_id_;
-  int64_t flush_send_queue_timer_id_;
 };
 
 }  // qservice
