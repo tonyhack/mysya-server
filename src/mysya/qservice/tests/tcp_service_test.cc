@@ -65,26 +65,20 @@ class EchoServer {
 
 EchoServer::EchoServer(const ::mysya::ioevent::SocketAddress &listen_addr)
   : app_event_loop_(), thread_pool_(2), tcp_service_(listen_addr, &app_event_loop_, &thread_pool_) {
-  TransportAgentVector &transport_agents = this->tcp_service_.GetTransportAgents();
-
-  for (TransportAgentVector::iterator iter = transport_agents.begin();
-      iter != transport_agents.end(); ++iter) {
-    ::mysya::qservice::TransportAgent *transport_agent = *iter;
-    transport_agent->SetConnectAppCallback(
-        std::bind(&EchoServer::OnNewConnection, this, std::placeholders::_1,
-          std::placeholders::_2));
-    transport_agent->SetReceiveAppCallback(
-        std::bind(&EchoServer::OnReceive, this, std::placeholders::_1,
-          std::placeholders::_2, std::placeholders::_3));
-    transport_agent->SetCloseAppCallback(
-        std::bind(&EchoServer::OnClose, this, std::placeholders::_1));
-    transport_agent->SetErrorAppCallback(
-        std::bind(&EchoServer::OnError, this, std::placeholders::_1,
-          std::placeholders::_2));
-    transport_agent->SetReceiveDecodeCallback(
-        std::bind(&EchoServer::OnReceiveDecode, this, std::placeholders::_1,
-          std::placeholders::_2));
-  }
+  this->tcp_service_.SetConnectCallback(
+      std::bind(&EchoServer::OnNewConnection, this, std::placeholders::_1,
+        std::placeholders::_2));
+  this->tcp_service_.SetReceiveCallback(
+      std::bind(&EchoServer::OnReceive, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3));
+  this->tcp_service_.SetCloseCallback(
+      std::bind(&EchoServer::OnClose, this, std::placeholders::_1));
+  this->tcp_service_.SetErrorCallback(
+      std::bind(&EchoServer::OnError, this, std::placeholders::_1,
+        std::placeholders::_2));
+  this->tcp_service_.SetReceiveDecodeCallback(
+      std::bind(&EchoServer::OnReceiveDecode, this, std::placeholders::_1,
+        std::placeholders::_2));
 
   this->app_event_loop_.Loop();
 }

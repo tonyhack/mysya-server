@@ -73,9 +73,10 @@ bool TransportAgent::TransportChannel::SendMessage(const char *data, size_t size
   return true;
 }
 
-TransportAgent::TransportAgent(::mysya::ioevent::EventLoop *network_event_loop,
+TransportAgent::TransportAgent(TcpService *host, ::mysya::ioevent::EventLoop *network_event_loop,
     ::mysya::ioevent::EventLoop *app_event_loop)
-  : network_event_loop_(network_event_loop),
+  : host_(host),
+    network_event_loop_(network_event_loop),
     app_event_loop_(app_event_loop),
     receive_queue_(network_event_loop_, app_event_loop_,
         std::bind(&TransportAgent::OnReceiveQueueReady, this,
@@ -136,51 +137,6 @@ bool TransportAgent::AddTcpSocket(::mysya::ioevent::TcpSocket *tcp_socket) {
 
 bool TransportAgent::SendMessage(int sockfd, const char *data, size_t size) {
   return this->send_queue_.Push(sockfd, data, size) != (int)size;
-}
-
-void TransportAgent::SetConnectAppCallback(const ConnectCallback &cb) {
-  this->connect_app_cb_ = cb;
-}
-
-void TransportAgent::ResetConnectAppCallback() {
-  ConnectCallback cb;
-  this->connect_app_cb_.swap(cb);
-}
-
-void TransportAgent::SetReceiveAppCallback(const ReceiveCallback &cb) {
-  this->receive_app_cb_ = cb;
-}
-
-void TransportAgent::ResetReceiveAppCallback() {
-  ReceiveCallback cb;
-  this->receive_app_cb_.swap(cb);
-}
-
-void TransportAgent::SetCloseAppCallback(const CloseCallback &cb) {
-  this->close_app_cb_ = cb;
-}
-
-void TransportAgent::ResetCloseAppCallback() {
-  CloseCallback cb;
-  this->close_app_cb_.swap(cb);
-}
-
-void TransportAgent::SetErrorAppCallback(const ErrorCallback &cb) {
-  this->error_app_cb_ = cb;
-}
-
-void TransportAgent::ResetErrorAppCallback() {
-  ErrorCallback cb;
-  this->error_app_cb_.swap(cb);
-}
-
-void TransportAgent::SetReceiveDecodeCallback(const ReceiveDecodeCallback &cb) {
-  this->receive_decode_cb_ = cb;
-}
-
-void TransportAgent::ResetReceiveDecodeCallback() {
-  ReceiveDecodeCallback cb;
-  this->receive_decode_cb_.swap(cb);
 }
 
 int TransportAgent::DoReceive(int sockfd, const char *data, int size) {
@@ -246,8 +202,9 @@ void TransportAgent::OnSocketRead(::mysya::ioevent::EventChannel *event_channel)
   }
 
   // received callback.
-  if (received == true and this->receive_decode_cb_) {
-    this->receive_decode_cb_(sockfd, receive_buffer);
+  TcpService::ReceiveDecodeCallback receive_decode_cb = this->host_->GetReceiveDecodeCallback();
+  if (received == true and receive_decode_cb) {
+    receive_decode_cb(sockfd, receive_buffer);
   }
 
   if (peer_closed == true) {
@@ -293,26 +250,30 @@ void TransportAgent::OnSocketError(::mysya::ioevent::EventChannel *event_channel
 }
 
 void TransportAgent::OnHandleConnected(int sockfd) {
-  if (this->connect_app_cb_) {
-    this->connect_app_cb_(sockfd, this);
+  TcpService::ConnectCallback cb = this->host_->GetConnectCallback();
+  if (cb) {
+    cb(sockfd, this);
   }
 }
 
 void TransportAgent::OnHandleClosed(int sockfd) {
-  if (this->close_app_cb_) {
-    this->close_app_cb_(sockfd);
+  TcpService::CloseCallback cb = this->host_->GetCloseCallback();
+  if (cb) {
+    cb(sockfd);
   }
 }
 
 void TransportAgent::OnHandleError(int sockfd, int sys_errno) {
-  if (this->error_app_cb_) {
-    this->error_app_cb_(sockfd, sys_errno);
+  TcpService::ErrorCallback cb = this->host_->GetErrorCallback();
+  if (cb) {
+    cb(sockfd, sys_errno);
   }
 }
 
 void TransportAgent::OnReceiveQueueReady(int host, const char *data, int size) {
-  if (this->receive_app_cb_) {
-    this->receive_app_cb_(host, data, size);
+  TcpService::ReceiveCallback cb = this->host_->GetReceiveCallback();
+  if (cb) {
+    cb(host, data, size);
   }
 }
 

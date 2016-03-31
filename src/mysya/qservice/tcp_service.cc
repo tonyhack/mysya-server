@@ -31,8 +31,8 @@ TcpService::TcpService(const ::mysya::ioevent::SocketAddress &listen_addr,
   EventLoopThreadVector &threads = this->thread_pool_->GetThreads();
   for (EventLoopThreadVector::iterator iter = threads.begin();
       iter != threads.end(); ++iter) {
-    TransportAgent *transport_agent =
-      new (std::nothrow) TransportAgent(&(*iter)->event_loop_, this->app_event_loop_);
+    TransportAgent *transport_agent = new (std::nothrow) TransportAgent(
+        this, &(*iter)->event_loop_, this->app_event_loop_);
     if (transport_agent == NULL) {
       ::mysya::util::ThrowSystemErrorException(
           "TcpService::TcpService(): failed in allocate TransportAgent.");
@@ -50,8 +50,69 @@ TcpService::~TcpService() {
   this->transport_agents_.clear();
 }
 
-TcpService::TransportAgentVector &TcpService::GetTransportAgents() {
-  return this->transport_agents_;
+TcpService::ConnectCallback TcpService::GetConnectCallback() const {
+  return this->connect_cb_;
+}
+
+void TcpService::SetConnectCallback(const ConnectCallback &cb) {
+  this->connect_cb_ = cb;
+}
+
+void TcpService::ResetConnectCallback() {
+  ConnectCallback cb;
+  this->connect_cb_.swap(cb);
+}
+
+TcpService::ReceiveCallback TcpService::GetReceiveCallback() const {
+  return this->receive_cb_;
+}
+
+void TcpService::SetReceiveCallback(const ReceiveCallback &cb) {
+  this->receive_cb_ = cb;
+}
+
+void TcpService::ResetReceiveCallback() {
+  ReceiveCallback cb;
+  this->receive_cb_.swap(cb);
+}
+
+TcpService::CloseCallback TcpService::GetCloseCallback() const {
+  return this->close_cb_;
+}
+
+void TcpService::SetCloseCallback(const CloseCallback &cb) {
+  this->close_cb_ = cb;
+}
+
+void TcpService::ResetCloseCallback() {
+  CloseCallback cb;
+  this->close_cb_.swap(cb);
+}
+
+TcpService::ErrorCallback TcpService::GetErrorCallback() const {
+  return this->error_cb_;
+}
+
+void TcpService::SetErrorCallback(const ErrorCallback &cb) {
+  this->error_cb_ = cb;
+}
+
+void TcpService::ResetErrorCallback() {
+  ErrorCallback cb;
+  this->error_cb_.swap(cb);
+}
+
+TcpService::ReceiveDecodeCallback TcpService::GetReceiveDecodeCallback() const {
+  return this->receive_decode_cb_;
+}
+
+void TcpService::SetReceiveDecodeCallback(const ReceiveDecodeCallback &cb) {
+  this->receive_decode_cb_ = cb;
+}
+
+void TcpService::ResetReceiveDecodeCallback() {
+  ReceiveDecodeCallback cb;
+  this->receive_decode_cb_.swap(cb);
 }
 
 bool TcpService::BuildListenSocket(const ::mysya::ioevent::SocketAddress &listen_addr) {
