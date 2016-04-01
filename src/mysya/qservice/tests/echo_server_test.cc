@@ -1,4 +1,5 @@
 #include <map>
+#include <memory>
 
 #include <mysya/ioevent/event_loop.h>
 #include <mysya/ioevent/logger.h>
@@ -9,8 +10,6 @@
 namespace mysya {
 namespace qservice {
 namespace test {
-
-namespace socket_server {
 
 class EchoConnection {
  public:
@@ -37,10 +36,13 @@ class EchoConnection {
 class EchoServer {
  public:
   typedef std::map<int, EchoConnection *> ConnectionMap;
-  typedef TcpService::TransportAgentVector TransportAgentVector;
+  typedef std::map<int, ::mysya::ioevent::SocketAddress> ListenAddrMap;
 
-  EchoServer(const ::mysya::ioevent::SocketAddress &listen_addr);
+  EchoServer();
   ~EchoServer();
+
+  void Start();
+  int Listen(const ::mysya::ioevent::SocketAddress &listen_addr);
 
   bool AddConnection(EchoConnection *connection);
   EchoConnection *RemoveConnection(int sockfd);
@@ -51,7 +53,10 @@ class EchoServer {
   void OnNewConnection(int sockfd, ::mysya::qservice::TransportAgent *transport_agent);
   void OnReceive(int sockfd, const char *data, int size);
   void OnClose(int sockfd);
-  void OnError(int sockfd, int sys_errno);
+  void OnError(int sockfd, int socket_errno);
+
+  void OnListened(int listen_sockfd);
+  void OnListenError(int listen_sockfd, int socket_errno);
 
  private:
   ::mysya::ioevent::EventLoop app_event_loop_;
@@ -60,11 +65,19 @@ class EchoServer {
   ::mysya::qservice::TcpService tcp_service_;
 
   ConnectionMap connections_;
+  ListenAddrMap listen_addrs_;
 };
 
 
-EchoServer::EchoServer(const ::mysya::ioevent::SocketAddress &listen_addr)
-  : app_event_loop_(), thread_pool_(2), tcp_service_(listen_addr, &app_event_loop_, &thread_pool_) {
+EchoServer::EchoServer()
+  : app_event_loop_(), thread_pool_(2),
+    tcp_service_(&app_event_loop_, &thread_pool_) {
+  this->tcp_service_.SetListenedCallback(
+      std::bind(&EchoServer::OnListened, this, std::placeholders::_1));
+  this->tcp_service_.SetListenErrorCallback(
+      std::bind(&EchoServer::OnListenError, this, std::placeholders::_1,
+        std::placeholders::_2));
+
   this->tcp_service_.SetConnectCallback(
       std::bind(&EchoServer::OnNewConnection, this, std::placeholders::_1,
         std::placeholders::_2));
@@ -79,11 +92,19 @@ EchoServer::EchoServer(const ::mysya::ioevent::SocketAddress &listen_addr)
   this->tcp_service_.SetReceiveDecodeCallback(
       std::bind(&EchoServer::OnReceiveDecode, this, std::placeholders::_1,
         std::placeholders::_2));
-
-  this->app_event_loop_.Loop();
 }
 
 EchoServer::~EchoServer() {}
+
+void EchoServer::Start() {
+  this->app_event_loop_.Loop();
+}
+
+int EchoServer::Listen(const ::mysya::ioevent::SocketAddress &listen_addr) {
+  int listen_sockfd = this->tcp_service_.Listen(listen_addr);
+  this->listen_addrs_.insert(std::make_pair(listen_sockfd, listen_addr));
+  return listen_sockfd;
+}
 
 bool EchoServer::AddConnection(EchoConnection *connection) {
   ConnectionMap::iterator iter = this->connections_.find(connection->GetSockfd());
@@ -177,25 +198,72 @@ void EchoServer::OnClose(int sockfd) {
   MYSYA_DEBUG("[ECHO] OnClose.");
 }
 
-void EchoServer::OnError(int sockfd, int sys_errno) {
+void EchoServer::OnError(int sockfd, int socket_errno) {
   delete this->RemoveConnection(sockfd);
 
-  MYSYA_DEBUG("[ECHO] OnError errno(%d).", sys_errno);
+  MYSYA_DEBUG("[ECHO] OnError errno(%d).", socket_errno);
+}
+
+void EchoServer::OnListened(int listen_sockfd) {
+  ListenAddrMap::iterator iter = this->listen_addrs_.find(listen_sockfd);
+  if (iter == this->listen_addrs_.end()) {
+    MYSYA_ERROR("listen_sockfd(%d) not found in listen_addrs_.", listen_sockfd);
+    return;
+  }
+
+  MYSYA_DEBUG("listened addr(%s:%d)", iter->second.GetHost().data(), iter->second.GetPort());
+}
+
+void EchoServer::OnListenError(int listen_sockfd, int socket_errno) {
+  ListenAddrMap::iterator iter = this->listen_addrs_.find(listen_sockfd);
+  if (iter == this->listen_addrs_.end()) {
+    MYSYA_ERROR("listen_sockfd(%d) not found in listen_addrs_.", listen_sockfd);
+    return;
+  }
+
+  ::mysya::ioevent::SocketAddress listen_addr = iter->second;
+
+  this->listen_addrs_.erase(iter);
+
+  MYSYA_DEBUG("listened addr(%s:%d) failed, socket_errno(%d).",
+      listen_addr.GetHost().data(), listen_addr.GetPort(), socket_errno);
 }
 
 void TestFunc() {
-  ::mysya::ioevent::SocketAddress listen_addr("0.0.0.0", 9999);
-  EchoServer server(listen_addr);
-}
+  ::mysya::ioevent::SocketAddress listen_addr1("0.0.0.0", 9991);
+  ::mysya::ioevent::SocketAddress listen_addr2("0.0.0.0", 9992);
+  ::mysya::ioevent::SocketAddress listen_addr3("0.0.0.0", 9993);
+  ::mysya::ioevent::SocketAddress listen_addr4("0.0.0.0", 9994);
+  ::mysya::ioevent::SocketAddress listen_addr5("0.0.0.0", 9995);
+  ::mysya::ioevent::SocketAddress listen_addr6("0.0.0.0", 9996);
+  ::mysya::ioevent::SocketAddress listen_addr7("0.0.0.0", 9997);
+  ::mysya::ioevent::SocketAddress listen_addr8("0.0.0.0", 9998);
+  ::mysya::ioevent::SocketAddress listen_addr9("0.0.0.0", 9999);
 
-}  // namespace socket_server
+  EchoServer server;
+
+  if (server.Listen(listen_addr1) == -1 ||
+      server.Listen(listen_addr2) == -1 ||
+      server.Listen(listen_addr3) == -1 ||
+      server.Listen(listen_addr4) == -1 ||
+      server.Listen(listen_addr5) == -1 ||
+      server.Listen(listen_addr6) == -1 ||
+      server.Listen(listen_addr7) == -1 ||
+      server.Listen(listen_addr8) == -1 ||
+      server.Listen(listen_addr9) == -1) {
+    MYSYA_ERROR("Listen failed.");
+    return;
+  }
+
+  server.Start();
+}
 
 }  // namespace test
 }  // namespace qservice
 }  // namespace mysya
 
 int main(int argc, char *argv[]) {
-  ::mysya::qservice::test::socket_server::TestFunc();
+  ::mysya::qservice::test::TestFunc();
 
   return 0;
 }

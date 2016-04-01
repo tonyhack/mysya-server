@@ -7,7 +7,7 @@
 #include <mysya/ioevent/mutex.h>
 #include <mysya/ioevent/logger.h>
 #include <mysya/ioevent/tcp_socket.h>
-
+#include <mysya/qservice/errno.h>
 #include <mysya/qservice/message_queue.h>
 
 namespace mysya {
@@ -135,12 +135,88 @@ bool TransportAgent::AddTcpSocket(::mysya::ioevent::TcpSocket *tcp_socket) {
   return true;
 }
 
+int TransportAgent::AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms) {
+  std::unique_ptr< ::mysya::ioevent::TcpSocket> socket(
+      new (std::nothrow) ::mysya::ioevent::TcpSocket());
+  if (socket.get() == NULL) {
+    MYSYA_ERROR("Allocate TcpSocket failed.");
+    return -1;
+  }
+
+  if (socket->Open() == false) {
+    MYSYA_ERROR("TcpSocket::Open() failed.");
+    return -1;
+  }
+
+  if (socket->AsyncConnect(addr) == false) {
+    MYSYA_ERROR("TcpSocket::AsyncConnect(%s:%d) failed.",
+        addr.GetHost().data(), addr.GetPort());
+    socket->Close();
+    return -1;
+  }
+
+  int connect_sockfd = socket->GetFileDescriptor();
+
+  this->network_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleAsyncConnect, this, socket.get(), timeout_ms));
+  socket.release();
+
+  return connect_sockfd;
+}
+
+int TransportAgent::Listen(const ::mysya::ioevent::SocketAddress &addr) {
+  std::unique_ptr< ::mysya::ioevent::TcpSocket> listen_socket(
+      new (std::nothrow) ::mysya::ioevent::TcpSocket());
+  if (listen_socket.get() == NULL) {
+    MYSYA_ERROR("Allocate TcpSocket failed.");
+    return -1;
+  }
+
+  if (listen_socket->Open() == false) {
+    MYSYA_ERROR("TcpSocket::Open() failed.");
+    return -1;
+  }
+
+  int listen_sockfd = listen_socket->GetFileDescriptor();
+
+  this->network_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleListen, this, listen_socket.get(), addr));
+  listen_socket.release();
+
+  return listen_sockfd;
+}
+
 bool TransportAgent::SendMessage(int sockfd, const char *data, size_t size) {
   return this->send_queue_.Push(sockfd, data, size) != (int)size;
 }
 
 int TransportAgent::DoReceive(int sockfd, const char *data, int size) {
   return this->receive_queue_.Push(sockfd, data, size);
+}
+
+void TransportAgent::AddAsyncConnectSocketTimer(::mysya::ioevent::TcpSocket *socket,
+    int expire_ms, const ExpireCallback &cb) {
+  int64_t timer_id = this->network_event_loop_->StartTimer(expire_ms, cb, 1);
+  if (timer_id < 0) {
+    MYSYA_ERROR("sockfd(%d) Start async connect timer failed.", socket->GetFileDescriptor());
+    return;
+  }
+
+  this->async_connect_timer_sockets_[timer_id] = socket;
+  this->async_connect_socket_timers_[socket] = timer_id;
+}
+
+void TransportAgent::RemoveAsyncConnectSocketTimer(::mysya::ioevent::TcpSocket *socket) {
+  SocketTimerHashmap::iterator iter = this->async_connect_socket_timers_.find(socket);
+  if (iter == this->async_connect_socket_timers_.end()) {
+    return;
+  }
+
+  int64_t timer_id = iter->second;
+  this->async_connect_timer_sockets_.erase(timer_id);
+  this->async_connect_socket_timers_.erase(socket);
+
+  this->network_event_loop_->StopTimer(timer_id);
 }
 
 ::mysya::ioevent::TcpSocket *TransportAgent::RemoveTcpSocket(int sockfd) {
@@ -159,6 +235,69 @@ int TransportAgent::DoReceive(int sockfd, const char *data, int size) {
 
 void TransportAgent::CloseTcpSocket(int sockfd) {
   delete this->RemoveTcpSocket(sockfd);
+}
+
+void TransportAgent::OnAsyncConnectSocketWrite(::mysya::ioevent::EventChannel *event_channel) {
+  ::mysya::ioevent::TcpSocket *tcp_socket =
+    (::mysya::ioevent::TcpSocket *)event_channel->GetAppHandle();
+
+  int sockfd = tcp_socket->GetFileDescriptor();
+  int socket_errno = SocketErrno::UNKNOWN;
+
+  // remove connect timer.
+  this->RemoveAsyncConnectSocketTimer(tcp_socket);
+
+  do {
+    if (this->host_->BuildConnectedSocket(tcp_socket) == false) {
+      socket_errno = SocketErrno::BUILD_CONNECTED_SOCKET;
+      MYSYA_WARNING("BuildConnectedSocket failed.");
+      break;
+    }
+
+    this->app_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleAsyncConnected, this, sockfd));
+
+    return;
+  } while (true);
+
+  delete tcp_socket;
+
+  this->app_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleAsyncConnectError, this, sockfd, socket_errno));
+}
+
+void TransportAgent::OnAsyncConnectError(::mysya::ioevent::EventChannel *event_channel) {
+  ::mysya::ioevent::TcpSocket *tcp_socket =
+    (::mysya::ioevent::TcpSocket *)event_channel->GetAppHandle();
+
+  int sockfd = tcp_socket->GetFileDescriptor();
+  delete tcp_socket;
+
+  // remove connect timer.
+  this->RemoveAsyncConnectSocketTimer(tcp_socket);
+
+  this->app_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleAsyncConnectError, this, sockfd, errno));
+}
+
+void TransportAgent::OnAsyncConnectTimeout(int64_t timer_id) {
+  TimerSocketHashmap::iterator iter = this->async_connect_timer_sockets_.find(timer_id);
+  if (iter == this->async_connect_timer_sockets_.end()) {
+    MYSYA_ERROR("timer_id(%ld) not found in async_connect_timer_sockets_.", timer_id);
+    return;
+  }
+
+  ::mysya::ioevent::TcpSocket *socket = iter->second;;
+
+  this->async_connect_timer_sockets_.erase(timer_id);
+  this->async_connect_socket_timers_.erase(socket);
+
+  int sockfd = socket->GetFileDescriptor();
+  delete socket;
+
+  this->app_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleAsyncConnectError, this, sockfd,
+        SocketErrno::CONNECT_TIMEOUT));
 }
 
 void TransportAgent::OnSocketRead(::mysya::ioevent::EventChannel *event_channel) {
@@ -249,6 +388,84 @@ void TransportAgent::OnSocketError(::mysya::ioevent::EventChannel *event_channel
   this->CloseTcpSocket(sockfd);
 }
 
+void TransportAgent::OnHandleListen(::mysya::ioevent::TcpSocket *listen_socket,
+    const ::mysya::ioevent::SocketAddress &addr) {
+  int listen_sockfd = listen_socket->GetFileDescriptor();
+  int socket_errno = SocketErrno::UNKNOWN;
+
+  do {
+    if (this->host_->BuildListenSocket(this, listen_socket, addr) == false) {
+      socket_errno = errno;
+      MYSYA_ERROR("BuildListenSocket(%d) failed.", listen_sockfd);
+      break;
+    }
+
+    return;
+  } while (false);
+
+  delete listen_socket;
+  this->app_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleListenError, this, listen_sockfd, socket_errno));
+}
+
+void TransportAgent::OnHandleListened(int listen_sockfd) {
+  TcpService::ListenedCallback cb = this->host_->GetListenedCallback();
+  if (cb) {
+    cb(listen_sockfd);
+  }
+}
+
+void TransportAgent::OnHandleListenError(int listen_sockfd, int socket_errno) {
+  TcpService::ListenErrorCallback cb = this->host_->GetListenErrorCallback();
+  if (cb) {
+    cb(listen_sockfd, socket_errno);
+  }
+}
+
+void TransportAgent::OnHandleAsyncConnect(::mysya::ioevent::TcpSocket *socket, int timeout_ms) {
+  int sockfd = socket->GetFileDescriptor();
+
+  socket->GetEventChannel()->SetWriteCallback(
+      std::bind(&TransportAgent::OnAsyncConnectSocketWrite, this, std::placeholders::_1));
+  socket->GetEventChannel()->SetErrorCallback(
+      std::bind(&TransportAgent::OnAsyncConnectError, this, std::placeholders::_1));
+
+  int socket_errno = SocketErrno::UNKNOWN;
+
+  do {
+    if (socket->GetEventChannel()->AttachEventLoop(this->network_event_loop_) == false) {
+      socket_errno = SocketErrno::ATTACH_EVENT_LOOP;
+      MYSYA_ERROR("EventChannel::AttachEventLoop() failed.");
+      break;
+    }
+
+    if (timeout_ms > 0) {
+      this->AddAsyncConnectSocketTimer(socket, timeout_ms,
+          std::bind(&TransportAgent::OnAsyncConnectTimeout, this, std::placeholders::_1));
+    }
+
+    return;
+  } while (false);
+
+  delete socket;
+  this->app_event_loop_->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleAsyncConnectError, this, sockfd, socket_errno));
+}
+
+void TransportAgent::OnHandleAsyncConnected(int sockfd) {
+  TcpService::AsyncConnectedCallback cb = this->host_->GetAsyncConnectedCallback();
+  if (cb) {
+    cb(sockfd, this);
+  }
+}
+
+void TransportAgent::OnHandleAsyncConnectError(int sockfd, int socket_errno) {
+  TcpService::AsyncConnectErroCallback cb = this->host_->GetAsyncConnectErroCallback();
+  if (cb) {
+    cb(sockfd, socket_errno);
+  }
+}
+
 void TransportAgent::OnHandleConnected(int sockfd) {
   TcpService::ConnectCallback cb = this->host_->GetConnectCallback();
   if (cb) {
@@ -263,10 +480,10 @@ void TransportAgent::OnHandleClosed(int sockfd) {
   }
 }
 
-void TransportAgent::OnHandleError(int sockfd, int sys_errno) {
+void TransportAgent::OnHandleError(int sockfd, int socket_errno) {
   TcpService::ErrorCallback cb = this->host_->GetErrorCallback();
   if (cb) {
-    cb(sockfd, sys_errno);
+    cb(sockfd, socket_errno);
   }
 }
 

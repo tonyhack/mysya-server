@@ -1,31 +1,21 @@
 #include <mysya/qservice/tcp_service.h>
 
+#include <memory>
+
 #include <mysya/ioevent/event_channel.h>
 #include <mysya/ioevent/event_loop.h>
 #include <mysya/ioevent/logger.h>
+#include <mysya/qservice/errno.h>
 #include <mysya/qservice/event_loop_thread_pool.h>
 #include <mysya/qservice/transport_agent.h>
 
 namespace mysya {
 namespace qservice {
 
-TcpService::TcpService(const ::mysya::ioevent::SocketAddress &listen_addr,
-    ::mysya::ioevent::EventLoop *app_event_loop, EventLoopThreadPool *thread_pool)
-      : next_agent_(0) {
-  this->listen_addr_ = listen_addr_;
+TcpService::TcpService(::mysya::ioevent::EventLoop *app_event_loop,
+    EventLoopThreadPool *thread_pool) : next_agent_(0) {
   this->app_event_loop_ = app_event_loop;
   this->thread_pool_ = thread_pool;
-
-  if (this->listen_socket_.Open() == false) {
-    ::mysya::util::ThrowSystemErrorException(
-        "TcpService::TcpService(): failed in TcpSocket::Open.");
-  }
-
-  if (this->BuildListenSocket(listen_addr) == false) {
-    this->listen_socket_.Close();
-    ::mysya::util::ThrowSystemErrorException(
-        "TcpService::TcpService(): failed in BuildListenSocket.");
-  }
 
   typedef EventLoopThreadPool::EventLoopThreadVector EventLoopThreadVector;
   EventLoopThreadVector &threads = this->thread_pool_->GetThreads();
@@ -42,12 +32,77 @@ TcpService::TcpService(const ::mysya::ioevent::SocketAddress &listen_addr,
 }
 
 TcpService::~TcpService() {
+  for (TcpSocketMap::iterator iter = this->listen_sockets_.begin();
+      iter != this->listen_sockets_.end(); ++iter) {
+    delete iter->first;
+  }
+
   for (TransportAgentVector::iterator iter = this->transport_agents_.begin();
       iter != this->transport_agents_.end(); ++iter) {
     delete *iter;
   }
 
   this->transport_agents_.clear();
+}
+
+int TcpService::AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms) {
+  return this->AllocateTransportAgent()->AsyncConnect(addr, timeout_ms);
+}
+
+int TcpService::Listen(const ::mysya::ioevent::SocketAddress &addr) {
+  return this->AllocateTransportAgent()->Listen(addr);
+}
+
+TcpService::ListenedCallback TcpService::GetListenedCallback() {
+  return this->listened_cb_;
+}
+
+void TcpService::SetListenedCallback(const ListenedCallback &cb) {
+  this->listened_cb_ = cb;
+}
+
+void TcpService::ResetListenedCallback() {
+  ListenedCallback cb;
+  this->listened_cb_.swap(cb);
+}
+
+TcpService::ListenErrorCallback TcpService::GetListenErrorCallback() {
+  return this->listen_error_cb_;
+}
+
+void TcpService::SetListenErrorCallback(const ListenErrorCallback &cb) {
+  this->listen_error_cb_ = cb;
+}
+
+void TcpService::ResetListenErrorCallback() {
+  ListenErrorCallback cb;
+  this->listen_error_cb_.swap(cb);
+}
+
+TcpService::AsyncConnectedCallback TcpService::GetAsyncConnectedCallback() const {
+  return this->async_connected_cb_;
+}
+
+void TcpService::SetAsyncConnectedCallback(const AsyncConnectedCallback &cb) {
+  this->async_connected_cb_ = cb;
+}
+
+void TcpService::ResetAsyncConnectedCallback() {
+  AsyncConnectedCallback cb;
+  this->async_connected_cb_.swap(cb);
+}
+
+TcpService::AsyncConnectErroCallback TcpService::GetAsyncConnectErroCallback() const {
+  return this->async_connect_error_cb_;
+}
+
+void TcpService::SetAsyncConnectErroCallback(const AsyncConnectErroCallback &cb) {
+  this->async_connect_error_cb_ = cb;
+}
+
+void TcpService::ResetAsyncConnectErroCallback() {
+  AsyncConnectErroCallback cb;
+  this->async_connect_error_cb_.swap(cb);
 }
 
 TcpService::ConnectCallback TcpService::GetConnectCallback() const {
@@ -115,48 +170,65 @@ void TcpService::ResetReceiveDecodeCallback() {
   this->receive_decode_cb_.swap(cb);
 }
 
-bool TcpService::BuildListenSocket(const ::mysya::ioevent::SocketAddress &listen_addr) {
-  if (this->listen_socket_.SetReuseAddr() == false) {
+bool TcpService::BuildListenSocket(TransportAgent *transport_agent,
+    ::mysya::ioevent::TcpSocket *listen_socket, const ::mysya::ioevent::SocketAddress &listen_addr,
+    int backlog) {
+  int listen_sockfd = listen_socket->GetFileDescriptor();
+
+  TcpSocketMap::iterator iter = this->listen_sockets_.find(listen_socket);
+  if (iter != this->listen_sockets_.end()) {
+    errno = SocketErrno::DUPLICATE_SOCKET;
+    MYSYA_ERROR("Duplicate listen sockfd(%d).", listen_sockfd);
+    return false;
+  }
+
+  if (listen_socket->SetReuseAddr() == false) {
     MYSYA_ERROR("TcpSocket::SetReuseAddr() failed.");
     return false;
   }
 
-  if (this->listen_socket_.SetTcpNoDelay() == false) {
+  if (listen_socket->SetTcpNoDelay() == false) {
     MYSYA_ERROR("TcpSocket::SetTcpNoDelay() failed.");
     return false;
   }
 
-  if (this->listen_socket_.Bind(listen_addr) == false) {
+  if (listen_socket->Bind(listen_addr) == false) {
     MYSYA_ERROR("TcpSocket::Bind() failed.");
     return false;
   }
 
-  if (this->listen_socket_.Listen(256) == false) {
+  if (listen_socket->Listen(backlog) == false) {
     MYSYA_ERROR("TcpSocket::Listen() failed.");
     return false;
   }
 
-  if (this->listen_socket_.SetNonblock() == false) {
+  if (listen_socket->SetNonblock() == false) {
     MYSYA_ERROR("TcpSocket::SetNonblock() failed.");
     return false;
   }
 
-  ::mysya::ioevent::EventLoop *event_loop = this->thread_pool_->Allocate();
+  ::mysya::ioevent::EventLoop *event_loop = transport_agent->GetNetworkEventLoop();
 
-  this->listen_socket_.GetEventChannel()->SetReadCallback(
+  listen_socket->GetEventChannel()->SetReadCallback(
       std::bind(&TcpService::OnListenRead, this, std::placeholders::_1));
-  this->listen_socket_.GetEventChannel()->SetErrorCallback(
+  listen_socket->GetEventChannel()->SetErrorCallback(
       std::bind(&TcpService::OnListenError, this, std::placeholders::_1));
 
-  if (this->listen_socket_.GetEventChannel()->AttachEventLoop(event_loop) == false) {
+  if (listen_socket->GetEventChannel()->AttachEventLoop(event_loop) == false) {
     MYSYA_ERROR("EventChannel::AttachEventLoop() failed.");
     return false;
   }
 
+  this->listen_sockets_.insert(std::make_pair(listen_socket, transport_agent));
+
+  // app listened callbcak.
+  event_loop->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleListened, transport_agent, listen_sockfd));
+
   return true;
 }
 
-bool TcpService::BuildConnectedSocket(std::unique_ptr< ::mysya::ioevent::TcpSocket> &socket) {
+bool TcpService::BuildConnectedSocket(::mysya::ioevent::TcpSocket *socket) {
   if (socket->SetReuseAddr() == false) {
     MYSYA_ERROR("TcpSocket::SetReuseAddr() failed.");
     return false;
@@ -178,7 +250,7 @@ bool TcpService::BuildConnectedSocket(std::unique_ptr< ::mysya::ioevent::TcpSock
     return false;
   }
 
-  if (transport_agent->AddTcpSocket(socket.get()) == false) {
+  if (transport_agent->AddTcpSocket(socket) == false) {
     MYSYA_ERROR("TransportAgent::AddTcpSocket() failed.");
     return false;
   }
@@ -215,7 +287,7 @@ void TcpService::OnListenRead(::mysya::ioevent::EventChannel *event_channel) {
       }
     }
 
-    if (this->BuildConnectedSocket(tcp_socket) == false) {
+    if (this->BuildConnectedSocket(tcp_socket.get()) == false) {
       MYSYA_WARNING("BuildConnectedSocket failed.");
       continue;
     }
@@ -225,6 +297,24 @@ void TcpService::OnListenRead(::mysya::ioevent::EventChannel *event_channel) {
 }
 
 void TcpService::OnListenError(::mysya::ioevent::EventChannel *event_channel) {
+  ::mysya::ioevent::TcpSocket *listen_socket =
+    (::mysya::ioevent::TcpSocket *)event_channel->GetAppHandle();
+  int listen_sockfd = listen_socket->GetFileDescriptor();
+
+  TcpSocketMap::iterator iter = this->listen_sockets_.find(listen_socket);
+  if (iter == this->listen_sockets_.end()) {
+    MYSYA_ERROR("listen_sockets_ find sockfd(%d) failed.", listen_sockfd);
+    return;
+  }
+
+  TransportAgent *transport_agent = iter->second;
+
+  this->listen_sockets_.erase(iter);
+  delete listen_socket;
+
+  // app listened callbcak.
+  transport_agent->GetAppEventLoop()->PushWakeupCallback(
+      std::bind(&TransportAgent::OnHandleListened, transport_agent, listen_sockfd));
 }
 
 }  // namespace qservice

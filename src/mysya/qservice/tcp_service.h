@@ -2,7 +2,7 @@
 #define MYSYA_QSERVICE_TCP_SERVICE_H
 
 #include <functional>
-#include <memory>
+#include <map>
 #include <vector>
 
 #include <mysya/ioevent/dynamic_buffer.h>
@@ -26,6 +26,8 @@ class EventLoopThreadPool;
 class TransportAgent;
 
 class TcpService {
+  friend class TransportAgent;
+
  public:
   typedef std::function<void (int, TransportAgent *)> ConnectCallback;
   typedef std::function<void (int, const char *, int)> ReceiveCallback;
@@ -33,11 +35,42 @@ class TcpService {
   typedef std::function<void (int, int)> ErrorCallback;
   typedef std::function<void (int, ::mysya::ioevent::DynamicBuffer *)> ReceiveDecodeCallback;
 
-  typedef std::vector<TransportAgent *> TransportAgentVector;
+  typedef std::function<void (int)> ListenedCallback;
+  typedef std::function<void (int, int)> ListenErrorCallback;
 
-  explicit TcpService(const ::mysya::ioevent::SocketAddress &listen_addr,
-      ::mysya::ioevent::EventLoop *app_event_loop, EventLoopThreadPool *thread_pool);
+  typedef std::function<void (int, TransportAgent *)> AsyncConnectedCallback;
+  typedef std::function<void (int, int)> AsyncConnectErroCallback;
+
+  typedef std::vector<TransportAgent *> TransportAgentVector;
+  typedef std::map< ::mysya::ioevent::TcpSocket *, TransportAgent *> TcpSocketMap;
+
+  explicit TcpService(::mysya::ioevent::EventLoop *app_event_loop,
+    EventLoopThreadPool *thread_pool);
   ~TcpService();
+
+  // running in app event loop.
+  int AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms);
+  int Listen(const ::mysya::ioevent::SocketAddress &addr);
+
+  // callback running in app event loop.
+  ListenedCallback GetListenedCallback();
+  void SetListenedCallback(const ListenedCallback &cb);
+  void ResetListenedCallback();
+
+  // callback running in app event loop.
+  ListenErrorCallback GetListenErrorCallback();
+  void SetListenErrorCallback(const ListenErrorCallback &cb);
+  void ResetListenErrorCallback();
+
+  // callback running in app event loop.
+  AsyncConnectedCallback GetAsyncConnectedCallback() const;
+  void SetAsyncConnectedCallback(const AsyncConnectedCallback &cb);
+  void ResetAsyncConnectedCallback();
+
+  // callback running in app event loop.
+  AsyncConnectErroCallback GetAsyncConnectErroCallback() const;
+  void SetAsyncConnectErroCallback(const AsyncConnectErroCallback &cb);
+  void ResetAsyncConnectErroCallback();
 
   // callback running in app event loop.
   ConnectCallback GetConnectCallback() const;
@@ -65,20 +98,31 @@ class TcpService {
   void ResetReceiveDecodeCallback();
 
  private:
-  bool BuildListenSocket(const ::mysya::ioevent::SocketAddress &listen_addr);
-  bool BuildConnectedSocket(std::unique_ptr< ::mysya::ioevent::TcpSocket> &socket);
+  bool BuildListenSocket(TransportAgent *transport_agent,
+      ::mysya::ioevent::TcpSocket *listen_socket,
+      const ::mysya::ioevent::SocketAddress &listen_addr,
+      int backlog = 256);
+  bool BuildConnectedSocket(::mysya::ioevent::TcpSocket *socket);
   TransportAgent *AllocateTransportAgent();
 
   void OnListenRead(::mysya::ioevent::EventChannel *event_channel);
   void OnListenError(::mysya::ioevent::EventChannel *event_channel);
 
-  ::mysya::ioevent::SocketAddress listen_addr_;
+  // ::mysya::ioevent::SocketAddress listen_addr_;
   ::mysya::ioevent::EventLoop *app_event_loop_;
   EventLoopThreadPool *thread_pool_;
 
   size_t next_agent_;
   TransportAgentVector transport_agents_;
-  ::mysya::ioevent::TcpSocket listen_socket_;
+  // ::mysya::ioevent::TcpSocket listen_socket_;
+
+  TcpSocketMap listen_sockets_;
+
+  ListenedCallback listened_cb_;
+  ListenErrorCallback listen_error_cb_;
+
+  AsyncConnectedCallback async_connected_cb_;
+  AsyncConnectErroCallback async_connect_error_cb_;
 
   ConnectCallback connect_cb_;
   ReceiveCallback receive_cb_;
