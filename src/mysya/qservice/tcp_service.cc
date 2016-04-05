@@ -45,12 +45,12 @@ TcpService::~TcpService() {
   this->transport_agents_.clear();
 }
 
-int TcpService::AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms) {
-  return this->AllocateTransportAgent()->AsyncConnect(addr, timeout_ms);
-}
-
 int TcpService::Listen(const ::mysya::ioevent::SocketAddress &addr) {
   return this->AllocateTransportAgent()->Listen(addr);
+}
+
+int TcpService::AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms) {
+  return this->AllocateTransportAgent()->AsyncConnect(addr, timeout_ms);
 }
 
 TcpService::ListenedCallback TcpService::GetListenedCallback() {

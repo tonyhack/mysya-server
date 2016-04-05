@@ -49,8 +49,8 @@ class TcpService {
   ~TcpService();
 
   // running in app event loop.
-  int AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms);
   int Listen(const ::mysya::ioevent::SocketAddress &addr);
+  int AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms);
 
   // callback running in app event loop.
   ListenedCallback GetListenedCallback();

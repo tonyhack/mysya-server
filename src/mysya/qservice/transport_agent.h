@@ -36,8 +36,8 @@ class TransportAgent {
       ::mysya::ioevent::EventLoop *app_event_loop);
   ~TransportAgent();
 
-  ::mysya::ioevent::EventLoop *GetNetworkEventLoop() const;
   ::mysya::ioevent::EventLoop *GetAppEventLoop() const;
+  ::mysya::ioevent::EventLoop *GetNetworkEventLoop() const;
 
   // running in app event loop.
   bool SendMessage(int sockfd, const char *data, size_t size);
@@ -45,18 +45,17 @@ class TransportAgent {
   // running in ReceiveDecodeCallback.
   int DoReceive(int sockfd, const char *data, int size);
 
-  // runnint in app event loop.
-  int AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms);
-  int Listen(const ::mysya::ioevent::SocketAddress &addr);
-
  private:
+  int Listen(const ::mysya::ioevent::SocketAddress &addr);
+  int AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms);
+
   void AddAsyncConnectSocketTimer(::mysya::ioevent::TcpSocket *socket,
       int expire_ms, const ExpireCallback &cb);
   void RemoveAsyncConnectSocketTimer(::mysya::ioevent::TcpSocket *socket);
 
   bool AddTcpSocket(::mysya::ioevent::TcpSocket *tcp_socket);
-
   ::mysya::ioevent::TcpSocket *RemoveTcpSocket(int sockfd);
+
   void CloseTcpSocket(int sockfd);
 
   // async connect.
