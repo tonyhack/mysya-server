@@ -12,18 +12,20 @@ namespace mysya {
 namespace qservice {
 namespace test {
 
-class EchoConnection {
+class BroadcastConnection {
  public:
-  EchoConnection(int sockfd, TransportAgent *transport_agent)
+  BroadcastConnection(int sockfd, TransportAgent *transport_agent)
     : sockfd_(sockfd), timer_id_(-1), host_(transport_agent) {
     char data[1024];
-    size_t data_size = snprintf(data, sizeof(data), "[%d] this is a echo test.", sockfd);
+    size_t data_size = snprintf(data, sizeof(data),
+        "[%d] %s %s", sockfd, "################################################################",
+        "################################################################");
 
-    this->timer_id_ = this->host_->GetAppEventLoop()->StartTimer(200,
-        std::bind(&EchoConnection::EchoRequest, this, std::placeholders::_1,
+    this->timer_id_ = this->host_->GetAppEventLoop()->StartTimer(100,
+        std::bind(&BroadcastConnection::BroadcastRequest, this, std::placeholders::_1,
           std::string(data, data_size)), -1);
   }
-  ~EchoConnection() {
+  ~BroadcastConnection() {
     this->host_->GetAppEventLoop()->StopTimer(this->timer_id_);
   }
 
@@ -38,8 +40,8 @@ class EchoConnection {
     return this->host_;
   }
 
-  void EchoRequest(int timer_id, const ::std::string &data) {
-    MYSYA_DEBUG("EchoClient %d %s", data.size(), data.data());
+  void BroadcastRequest(int timer_id, const ::std::string &data) {
+    MYSYA_DEBUG("BroadcastClient %d %s", data.size(), data.data());
     this->SendMessage(data.data(), data.size());
   }
 
@@ -49,21 +51,21 @@ class EchoConnection {
   ::mysya::qservice::TransportAgent *host_;
 };
 
-class EchoClient {
+class BroadcastClient {
  public:
-  typedef std::map<int, EchoConnection *> ConnectionMap;
+  typedef std::map<int, BroadcastConnection *> ConnectionMap;
   typedef std::set<int> ConnectionSet;
 
-  EchoClient();
-  ~EchoClient();
+  BroadcastClient();
+  ~BroadcastClient();
 
   void Start();
 
   void AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms = -1);
 
-  bool AddConnection(EchoConnection *connection);
-  EchoConnection *RemoveConnection(int sockfd);
-  EchoConnection *GetConnection(int sockfd);
+  bool AddConnection(BroadcastConnection *connection);
+  BroadcastConnection *RemoveConnection(int sockfd);
+  BroadcastConnection *GetConnection(int sockfd);
 
   void OnAsyncConnected(int sockfd, TransportAgent *transport_agent);
   void OnAsyncConnectError(int sockfd, int socket_errno);
@@ -84,37 +86,37 @@ class EchoClient {
   ConnectionMap connections_;
 };
 
-EchoClient::EchoClient()
+BroadcastClient::BroadcastClient()
   : app_event_loop_(), thread_pool_(2),
     tcp_service_(&app_event_loop_, &thread_pool_) {
 
   this->tcp_service_.SetAsyncConnectedCallback(
-      std::bind(&EchoClient::OnAsyncConnected, this, std::placeholders::_1,
+      std::bind(&BroadcastClient::OnAsyncConnected, this, std::placeholders::_1,
         std::placeholders::_2));
   this->tcp_service_.SetAsyncConnectErroCallback(
-      std::bind(&EchoClient::OnAsyncConnectError, this, std::placeholders::_1,
+      std::bind(&BroadcastClient::OnAsyncConnectError, this, std::placeholders::_1,
         std::placeholders::_2));
 
   this->tcp_service_.SetReceiveCallback(
-      std::bind(&EchoClient::OnReceive, this, std::placeholders::_1,
+      std::bind(&BroadcastClient::OnReceive, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
   this->tcp_service_.SetCloseCallback(
-      std::bind(&EchoClient::OnClose, this, std::placeholders::_1));
+      std::bind(&BroadcastClient::OnClose, this, std::placeholders::_1));
   this->tcp_service_.SetErrorCallback(
-      std::bind(&EchoClient::OnError, this, std::placeholders::_1,
+      std::bind(&BroadcastClient::OnError, this, std::placeholders::_1,
         std::placeholders::_2));
   this->tcp_service_.SetReceiveDecodeCallback(
-      std::bind(&EchoClient::OnReceiveDecode, this, std::placeholders::_1,
+      std::bind(&BroadcastClient::OnReceiveDecode, this, std::placeholders::_1,
         std::placeholders::_2));
 }
 
-EchoClient::~EchoClient() {}
+BroadcastClient::~BroadcastClient() {}
 
-void EchoClient::Start() {
+void BroadcastClient::Start() {
   this->app_event_loop_.Loop();
 }
 
-void EchoClient::AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms) {
+void BroadcastClient::AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int timeout_ms) {
   int sockfd = tcp_service_.AsyncConnect(addr, timeout_ms);
   if (sockfd == -1) {
     MYSYA_ERROR("[ECHO] AsyncConnect(%s:%d, %d) failed.",
@@ -125,7 +127,7 @@ void EchoClient::AsyncConnect(const ::mysya::ioevent::SocketAddress &addr, int t
   this->pendings_.insert(sockfd);
 }
 
-bool EchoClient::AddConnection(EchoConnection *connection) {
+bool BroadcastClient::AddConnection(BroadcastConnection *connection) {
   ConnectionMap::iterator iter = this->connections_.find(connection->GetSockfd());
   if (iter != this->connections_.end()) {
     return false;
@@ -135,8 +137,8 @@ bool EchoClient::AddConnection(EchoConnection *connection) {
   return true;
 }
 
-EchoConnection *EchoClient::RemoveConnection(int sockfd) {
-  EchoConnection *connection = NULL;
+BroadcastConnection *BroadcastClient::RemoveConnection(int sockfd) {
+  BroadcastConnection *connection = NULL;
 
   ConnectionMap::iterator iter = this->connections_.find(sockfd);
   if (iter != this->connections_.end()) {
@@ -147,8 +149,8 @@ EchoConnection *EchoClient::RemoveConnection(int sockfd) {
   return connection;
 }
 
-EchoConnection *EchoClient::GetConnection(int sockfd) {
-  EchoConnection *connection = NULL;
+BroadcastConnection *BroadcastClient::GetConnection(int sockfd) {
+  BroadcastConnection *connection = NULL;
 
   ConnectionMap::iterator iter = this->connections_.find(sockfd);
   if (iter != this->connections_.end()) {
@@ -158,17 +160,17 @@ EchoConnection *EchoClient::GetConnection(int sockfd) {
   return connection;
 }
 
-void EchoClient::OnAsyncConnected(int sockfd, TransportAgent *transport_agent) {
+void BroadcastClient::OnAsyncConnected(int sockfd, TransportAgent *transport_agent) {
   ConnectionSet::iterator iter = this->pendings_.find(sockfd);
   if (iter == this->pendings_.end()) {
     MYSYA_ERROR("[ECHO] sockfd(%d) not found in pendings.", sockfd);
     return;
   }
 
-  std::unique_ptr<EchoConnection> connection(
-      new (std::nothrow) EchoConnection(sockfd, transport_agent));
+  std::unique_ptr<BroadcastConnection> connection(
+      new (std::nothrow) BroadcastConnection(sockfd, transport_agent));
   if (connection.get() == NULL) {
-    MYSYA_ERROR("[ECHO] Allocate EchoConnection failed.");
+    MYSYA_ERROR("[ECHO] Allocate BroadcastConnection failed.");
     return;
   }
 
@@ -182,14 +184,14 @@ void EchoClient::OnAsyncConnected(int sockfd, TransportAgent *transport_agent) {
   MYSYA_DEBUG("[ECHO] async connected sockfd(%d).", sockfd);
 }
 
-void EchoClient::OnAsyncConnectError(int sockfd, int socket_errno) {
+void BroadcastClient::OnAsyncConnectError(int sockfd, int socket_errno) {
   this->pendings_.erase(sockfd);
 
   MYSYA_DEBUG("[ECHO] async connect error sockfd(%d) socket_errno(%d).", socket_errno);
 }
 
-void EchoClient::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
-  EchoConnection *connection = this->GetConnection(sockfd);
+void BroadcastClient::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
+  BroadcastConnection *connection = this->GetConnection(sockfd);
   if (connection == NULL) {
     return;
   }
@@ -216,8 +218,8 @@ void EchoClient::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *bu
   }
 }
 
-void EchoClient::OnReceive(int sockfd, const char *data, int size) {
-  EchoConnection *connection = this->GetConnection(sockfd);
+void BroadcastClient::OnReceive(int sockfd, const char *data, int size) {
+  BroadcastConnection *connection = this->GetConnection(sockfd);
   if (connection == NULL) {
     return;
   }
@@ -225,40 +227,26 @@ void EchoClient::OnReceive(int sockfd, const char *data, int size) {
   MYSYA_DEBUG("[ECHO] receive[%s]", data);
 }
 
-void EchoClient::OnClose(int sockfd) {
+void BroadcastClient::OnClose(int sockfd) {
   delete this->RemoveConnection(sockfd);
 
   MYSYA_DEBUG("[ECHO] OnClose.");
 }
 
-void EchoClient::OnError(int sockfd, int socket_errno) {
+void BroadcastClient::OnError(int sockfd, int socket_errno) {
   delete this->RemoveConnection(sockfd);
 
   MYSYA_DEBUG("[ECHO] OnError errno(%d).", socket_errno);
 }
 
 void TestFunc() {
-  ::mysya::ioevent::SocketAddress listen_addr1("0.0.0.0", 9991);
-  ::mysya::ioevent::SocketAddress listen_addr2("0.0.0.0", 9992);
-  ::mysya::ioevent::SocketAddress listen_addr3("0.0.0.0", 9993);
-  ::mysya::ioevent::SocketAddress listen_addr4("0.0.0.0", 9994);
-  ::mysya::ioevent::SocketAddress listen_addr5("0.0.0.0", 9995);
-  ::mysya::ioevent::SocketAddress listen_addr6("0.0.0.0", 9996);
-  ::mysya::ioevent::SocketAddress listen_addr7("0.0.0.0", 9997);
-  ::mysya::ioevent::SocketAddress listen_addr8("0.0.0.0", 9998);
-  ::mysya::ioevent::SocketAddress listen_addr9("0.0.0.0", 9999);
+  ::mysya::ioevent::SocketAddress listen_addr("0.0.0.0", 9999);
 
-  EchoClient client;
+  BroadcastClient client;
 
-  client.AsyncConnect(listen_addr1, 100);
-  client.AsyncConnect(listen_addr2, 100);
-  client.AsyncConnect(listen_addr3, 100);
-  client.AsyncConnect(listen_addr4, 100);
-  client.AsyncConnect(listen_addr5, 100);
-  client.AsyncConnect(listen_addr6, 100);
-  client.AsyncConnect(listen_addr7, 100);
-  client.AsyncConnect(listen_addr8, 100);
-  client.AsyncConnect(listen_addr9, 100);
+  for (size_t i = 0; i < 500; ++i) {
+    client.AsyncConnect(listen_addr, 1000);
+  }
 
   client.Start();
 }
