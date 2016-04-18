@@ -67,7 +67,7 @@ int MessageQueue::Pop(int &host, ::mysya::ioevent::DynamicBuffer &buffer) {
 
   int ret_size = element->size_;
   host = element->host_;
-  buffer.ReserveWritableBytes(ret_size);
+  // buffer.ReserveWritableBytes(ret_size);
   buffer.Append(element->data_, element->size_);
   this->consumer_->ReadBytes(ret_size + sizeof(MessageQueueElement));
 

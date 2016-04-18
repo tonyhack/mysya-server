@@ -120,7 +120,7 @@ void OnRead(EventChannel *channel) {
         quit = true;
       }
 
-      MYSYA_INFO("Receive from client: %s", buffer.ReadBegin());
+      MYSYA_INFO("Receive from client size(%s)", buffer.ReadBegin());
 
       buffer.ReadBytes(read_size);
     } while (false);

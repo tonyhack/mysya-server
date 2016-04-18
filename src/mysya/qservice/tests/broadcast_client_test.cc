@@ -16,14 +16,14 @@ class BroadcastConnection {
  public:
   BroadcastConnection(int sockfd, TransportAgent *transport_agent)
     : sockfd_(sockfd), timer_id_(-1), host_(transport_agent) {
-    char data[1024];
-    size_t data_size = snprintf(data, sizeof(data),
-        "[%d] %s %s", sockfd, "################################################################",
-        "################################################################");
+
+    std::vector<char> data;
+    data.resize(128, '#');
+    *(int *)&data[0] = 120;
+    this->data_.assign(&data[0], sizeof(int) + 120);
 
     this->timer_id_ = this->host_->GetAppEventLoop()->StartTimer(100,
-        std::bind(&BroadcastConnection::BroadcastRequest, this, std::placeholders::_1,
-          std::string(data, data_size)), -1);
+        std::bind(&BroadcastConnection::BroadcastRequest, this, std::placeholders::_1), -1);
   }
   ~BroadcastConnection() {
     this->host_->GetAppEventLoop()->StopTimer(this->timer_id_);
@@ -40,14 +40,14 @@ class BroadcastConnection {
     return this->host_;
   }
 
-  void BroadcastRequest(int timer_id, const ::std::string &data) {
-    MYSYA_DEBUG("BroadcastClient %d %s", data.size(), data.data());
-    this->SendMessage(data.data(), data.size());
+  void BroadcastRequest(int timer_id) {
+    this->SendMessage(this->data_.data(), this->data_.size());
   }
 
  private:
   int sockfd_;
   int64_t timer_id_;
+  std::string data_;
   ::mysya::qservice::TransportAgent *host_;
 };
 
@@ -70,7 +70,7 @@ class BroadcastClient {
   void OnAsyncConnected(int sockfd, TransportAgent *transport_agent);
   void OnAsyncConnectError(int sockfd, int socket_errno);
 
-  void OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer);
+  bool OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer);
 
   void OnReceive(int sockfd, const char *data, int size);
   void OnClose(int sockfd);
@@ -87,7 +87,7 @@ class BroadcastClient {
 };
 
 BroadcastClient::BroadcastClient()
-  : app_event_loop_(), thread_pool_(2),
+  : app_event_loop_(), thread_pool_(1),
     tcp_service_(&app_event_loop_, &thread_pool_) {
 
   this->tcp_service_.SetAsyncConnectedCallback(
@@ -190,32 +190,27 @@ void BroadcastClient::OnAsyncConnectError(int sockfd, int socket_errno) {
   MYSYA_DEBUG("[ECHO] async connect error sockfd(%d) socket_errno(%d).", socket_errno);
 }
 
-void BroadcastClient::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
+bool BroadcastClient::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
   BroadcastConnection *connection = this->GetConnection(sockfd);
   if (connection == NULL) {
-    return;
+    return false;
   }
 
+  int head_size = sizeof(int);
   int readable_bytes = buffer->ReadableBytes();
-  if (readable_bytes <= 0) {
-    return;
+  if (readable_bytes < head_size) {
+    return false;
   }
 
-  int read_bytes = 0;
-  for (int i = 0; i < readable_bytes; ++i) {
-    if (buffer->ReadBegin()[i] == '\n') {
-      read_bytes = i + 1;
-    }
+  int message_size = *(int *)buffer->ReadBegin();
+  if (readable_bytes < message_size + head_size) {
+    return false;
   }
 
-  if (read_bytes > 0) {
-    read_bytes = connection->GetHost()->DoReceive(sockfd, buffer->ReadBegin(), read_bytes);
-    if (read_bytes < 0) {
-      return;
-    }
+  connection->GetHost()->DoReceive(sockfd, buffer->ReadBegin() + head_size, message_size);
+  buffer->ReadBytes(message_size + head_size);
 
-    buffer->ReadBytes(read_bytes);
-  }
+  return true;
 }
 
 void BroadcastClient::OnReceive(int sockfd, const char *data, int size) {
@@ -224,7 +219,7 @@ void BroadcastClient::OnReceive(int sockfd, const char *data, int size) {
     return;
   }
 
-  MYSYA_DEBUG("[ECHO] receive[%s]", data);
+  MYSYA_DEBUG("[ECHO] receive[%d]", size);
 }
 
 void BroadcastClient::OnClose(int sockfd) {
@@ -240,7 +235,7 @@ void BroadcastClient::OnError(int sockfd, int socket_errno) {
 }
 
 void TestFunc() {
-  ::mysya::ioevent::SocketAddress listen_addr("0.0.0.0", 9999);
+  ::mysya::ioevent::SocketAddress listen_addr("127.0.0.1", 9999);
 
   BroadcastClient client;
 

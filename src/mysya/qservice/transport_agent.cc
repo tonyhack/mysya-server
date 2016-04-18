@@ -342,8 +342,8 @@ void TransportAgent::OnSocketRead(::mysya::ioevent::EventChannel *event_channel)
 
   // received callback.
   TcpService::ReceiveDecodeCallback receive_decode_cb = this->host_->GetReceiveDecodeCallback();
-  if (received == true and receive_decode_cb) {
-    receive_decode_cb(sockfd, receive_buffer);
+  if (received == true && receive_decode_cb) {
+      while (receive_decode_cb(sockfd, receive_buffer) == true);
   }
 
   if (peer_closed == true) {

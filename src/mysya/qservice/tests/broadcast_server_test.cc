@@ -81,7 +81,7 @@ class BroadcastServer {
 
   Room *AllocateRoom();
 
-  void OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer);
+  bool OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer);
 
   void OnNewConnection(int sockfd, ::mysya::qservice::TransportAgent *transport_agent);
   void OnReceive(int sockfd, const char *data, int size);
@@ -124,10 +124,14 @@ void Room::RemoveConnection(int sockfd) {
 }
 
 void Room::Broadcast(const char *data, int size) {
+  std::string message;
+  message.assign((char *)&size, sizeof(int));
+  message.append(data, size);
+
   for (ConnectionSet::const_iterator iter = this->connections_.begin();
       iter != this->connections_.end(); ++iter) {
     Connection *connection = this->host_->GetConnection(*iter);
-    connection->SendMessage(data, size);
+    connection->SendMessage(message.data(), message.size());
   }
 }
 
@@ -213,32 +217,27 @@ Room *BroadcastServer::AllocateRoom() {
   return room;
 }
 
-void BroadcastServer::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
+bool BroadcastServer::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
   Connection *connection = this->GetConnection(sockfd);
   if (connection == NULL) {
-    return;
+    return false;
   }
 
+  int head_size = sizeof(int);
   int readable_bytes = buffer->ReadableBytes();
-  if (readable_bytes <= 0) {
-    return;
+  if (readable_bytes <= head_size) {
+    return false;
   }
 
-  int read_bytes = 0;
-  for (int i = 0; i < readable_bytes; ++i) {
-    if (buffer->ReadBegin()[i] == '\n') {
-      read_bytes = i + 1;
-    }
+  int message_size = *(int *)buffer->ReadBegin();
+  if (readable_bytes < message_size + head_size) {
+    return false;
   }
 
-  if (read_bytes > 0) {
-    read_bytes = connection->GetHost()->DoReceive(sockfd, buffer->ReadBegin(), read_bytes);
-    if (read_bytes < 0) {
-      return;
-    }
+  connection->GetHost()->DoReceive(sockfd, buffer->ReadBegin() + head_size, message_size);
+  buffer->ReadBytes(message_size + head_size);
 
-    buffer->ReadBytes(read_bytes);
-  }
+  return true;
 }
 
 void BroadcastServer::OnNewConnection(int sockfd, ::mysya::qservice::TransportAgent *transport_agent) {

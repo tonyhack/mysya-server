@@ -68,7 +68,7 @@ class EchoClient {
   void OnAsyncConnected(int sockfd, TransportAgent *transport_agent);
   void OnAsyncConnectError(int sockfd, int socket_errno);
 
-  void OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer);
+  bool OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer);
 
   void OnReceive(int sockfd, const char *data, int size);
   void OnClose(int sockfd);
@@ -188,15 +188,15 @@ void EchoClient::OnAsyncConnectError(int sockfd, int socket_errno) {
   MYSYA_DEBUG("[ECHO] async connect error sockfd(%d) socket_errno(%d).", socket_errno);
 }
 
-void EchoClient::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
+bool EchoClient::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
   EchoConnection *connection = this->GetConnection(sockfd);
   if (connection == NULL) {
-    return;
+    return false;
   }
 
   int readable_bytes = buffer->ReadableBytes();
   if (readable_bytes <= 0) {
-    return;
+    return false;
   }
 
   int read_bytes = 0;
@@ -209,11 +209,15 @@ void EchoClient::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *bu
   if (read_bytes > 0) {
     read_bytes = connection->GetHost()->DoReceive(sockfd, buffer->ReadBegin(), read_bytes);
     if (read_bytes < 0) {
-      return;
+      return false;
     }
 
     buffer->ReadBytes(read_bytes);
+
+    return true;
   }
+
+  return false;
 }
 
 void EchoClient::OnReceive(int sockfd, const char *data, int size) {

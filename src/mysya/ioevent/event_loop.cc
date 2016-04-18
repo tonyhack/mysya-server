@@ -153,14 +153,18 @@ void EventLoop::Loop() {
         if (this->CheckEventChannelRemoved(event_channel) == true) {
           continue;
         }
-        event_channel->GetReadCallback()(event_channel);
+        if (event_channel->GetReadCallback()) {
+          event_channel->GetReadCallback()(event_channel);
+        }
       }
 
       if (event->events & EventLoop::kWriteEventMask) {
         if (this->CheckEventChannelRemoved(event_channel) == true) {
           continue;
         }
-        event_channel->GetWriteCallback()(event_channel);
+        if (event_channel->GetWriteCallback()) {
+          event_channel->GetWriteCallback()(event_channel);
+        }
       }
 
       if (event->events & EventLoop::kErrorEventMask) {
@@ -183,7 +187,6 @@ void EventLoop::Quit() {
   this->quit_ = true;
 }
 
-// TODO
 void EventLoop::Wakeup() {
   eventfd_t data = 1;
   ssize_t ret = ::write(this->wakeup_fd_, &data, sizeof(data));

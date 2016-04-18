@@ -33,7 +33,7 @@ class TcpService {
   typedef std::function<void (int, const char *, int)> ReceiveCallback;
   typedef std::function<void (int)> CloseCallback;
   typedef std::function<void (int, int)> ErrorCallback;
-  typedef std::function<void (int, ::mysya::ioevent::DynamicBuffer *)> ReceiveDecodeCallback;
+  typedef std::function<bool (int, ::mysya::ioevent::DynamicBuffer *)> ReceiveDecodeCallback;
 
   typedef std::function<void (int)> ListenedCallback;
   typedef std::function<void (int, int)> ListenErrorCallback;

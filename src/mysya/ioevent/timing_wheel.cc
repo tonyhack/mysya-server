@@ -205,14 +205,12 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
   this->debug_tick_counts_ = 0;
 #endif  // _MYSYA_DEBUG_
 
-  // TODO: unique_ptr<> ?
   this->event_channel_ = new (std::nothrow) EventChannel();
   if (this->event_channel_ == NULL) {
     ::mysya::util::ThrowSystemErrorException(
         "TimingWheel::TimingWheel(): allocate EventChannel failed.");
   }
 
-  // TODO: unique_ptr<> ?
   this->timer_ids_ = new (std::nothrow) TimerIdAllocator();
   if (this->timer_ids_ == NULL) {
     ::mysya::util::ThrowSystemErrorException(
@@ -221,7 +219,6 @@ TimingWheel::TimingWheel(int tick_ms, EventLoop *event_loop)
 
   // Allocate wheels.
   for (int i = 0; i < 5; ++i) {
-    // TODO: unique_ptr<> ?
     Wheel *wheel =
       new (std::nothrow) Wheel(this, i, kTimingWheelBucketNum[i]);
     if (wheel == NULL) {

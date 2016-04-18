@@ -141,7 +141,7 @@ void OnReceive(TcpSocketApp *app, int sockfd, DynamicBuffer *buffer) {
       quit = true;
     }
 
-    MYSYA_INFO("Receive from client(%s:%d) socket(%d) content[%s].",
+    MYSYA_INFO("Receive from client(%s:%d) socket(%d) content_size[%s].",
         peer_addr.GetHost().data(), peer_addr.GetPort(), sockfd, data);
 
     buffer->ReadBytes(readable_bytes);

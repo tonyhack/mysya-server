@@ -48,7 +48,7 @@ class EchoServer {
   EchoConnection *RemoveConnection(int sockfd);
   EchoConnection *GetConnection(int sockfd);
 
-  void OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer);
+  bool OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer);
 
   void OnNewConnection(int sockfd, ::mysya::qservice::TransportAgent *transport_agent);
   void OnReceive(int sockfd, const char *data, int size);
@@ -139,15 +139,15 @@ EchoConnection *EchoServer::GetConnection(int sockfd) {
   return connection;
 }
 
-void EchoServer::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
+bool EchoServer::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
   EchoConnection *connection = this->GetConnection(sockfd);
   if (connection == NULL) {
-    return;
+    return false;
   }
 
   int readable_bytes = buffer->ReadableBytes();
   if (readable_bytes <= 0) {
-    return;
+    return false;
   }
 
   int read_bytes = 0;
@@ -160,13 +160,15 @@ void EchoServer::OnReceiveDecode(int sockfd, ::mysya::ioevent::DynamicBuffer *bu
   if (read_bytes > 0) {
     read_bytes = connection->GetHost()->DoReceive(sockfd, buffer->ReadBegin(), read_bytes);
     if (read_bytes < 0) {
-      return;
+      return false;
     }
 
     buffer->ReadBytes(read_bytes);
+
+    return true;
   }
 
-  MYSYA_DEBUG("[ECHO] OnReceiveDecode read_bytes(%d)", read_bytes);
+  return false;
 }
 
 void EchoServer::OnNewConnection(int sockfd, ::mysya::qservice::TransportAgent *transport_agent) {

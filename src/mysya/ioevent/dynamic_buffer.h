@@ -20,7 +20,6 @@ class DynamicBuffer {
   size_t ReadableBytes() const;
   size_t WritableBytes() const;
 
-  // TODO: remove non-const ReadBegin.
   char *ReadBegin();
   const char *ReadBegin() const;
   void ReadBytes(size_t size);
