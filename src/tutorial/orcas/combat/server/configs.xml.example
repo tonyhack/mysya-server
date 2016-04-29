@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<config>
+  <listen id="[combat_server_id]" ip="0.0.0.0" port="[combat_server_port]"/>
+  <confs>
+    <value file="[etc_dir]/combat/confs/map1001.xml"/>
+    <value file="[etc_dir]/combat/confs/map1002.xml"/>
+  </confs>
+</config>
