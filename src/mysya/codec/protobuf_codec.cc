@@ -11,7 +11,8 @@
 namespace mysya {
 namespace codec {
 
-ProtobufCodec::ProtobufCodec(::mysya::ioevent::TcpSocketApp *socket_app) {}
+ProtobufCodec::ProtobufCodec(::mysya::ioevent::TcpSocketApp *socket_app)
+  : socket_app_(socket_app) {}
 ProtobufCodec::~ProtobufCodec() {}
 
 void ProtobufCodec::SetMessageCallback(const MessageCallback &cb) {

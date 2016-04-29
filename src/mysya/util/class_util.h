@@ -46,6 +46,9 @@
   _T(const _T &);                             \
   void operator=(const _T &);                 \
 
+#define MYSYA_SINGLETON_IMPL(_T)              \
+  _T *_T::g_instance_ = NULL;
+
 
 #define MYSYA_SINGLETON2(_T)                  \
  public:                                      \
