@@ -131,7 +131,7 @@ void TcpSocketApp::SetSendCompleteCallback(const SendCompleteCallback &cb) {
   this->send_complete_cb_ = cb;
 }
 
-void TcpSocketApp::ResetetSendCompleteCallback() {
+void TcpSocketApp::ResetSendCompleteCallback() {
   SendCompleteCallback cb;
   this->send_complete_cb_.swap(cb);
 }

@@ -49,7 +49,7 @@ class TcpSocketApp {
   const ReceiveCallback &GetReceiveCallback() const;
 
   void SetSendCompleteCallback(const SendCompleteCallback &cb);
-  void ResetetSendCompleteCallback();
+  void ResetSendCompleteCallback();
   const SendCompleteCallback &GetSendCompleteCallback() const;
 
   void SetCloseCallback(const CloseCallback &cb);

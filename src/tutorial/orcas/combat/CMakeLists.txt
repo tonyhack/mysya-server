@@ -11,3 +11,4 @@ set(COMBAT_PROTOCOL_SOURCES
 
 add_subdirectory(protocol)
 add_subdirectory(server)
+add_subdirectory(client)

@@ -42,6 +42,17 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
 }
 
 AppServer::~AppServer() {
+  for (CodecHashmap::iterator iter = this->protobuf_codecs_.begin();
+      iter != this->protobuf_codecs_.end(); ++iter) {
+    iter->second->ResetMessageCallback();
+    delete iter->second;
+  }
+
+  this->tcp_socket_app_.ResetConnectionCallback();
+  this->tcp_socket_app_.ResetReceiveCallback();
+  this->tcp_socket_app_.ResetSendCompleteCallback();
+  this->tcp_socket_app_.ResetCloseCallback();
+  this->tcp_socket_app_.ResetErrorCallback();
   this->combat_message_handler_.ResetMessageHandlers();
 }
 
@@ -117,6 +128,9 @@ void AppServer::OnConnected(::mysya::ioevent::TcpSocketApp *app, int sockfd) {
       MYSYA_DEBUG("[APP_SERVER] Allocate ProtobufCodec failed.");
       return;
     }
+
+    codec->SetMessageCallback(std::bind(&AppServer::OnMessage, this,
+          std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     this->protobuf_codecs_.insert(std::make_pair(app, codec.get()));
 
