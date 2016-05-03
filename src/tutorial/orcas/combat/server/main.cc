@@ -74,10 +74,12 @@ bool CommandLineOption::Parse(int argc, char *argv[]) {
   }
 
   if (this->conf_file_.empty() == true) {
-    this->error_ += "missing option -c;";
+    this->error_ += "missing option -c";
+    return false;
   }
   if (this->pid_file_.empty() == true) {
-    this->error_ += "missing option -p;";
+    this->error_ += "missing option -p";
+    return false;
   }
   if (this->log_dir_.empty() == true) {
     this->log_dir_ = ".log/";

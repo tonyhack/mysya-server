@@ -21,4 +21,4 @@ set(COMBAT_SERVER_SOURCES
     )
 
 add_executable(combat_server ${UTIL_SOURCES} ${COMBAT_SOURCES} ${ORCAS_PROTOCOL_SOURCES} ${COMBAT_PROTOCOL_SOURCES} ${COMBAT_SERVER_SOURCES})
-target_link_libraries(combat_server mysya-ioevent mysya-codec protobuf pthread rt dl)
+target_link_libraries(combat_server mysya-ioevent mysya-codec mysya-orcas-deps protobuf pthread rt dl)

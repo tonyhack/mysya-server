@@ -23,6 +23,22 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
     tcp_socket_app_(event_loop_),
     combat_message_handler_(this) {
   this->combat_message_handler_.SetMessageHandlers();
+
+  this->tcp_socket_app_.SetConnectionCallback(
+      std::bind(&AppServer::OnConnected, this, std::placeholders::_1,
+        std::placeholders::_2));
+  this->tcp_socket_app_.SetReceiveCallback(
+      std::bind(&AppServer::OnReceive, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3));
+  this->tcp_socket_app_.SetSendCompleteCallback(
+      std::bind(&AppServer::OnSendCompleted, this, std::placeholders::_1,
+        std::placeholders::_2));
+  this->tcp_socket_app_.SetCloseCallback(
+      std::bind(&AppServer::OnClose, this, std::placeholders::_1,
+        std::placeholders::_2));
+  this->tcp_socket_app_.SetErrorCallback(
+      std::bind(&AppServer::OnError, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3));
 }
 
 AppServer::~AppServer() {
@@ -152,6 +168,8 @@ void AppServer::OnClose(::mysya::ioevent::TcpSocketApp *app, int sockfd) {
   }
 
   delete session;
+
+  MYSYA_DEBUG("[APP_SERVER] sockfd(%d) closed.", sockfd);
 }
 
 void AppServer::OnError(::mysya::ioevent::TcpSocketApp *app, int sockfd, int error_code) {
@@ -162,6 +180,8 @@ void AppServer::OnError(::mysya::ioevent::TcpSocketApp *app, int sockfd, int err
   }
 
   delete session;
+
+  MYSYA_DEBUG("[APP_SERVER] sockfd(%d) error.", sockfd);
 }
 
 void AppServer::OnMessage(int sockfd, ::mysya::ioevent::TcpSocketApp *app,

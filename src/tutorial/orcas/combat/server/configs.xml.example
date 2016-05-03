@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <config>
   <listen id="[combat_server_id]" ip="0.0.0.0" port="[combat_server_port]"/>
+  <pool>
+    <combat initial_size="100" extend_size="10"/>
+    <combat_warrior initial_size="100" extend_size="10"/>
+    <combat_role initial_size="100" extend_size="10"/>
+  </pool>
   <confs>
     <value file="[etc_dir]/combat/confs/map1001.xml"/>
     <value file="[etc_dir]/combat/confs/map1002.xml"/>

@@ -11,5 +11,6 @@ set(ORCAS_PROTOCOL_SOURCES
 include_directories(${ORCAS_SOURCE_DIR}/protocol/cc)
 
 add_subdirectory(protocol)
+add_subdirectory(deps)
 add_subdirectory(combat)
 # add_subdirectory(gateway)
