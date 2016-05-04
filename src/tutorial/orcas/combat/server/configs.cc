@@ -1,6 +1,6 @@
 #include "tutorial/orcas/combat/server/configs.h"
 
-#include "mysya/ioevent/logger.h"
+#include <mysya/ioevent/logger.h>
 
 #include "tutorial/orcas/deps/tinyxml/tinyxml.h"
 
@@ -16,6 +16,7 @@ Configs::~Configs() {}
 
 bool Configs::Load(const std::string &file) {
   TiXmlDocument doc;
+
   if (doc.LoadFile(file.data()) == false) {
     MYSYA_ERROR("Load conf(%s) failed.", file.data());
     return false;
