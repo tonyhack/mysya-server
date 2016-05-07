@@ -364,8 +364,8 @@ bool TcpSocketApp::BuildConnectedSocket(std::unique_ptr<TcpSocket> &socket) {
 
   socket->GetEventChannel()->SetReadCallback(
       std::bind(&TcpSocketApp::OnSocketRead, this, std::placeholders::_1));
-  socket->GetEventChannel()->SetWriteCallback(
-      std::bind(&TcpSocketApp::OnSocketWrite, this, std::placeholders::_1));
+  // socket->GetEventChannel()->SetWriteCallback(
+  //     std::bind(&TcpSocketApp::OnSocketWrite, this, std::placeholders::_1));
   socket->GetEventChannel()->SetErrorCallback(
       std::bind(&TcpSocketApp::OnSocketError, this, std::placeholders::_1));
 
@@ -451,7 +451,7 @@ void TcpSocketApp::AddSocketTimer(int sockfd, int expire_ms, const ExpireCallbac
 void TcpSocketApp::RemoveSocketTimer(int sockfd) {
   SocketTimerHashmap::iterator iter = this->socket_timer_ids_.find(sockfd);
   if (iter == this->socket_timer_ids_.end()) {
-    MYSYA_ERROR("sockfd(%d) not found in socket_timer_ids_.");
+    MYSYA_ERROR("sockfd(%d) not found in socket_timer_ids_.", sockfd);
     return;
   }
 
@@ -526,7 +526,7 @@ void TcpSocketApp::OnConnectWrite(EventChannel *event_channel) {
 
   event_channel->SetReadCallback(
       std::bind(&TcpSocketApp::OnSocketRead, this, std::placeholders::_1));
-  event_channel->SetErrorCallback(
+  event_channel->SetWriteCallback(
       std::bind(&TcpSocketApp::OnSocketWrite, this, std::placeholders::_1));
   event_channel->SetErrorCallback(
       std::bind(&TcpSocketApp::OnSocketError, this, std::placeholders::_1));
@@ -534,6 +534,8 @@ void TcpSocketApp::OnConnectWrite(EventChannel *event_channel) {
   if (this->connection_cb_) {
     this->connection_cb_(this, connection_sockfd);
   }
+
+  MYSYA_DEBUG("OnConnectWrite sockfd(%d)", connection_sockfd);
 }
 
 void TcpSocketApp::OnConnectError(EventChannel *event_channel) {
@@ -557,6 +559,8 @@ void TcpSocketApp::OnConnectError(EventChannel *event_channel) {
   }
 
   this->Close(connection_sockfd);
+
+  MYSYA_DEBUG("OnConnectError sockfd(%d)", connection_socket);
 }
 
 void TcpSocketApp::OnConnectTimeout(int64_t timer_id) {
@@ -674,6 +678,8 @@ void TcpSocketApp::OnSocketWrite(EventChannel *event_channel) {
       this->send_complete_cb_(this, sockfd);
     }
   }
+
+  MYSYA_DEBUG("sockfd(%d) Writable send_size(%d).", sockfd, send_size);
 }
 
 void TcpSocketApp::OnSocketError(EventChannel *event_channel) {

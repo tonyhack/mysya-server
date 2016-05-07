@@ -1,5 +1,5 @@
 set(PROTO_SOURCES
-  ${COMBAT_SOURCE_DIR}/protocol/meta/message.proto
+  ${COMBAT_SOURCE_DIR}/protocol/meta/combat_message.proto
   )
 
 foreach (script ${PROTO_SOURCES})

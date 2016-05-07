@@ -22,11 +22,10 @@ namespace server {
 
 class AppSession;
 class CombatField;
-class WarriorField;
 
 class CombatRoleField {
  public:
-  typedef std::map<int32_t, WarriorField *> WarriorFieldMap;
+  typedef std::map<int32_t, ::protocol::WarriorDescription> WarriorDescriptionMap;
 
   CombatRoleField();
   ~CombatRoleField();
@@ -43,9 +42,8 @@ class CombatRoleField {
   CombatField *GetCombatField();
   void SetCombatField(CombatField *value);
 
-  bool AddWarriorField(WarriorField *warrior);
-  WarriorField *GetWarriorField(int32_t id);
-  WarriorField *RemoveWarriorField(int32_t id);
+  void AddWarriorDescription(const ::protocol::WarriorDescription &warroir);
+  const ::protocol::WarriorDescription *GetWarriorDescription(int32_t id) const;
 
   void SetAppSession(AppSession *session);
   void ResetAppSession();
@@ -55,7 +53,7 @@ class CombatRoleField {
   uint64_t argent_id_;
   int32_t camp_id_;
   CombatField *combat_field_;
-  WarriorFieldMap warrior_fields_;
+  WarriorDescriptionMap warrior_descriptions_;
 
   AppSession *app_session_;
 

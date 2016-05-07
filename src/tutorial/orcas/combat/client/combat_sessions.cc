@@ -16,6 +16,9 @@ namespace client {
 
 CombatSessions::CombatSessions(::mysya::ioevent::TcpSocketApp *tcp_socket_app)
   : tcp_socket_app_(tcp_socket_app), codec_(tcp_socket_app_) {
+  this->tcp_socket_app_->SetConnectionCallback(
+      std::bind(&CombatSessions::OnConnected, this, std::placeholders::_1,
+        std::placeholders::_2));
   this->tcp_socket_app_->SetReceiveCallback(
       std::bind(&CombatSessions::OnReceive, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));

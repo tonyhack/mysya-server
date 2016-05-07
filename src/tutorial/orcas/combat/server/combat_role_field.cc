@@ -3,8 +3,6 @@
 #include <google/protobuf/message.h>
 
 #include "tutorial/orcas/combat/server/app_session.h"
-#include "tutorial/orcas/combat/server/warrior_field.h"
-#include "tutorial/orcas/combat/server/warrior_field_pool.h"
 
 namespace tutorial {
 namespace orcas {
@@ -28,13 +26,7 @@ void CombatRoleField::Finalize() {
     this->app_session_->Remove(this);
   }
 
-  for (WarriorFieldMap::iterator iter = this->warrior_fields_.begin();
-      iter != this->warrior_fields_.end(); ++iter) {
-    iter->second->Finalize();
-    WarriorFieldPool::GetInstance()->Deallocate(iter->second);
-  }
-
-  this->warrior_fields_.clear();
+  this->warrior_descriptions_.clear();
 
   this->SetArgentId(0);
   this->SetCampId(0);
@@ -65,38 +57,22 @@ void CombatRoleField::SetCombatField(CombatField *value) {
   this->combat_field_ = value;
 }
 
-bool CombatRoleField::AddWarriorField(WarriorField *warrior) {
-  WarriorFieldMap::iterator iter =
-    this->warrior_fields_.find(warrior->GetId());
-  if (iter != this->warrior_fields_.end()) {
-    return false;
-  }
 
-  this->warrior_fields_.insert(std::make_pair(warrior->GetId(), warrior));
-  return true;
+void CombatRoleField::AddWarriorDescription(
+    const ::protocol::WarriorDescription &warroir) {
+  this->warrior_descriptions_.insert(std::make_pair(warroir.id(), warrior));
 }
 
-WarriorField *CombatRoleField::GetWarriorField(int32_t id) {
-  WarriorField *warrior = NULL;
+const ::protocol::WarriorDescription *CombatRoleField::GetWarriorDescription(
+    int32_t id) const {
+  const ::protocol::WarriorDescription *warrior = NULL;
 
-  WarriorFieldMap::iterator iter = this->warrior_fields_.find(id);
-  if (iter != this->warrior_fields_.end()) {
-    warrior = iter->second;
-  }
+  WarriorDescriptionMap::const_iterator iter = this->warrior_descriptions_.find(id);
+  if (iter != this->warrior_descriptions_.end()) {
+    warroir = &iter->second;
+ }
 
-  return warrior;
-}
-
-WarriorField *CombatRoleField::RemoveWarriorField(int32_t id) {
-  WarriorField *warrior = NULL;
-
-  WarriorFieldMap::iterator iter = this->warrior_fields_.find(id);
-  if (iter != this->warrior_fields_.end()) {
-    warrior = iter->second;
-    this->warrior_fields_.erase(iter);
-  }
-
-  return warrior;
+  return warroir;
 }
 
 void CombatRoleField::SetAppSession(AppSession *session) {

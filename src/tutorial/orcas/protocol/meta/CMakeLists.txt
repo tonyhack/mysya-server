@@ -1,5 +1,7 @@
 set(PROTO_SOURCES
+  building.proto
   warrior.proto
+  message.proto
   )
 
 foreach (script ${PROTO_SOURCES})

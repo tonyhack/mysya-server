@@ -25,6 +25,8 @@ class AppSession;
 class CombatField {
  public:
   typedef std::set<uint64_t> CombatRoleFieldSet;
+  typedef std::hash_map<int32_t, CombatWarriorField *> WarriorFieldHashmap;
+  typedef std::map<int32_t, CombatBuildingField *> BuildingFieldmap;
 
   CombatField();
   ~CombatField();
@@ -45,6 +47,9 @@ class CombatField {
  private:
   int32_t id_;
   CombatRoleFieldSet roles_;
+
+  WarriorFieldHashmap warriors_;
+  BuildingFieldmap buildings_;
 
   AppSession *app_session_;
 

@@ -57,6 +57,8 @@ class AppServer {
 
   ::mysya::ioevent::EventLoop *event_loop_;
   ::mysya::ioevent::TcpSocketApp tcp_socket_app_;
+
+  ::mysya::ioevent::TcpSocketApp combat_socket_app_;
   ::tutorial::orcas::combat::client::CombatSessions combat_clients_;
 
   Codec codec_;

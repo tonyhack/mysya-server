@@ -1,3 +1,5 @@
 src/tags
 
 build/
+src/tutorial/orcas/combat/protocol/cc
+src/tutorial/orcas/protocol/cc

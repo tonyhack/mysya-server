@@ -15,7 +15,7 @@ enum WarriorType {
 
 // 士兵描述
 message WarriorDescription {
-  optional int32 id = 1;                            // id
+  optional int32 id = 1;                            // 配置id
   optional int32 type = 2;                          // 类型(WarriorType)
   optional int32 max_hp = 3;                        // 生命值
   optional int32 attack = 4;                        // 攻击力
@@ -25,6 +25,42 @@ message WarriorDescription {
   optional int32 attack_range = 8;                  // 攻击范围
 }
 
+// 士兵最终属性
+message CombatWarriorFields {
+  optional int32 id = 1;                            // id
+  optional int32 conf_id = 2;                       // 配置id
+  optional int32 type = 3;                          // 类型
+  optional uint64 host_id = 4;                      // 宿主id
+  optional int32 camp_id = 5;                       // 阵营id
+  optional int32 hp = 6;                            // 当前生命值
+  optional int32 max_hp = 7;                        // 当前最大生命值
+  optional int32 attack = 8;                        // 当前攻击力
+  optional int32 defence = 9;                       // 当前防御力
+  optional int32 attack_speed = 10;                 // 当前攻击速度
+  optional int32 attack_range = 11;                 // 攻击范围
+  optional int32 move_speed = 12;                   // 当前移动速度
+  optional int32 origin_pos_x = 13;                 // 当前位置x
+  optional int32 origin_pos_y = 14;                 // 当前位置y
+  optional int32 dest_pos_x = 15;                   // 终点位置x
+  optional int32 dest_pos_y = 16;                   // 终点位置y
+}
+
+// 士兵高级属性
+// 用于属性加成计算的中间值
+message CombatWarriorServerFields {
+  optional int32 max_hp_add_value = 1;              // 最大生命值加成值
+  optional int32 max_hp_add_per = 2;                // 最大生命值加成比
+  optional int32 attack_add_value = 3;              // 攻击加成值
+  optional int32 attack_add_per = 4;                // 攻击加成比
+  optional int32 defence_add_value = 5;             // 防御加成值
+  optional int32 defence_add_per = 6;               // 防御加成比
+  optional int32 move_speed_add_value = 7;          // 移动速度加成值
+  optional int32 move_speed_add_per = 8;            // 移动速度加成比
+  optional int32 attack_speed_add_value = 9;        // 攻击速度加成值
+  optional int32 attack_speed_add_per = 10;         // 攻击速度加成比
+}
+
+/*
 // 士兵最终属性(战斗计算)
 // 属性=(Junior+Senior加成值)*Senior加成比
 message WarriorFields {
@@ -64,3 +100,4 @@ message WarriorSeniorFields {
   optional int32 attack_speed_add_value = 9;        // 攻击速度加成值
   optional int32 attack_speed_add_per = 10;         // 攻击速度加成比
 }
+*/

@@ -6,7 +6,7 @@ set(COMBAT_SOURCES
   )
 
 set(COMBAT_PROTOCOL_SOURCES
-  ${TUTORIAL_SOURCE_DIR}/orcas/combat/protocol/cc/message.pb.cc
+  ${TUTORIAL_SOURCE_DIR}/orcas/combat/protocol/cc/combat_message.pb.cc
   )
 
 add_subdirectory(protocol)

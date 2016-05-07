@@ -18,7 +18,8 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
   : listen_backlog_(listen_backlog),
     event_loop_(event_loop),
     tcp_socket_app_(event_loop_),
-    combat_clients_(&tcp_socket_app_),
+    combat_socket_app_(event_loop_),
+    combat_clients_(&combat_socket_app_),
     codec_(&tcp_socket_app_) {
   this->tcp_socket_app_.SetConnectionCallback(
       std::bind(&AppServer::OnConnected, this, std::placeholders::_1,
@@ -41,7 +42,7 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
         std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
         std::placeholders::_5));
 
-  for (Config::CombatServerMap::iterator iter =
+  for (Config::CombatServerMap::const_iterator iter =
       Config::GetInstance()->combat_servers_.begin();
       iter != Config::GetInstance()->combat_servers_.end(); ++iter) {
     ::mysya::ioevent::SocketAddress server_addr(
@@ -129,6 +130,8 @@ void AppServer::OnConnected(::mysya::ioevent::TcpSocketApp *app, int sockfd) {
   this->AddActor(actor.get());
 
   actor.release();
+
+  MYSYA_DEBUG("[APP_SERVER] sockfd(%d) connected.", sockfd);
 }
 
 void AppServer::OnReceive(::mysya::ioevent::TcpSocketApp *app, int sockfd,

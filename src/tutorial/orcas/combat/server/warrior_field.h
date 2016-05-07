@@ -24,19 +24,12 @@ class WarriorField {
   uint64_t GetHostId() const;
   void SetHostId(uint64_t value);
 
-  int32_t GetCampId() const;
-  void SetCampId(int32_t value);
-
-  ::protocol::WarriorFields &GetFields();
-  ::protocol::WarriorJuniorFields &GetJuniorFields();
-  ::protocol::WarriorSeniorFields &GetSeniorFields();
+  void SetDescription(const ::protocol::WarriorDescription &value);
+  const ::protocol::WarriorDescription &GetDescription() const;
 
  private:
-  void GenerateFields();
-
-  ::protocol::WarriorFields fields_;
-  ::protocol::WarriorJuniorFields junior_fields_;
-  ::protocol::WarriorSeniorFields senior_fields_;
+  uint64_t host_id_;
+  ::protocol::WarriorDescription description_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(WarriorField);
 };
