@@ -13,8 +13,6 @@ namespace server {
 
 class Configs {
  public:
-  typedef std::vector<std::string> ConfigVector;
-
   bool Load(const std::string &file);
 
   int server_id_;
@@ -23,12 +21,14 @@ class Configs {
 
   size_t combat_initial_size_;
   size_t combat_extend_size_;
-  size_t combat_warrior_initial_size_;
-  size_t combat_warrior_extend_size_;
+  size_t combat_building_initial_size_;
+  size_t combat_building_extend_size_;
   size_t combat_role_initial_size_;
   size_t combat_role_extend_size_;
+  size_t combat_warrior_initial_size_;
+  size_t combat_warrior_extend_size_;
 
-  ConfigVector configs_;
+  std::string conf_path_;
 
  private:
   MYSYA_SINGLETON(Configs);

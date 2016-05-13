@@ -5,6 +5,7 @@
 
 #include <mysya/util/class_util.h>
 
+#include "tutorial/orcas/protocol/cc/message.pb.h"
 #include "tutorial/orcas/protocol/cc/warrior.pb.h"
 
 namespace google {
@@ -20,17 +21,19 @@ namespace orcas {
 namespace combat {
 namespace server {
 
+class AppServer;
 class AppSession;
 class CombatField;
 
 class CombatRoleField {
  public:
-  typedef std::map<int32_t, ::protocol::WarriorDescription> WarriorDescriptionMap;
+  typedef std::map<int32_t, ::protocol::WarriorDescription>
+    WarriorDescriptionMap;
 
   CombatRoleField();
   ~CombatRoleField();
 
-  bool Initialize(uint64_t argent_id);
+  bool Initialize(uint64_t argent_id, AppServer *app_server);
   void Finalize();
 
   uint64_t GetArgentId() const;
@@ -49,13 +52,20 @@ class CombatRoleField {
   void ResetAppSession();
   int SendMessage(const ::google::protobuf::Message &message);
 
+  bool DoAction(const ::protocol::CombatAction &action);
+
  private:
+  bool DoBuildAction(const ::protocol::CombatBuildAction &action);
+  bool DoMoveAction(const ::protocol::CombatMoveAction &action);
+  bool DoAttackAction(const ::protocol::CombatAttackAction &action);
+
   uint64_t argent_id_;
   int32_t camp_id_;
   CombatField *combat_field_;
   WarriorDescriptionMap warrior_descriptions_;
 
   AppSession *app_session_;
+  AppServer *app_server_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatRoleField);
 };

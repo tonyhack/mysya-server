@@ -3,3 +3,5 @@ src/tags
 build/
 src/tutorial/orcas/combat/protocol/cc
 src/tutorial/orcas/protocol/cc
+src/tutorial/orcas/combat/server/event/cc
+src/tutorial/orcas/combat/server/require/cc

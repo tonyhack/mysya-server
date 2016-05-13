@@ -1,0 +1,61 @@
+import "combat.proto";
+
+package protocol;
+
+// 消息类型
+enum MessageType {
+  MESSAGE_LOGIN_REQUEST = 1;                                        // 登陆请求
+  MESSAGE_LOGIN_RESPONSE = 2;                                       // 登陆回应
+
+  MESSAGE_COMBAT_REQUEST = 3;                                       // 战斗请求
+  MESSAGE_COMBAT_RESPONSE = 4;                                      // 战斗回应
+
+  MESSAGE_COMBAT_BEGIN_SYNC = 5;                                    // 战斗开始同步
+
+  MESSAGE_COMBAT_ACTION_REQUEST = 1001;                             // 行动请求
+  MESSAGE_COMBAT_ACTION_RESPONSE = 1002;                            // 行动回应
+  MESSAGE_COMBAT_ACTION_SYNC = 1003;                                // 行动同步
+};
+
+// ----------------- message body ------------------
+
+// MESSAGE_LOGIN_REQUEST
+message MessageLoginRequest {
+  required string name = 1;                                         // 名称
+}
+
+// MESSAGE_LOGIN_RESPONSE
+message MessageLoginResponse {
+  required bool result = 1;                                         // 结果
+}
+
+// MESSAGE_COMBAT_REQUEST
+message MessageCombatRequest {
+  repeated int32 warrior_id = 1;                                    // 出战士兵
+}
+
+// MESSAGE_COMBAT_RESPONSE
+message MessageCombatResponse {
+  required bool result = 1;                                         // 结果
+  optional .protocol.CombatStatusImage status_image = 2;            // 状态镜像
+}
+
+// MESSAGE_COMBAT_BEGIN_SYNC
+message MessageCombatBeginSync {
+  required .protocol.CombatStatusImage combat_init_image = 1;       // 战斗初始化数据
+}
+
+// MESSAGE_COMBAT_ACTION_REQUEST
+message MessageCombatActionRequest {
+  required .protocol.CombatAction action = 1;                       // 动作
+}
+
+// MESSAGE_COMBAT_ACTION_RESPONSE
+message MessageCombatActionResponse {
+  required bool result = 1;                                         // 结果
+}
+
+// MESSAGE_COMBAT_ACTION_SYNC
+message MessageCombatActionSync {
+  required .protocol.CombatAction action = 1;                       // 动作
+}

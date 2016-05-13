@@ -3,7 +3,6 @@
 #include <google/protobuf/message.h>
 #include <mysya/codec/protobuf_codec.h>
 #include <mysya/ioevent/dynamic_buffer.h>
-#include <mysya/ioevent/event_loop.h>
 #include <mysya/ioevent/logger.h>
 #include <mysya/ioevent/socket_address.h>
 
@@ -21,8 +20,10 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
   : listen_backlog_(listen_backlog),
     event_loop_(event_loop),
     tcp_socket_app_(event_loop_),
-    combat_message_handler_(this) {
+    combat_message_handler_(this),
+    user_combat_message_handler_(this) {
   this->combat_message_handler_.SetMessageHandlers();
+  this->user_combat_message_handler_.SetMessageHandlers();
 
   this->tcp_socket_app_.SetConnectionCallback(
       std::bind(&AppServer::OnConnected, this, std::placeholders::_1,
@@ -53,11 +54,22 @@ AppServer::~AppServer() {
   this->tcp_socket_app_.ResetSendCompleteCallback();
   this->tcp_socket_app_.ResetCloseCallback();
   this->tcp_socket_app_.ResetErrorCallback();
+
+  this->user_combat_message_handler_.ResetMessageHandlers();
   this->combat_message_handler_.ResetMessageHandlers();
 }
 
 bool AppServer::Listen(const ::mysya::ioevent::SocketAddress &addr) {
   return this->tcp_socket_app_.Listen(addr);
+}
+
+int64_t AppServer::StartTimer(int expire_ms, const ExpireCallback &cb,
+    int call_times) {
+  return this->event_loop_->StartTimer(expire_ms, cb, call_times);
+}
+
+void AppServer::StopTimer(int64_t timer_id) {
+  this->event_loop_->StopTimer(timer_id);
 }
 
 ::mysya::codec::ProtobufCodec *AppServer::GetProtobufCodec(
@@ -83,8 +95,24 @@ AppSession *AppServer::GetSession(int sockfd) {
   return session;
 }
 
+EventDispatcher *AppServer::GetEventDispatcher() {
+  return &this->event_dispatcher_;
+}
+
+RequireDispatcher *AppServer::GetRequireDispatcher() {
+  return &this->require_dispatcher_;
+}
+
 MessageDispatcher *AppServer::GetMessageDispatcher() {
   return &this->message_dispatcher_;
+}
+
+UserMessageDispatcher *AppServer::GetUserMessageDispatcher() {
+  return &this->user_message_dispatcher_;
+}
+
+const ::mysya::util::Timestamp &AppServer::GetTimestamp() const {
+  return this->event_loop_->GetTimestamp();
 }
 
 AppSession *AppServer::RemoveSession(int sockfd) {

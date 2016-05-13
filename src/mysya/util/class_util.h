@@ -1,6 +1,7 @@
 #ifndef MYSYA_UTIL_CLASS_UTIL_H
 #define MYSYA_UTIL_CLASS_UTIL_H
 
+#include <stdlib.h>
 #include <cstdarg>
 
 #define MYSYA_SAFE_BOOL_TYPE(_T)              \

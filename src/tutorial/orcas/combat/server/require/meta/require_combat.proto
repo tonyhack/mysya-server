@@ -1,0 +1,21 @@
+import "combat.proto";
+
+package tutorial.orcas.combat.server.require;
+
+// REQUIRE_COMBAT_BUILD_ACTION
+message RequireCombatBuildAction {
+  required int32 combat_id = 1;                             // 战斗id
+  required .protocol.CombatBuildAction action = 2;          // 动作
+}
+
+// REQUIRE_COMBAT_MOVE_ACTION
+message RequireCombatMoveAction {
+  required int32 combat_id = 1;                             // 战斗id
+  required .protocol.CombatMoveAction action = 2;           // 动作
+}
+
+// REQUIRE_COMBAT_ATTACK_ACTION
+message RequireCombatAttackAction {
+  required int32 combat_id = 1;                             // 战斗id
+  required .protocol.CombatAttackAction action = 2;         // 动作
+}

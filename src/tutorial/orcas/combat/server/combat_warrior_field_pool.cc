@@ -1,25 +1,25 @@
-#include "tutorial/orcas/combat/server/warrior_field_pool.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
 
 #include "tutorial/orcas/combat/server/configs.h"
-#include "tutorial/orcas/combat/server/warrior_field.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field.h"
 
 namespace tutorial {
 namespace orcas {
 namespace combat {
 namespace server {
 
-MYSYA_SINGLETON_IMPL(WarriorFieldPool);
+MYSYA_SINGLETON_IMPL(CombatWarriorFieldPool);
 
-WarriorFieldPool::WarriorFieldPool()
+CombatWarriorFieldPool::CombatWarriorFieldPool()
   : pool_(Configs::GetInstance()->combat_warrior_initial_size_,
       Configs::GetInstance()->combat_warrior_extend_size_) {}
-WarriorFieldPool::~WarriorFieldPool() {}
+CombatWarriorFieldPool::~CombatWarriorFieldPool() {}
 
-WarriorField *WarriorFieldPool::Allocate() {
+CombatWarriorField *CombatWarriorFieldPool::Allocate() {
   return this->pool_.Allocate();
 }
 
-void WarriorFieldPool::Deallocate(WarriorField *warrior) {
+void CombatWarriorFieldPool::Deallocate(CombatWarriorField *warrior) {
   this->pool_.Deallocate(warrior);
 }
 

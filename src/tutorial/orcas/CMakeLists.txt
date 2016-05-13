@@ -5,6 +5,10 @@ set(UTIL_SOURCES
   )
 
 set(ORCAS_PROTOCOL_SOURCES
+  ${ORCAS_SOURCE_DIR}/protocol/cc/building.pb.cc
+  ${ORCAS_SOURCE_DIR}/protocol/cc/combat.pb.cc
+  ${ORCAS_SOURCE_DIR}/protocol/cc/message.pb.cc
+  ${ORCAS_SOURCE_DIR}/protocol/cc/position.pb.cc
   ${ORCAS_SOURCE_DIR}/protocol/cc/warrior.pb.cc
   )
 

@@ -1,7 +1,9 @@
 set(PROTO_SOURCES
   building.proto
-  warrior.proto
+  combat.proto
   message.proto
+  position.proto
+  warrior.proto
   )
 
 foreach (script ${PROTO_SOURCES})

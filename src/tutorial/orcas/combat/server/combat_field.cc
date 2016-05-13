@@ -3,19 +3,30 @@
 #include <google/protobuf/message.h>
 
 #include "tutorial/orcas/combat/server/app_session.h"
+#include "tutorial/orcas/combat/server/combat_building_field.h"
+#include "tutorial/orcas/combat/server/combat_building_field_pool.h"
+#include "tutorial/orcas/combat/server/combat_role_field.h"
 #include "tutorial/orcas/combat/server/combat_role_field_manager.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
 
 namespace tutorial {
 namespace orcas {
 namespace combat {
 namespace server {
 
-CombatField::CombatField() : id_(0), app_session_(NULL) {}
+CombatField::CombatField()
+  : id_(0), map_id_(0), id_alloctor_(0),
+    app_session_(NULL) {}
+
 CombatField::~CombatField() {}
 
-bool CombatField::Initialize(AppSession *session) {
+bool CombatField::Initialize(int32_t map_id, AppServer *app_server, AppSession *session) {
+  this->app_server_ = app_server;
   this->app_session_ = session;
   this->app_session_->Add(this);
+  this->id_alloctor_ = 0;
+  this->map_id_ = map_id;
 
   return true;
 }
@@ -25,6 +36,22 @@ void CombatField::Finalize() {
     this->app_session_->Remove(this);
   }
 
+  for (WarriorFieldHashmap::iterator iter = this->warriors_.begin();
+      iter != this->warriors_.end(); ++iter) {
+    CombatWarriorField *warrior = iter->second;
+    warrior->Finalize();
+    CombatWarriorFieldPool::GetInstance()->Deallocate(warrior);
+  }
+  this->warriors_.clear();
+
+  for (BuildingFieldMap::iterator iter = this->buildings_.begin();
+      iter != this->buildings_.end(); ++iter) {
+    CombatBuildingField *building = iter->second;
+    building->Finalize();
+    CombatBuildingFieldPool::GetInstance()->Deallocate(building);
+  }
+  this->buildings_.clear();
+
   for (CombatRoleFieldSet::const_iterator iter = this->roles_.begin();
       iter != this->roles_.end(); ++iter) {
     CombatRoleField *role = CombatRoleFieldManager::GetInstance()->Remove(*iter);
@@ -32,8 +59,12 @@ void CombatField::Finalize() {
       CombatRoleFieldManager::GetInstance()->Deallocate(role);
     }
   }
-
   this->roles_.clear();
+
+  this->argent_roles_.clear();
+
+  this->app_session_ = NULL;
+  this->app_server_ = NULL;
 }
 
 int32_t CombatField::GetId() const {
@@ -42,6 +73,22 @@ int32_t CombatField::GetId() const {
 
 void CombatField::SetId(int32_t value) {
   this->id_ = value;
+}
+
+int32_t CombatField::GetMapId() const {
+  return this->map_id_;
+}
+
+int32_t CombatField::AllocateId() {
+  return ++this->id_alloctor_;
+}
+
+const ::mysya::util::Timestamp &CombatField::GetBeginTimestamp() const {
+  return this->begin_timestamp_;
+}
+
+void CombatField::SetBeginTimestamp(const ::mysya::util::Timestamp &value) {
+  this->begin_timestamp_ = value;
 }
 
 void CombatField::AddRole(uint64_t role_argent_id) {
@@ -56,6 +103,68 @@ const CombatField::CombatRoleFieldSet &CombatField::GetRoles() const {
   return this->roles_;
 }
 
+void CombatField::AddBuilding(CombatBuildingField *building) {
+  this->buildings_.insert(std::make_pair(building->GetId(), building));
+}
+
+CombatBuildingField *CombatField::RemoveBuilding(int32_t building_id) {
+  CombatBuildingField *building = NULL;
+
+  BuildingFieldMap::iterator iter = this->buildings_.find(building_id);
+  if (iter != this->buildings_.end()) {
+    building = iter->second;
+    this->buildings_.erase(iter);
+  }
+
+  return building;
+}
+
+CombatBuildingField *CombatField::GetBuilding(int32_t building_id) {
+  CombatBuildingField *building = NULL;
+
+  BuildingFieldMap::iterator iter = this->buildings_.find(building_id);
+  if (iter != this->buildings_.end()) {
+    building = iter->second;
+  }
+
+  return building;
+}
+
+const CombatField::BuildingFieldMap &CombatField::GetBuildings() const {
+  return this->buildings_;
+}
+
+void CombatField::AddWarrior(CombatWarriorField *warrior) {
+  this->warriors_.insert(std::make_pair(warrior->GetId(), warrior));
+}
+
+CombatWarriorField *CombatField::RemoveWarrior(int32_t warrior_id) {
+  CombatWarriorField *warrior = NULL;
+
+  WarriorFieldHashmap::iterator iter = this->warriors_.find(warrior_id);
+  if (iter != this->warriors_.end()) {
+    warrior = iter->second;
+    this->warriors_.erase(iter);
+  }
+
+  return warrior;
+}
+
+CombatWarriorField *CombatField::GetWarrior(int32_t warrior_id) {
+  CombatWarriorField *warrior = NULL;
+
+  WarriorFieldHashmap::iterator iter = this->warriors_.find(warrior_id);
+  if (iter != this->warriors_.end()) {
+    warrior = iter->second;
+  }
+
+  return warrior;
+}
+
+const CombatField::WarriorFieldHashmap &CombatField::GetWarriors() const {
+  return this->warriors_;
+}
+
 void CombatField::ResetAppSession() {
   this->app_session_ = NULL;
 }
@@ -66,6 +175,11 @@ int CombatField::SendMessage(const ::google::protobuf::Message &message) {
   }
 
   return this->app_session_->SendMessage(message);
+}
+
+int CombatField::BroadcastMessage(int type, const ::google::protobuf::Message &message) {
+  // TODO:
+  return -1;
 }
 
 }  // namespace server

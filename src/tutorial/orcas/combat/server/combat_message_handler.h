@@ -30,19 +30,23 @@ class CombatMessageHandler {
   void ResetMessageHandlers();
 
  private:
-  void OnMessageCombatDeployRequest(::tutorial::orcas::combat::TransportChannel *transport_channel,
+  void OnMessageCombatDeployRequest(::tutorial::orcas::combat::TransportChannel *channel,
       const ::google::protobuf::Message *message_pb);
-  void OnMessageCombatArgentRequest(::tutorial::orcas::combat::TransportChannel *transport_channel,
+  void OnMessageCombatArgentRequest(::tutorial::orcas::combat::TransportChannel *channel,
       const ::google::protobuf::Message *message_pb);
-  void OnMessageCombatConnectArgentRequest(::tutorial::orcas::combat::TransportChannel *transport_channel,
+  void OnMessageCombatBeginRequest(::tutorial::orcas::combat::TransportChannel *channel,
+      const ::google::protobuf::Message *message_pb);
+  void OnMessageCombatConnectArgentRequest(::tutorial::orcas::combat::TransportChannel *channel,
       const ::google::protobuf::Message *message_pb);
 
   AppServer *app_server_;
+
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatMessageHandler);
 };
 
 }  // namespace server
 }  // namespace combat
 }  // namespace orcas
-}  // namespace tutorialk
+}  // namespace tutorial
 
 #endif  // TUTORIAL_ORCAS_COMBAT_SERVER_COMBAT_MESSAGE_HANDLER_H

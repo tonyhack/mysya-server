@@ -1,0 +1,47 @@
+import "building.proto";
+import "position.proto";
+import "warrior.proto";
+
+package protocol;
+
+// 战斗动作类型
+enum CombatActionType {
+  COMBAT_ACTION_TYPE_BUILD = 1;                           // 建造
+  COMBAT_ACTION_TYPE_MOVE = 2;                            // 移动
+  COMBAT_ACTION_TYPE_ATTACK = 3;                          // 攻击
+}
+
+// 建造指令
+message CombatBuildAction {
+  required int32 building_id = 1;                         // 建筑id
+  required int32 warrior_conf_id = 2;                     // 士兵配置id
+}
+
+// 移动指令
+message CombatMoveAction {
+  repeated int32 warrior_id = 1;                          // 士兵id集
+  required .protocol.Position pos = 2;                    // 位置
+  repeated .protocol.Position paths = 3;                  // 路径点
+}
+
+// 攻击指令
+message CombatAttackAction {
+  required int32 warrior_id = 1;                          // 士兵id
+  required int32 target_warrior_id = 2;                   // 目标士兵id
+  required int32 damage = 3;                              // 伤害值
+}
+
+// 行动指令
+message CombatAction {
+  required int32 type = 1;                                // 操作类型(CombatActionType)
+  required int32 timestamp = 2;                           // 时间戳
+  optional CombatBuildAction build_action = 3;            // 建造指令
+  optional CombatMoveAction move_action = 4;              // 移动指令
+  optional CombatAttackAction attack_action = 5;          // 攻击指令
+}
+
+// 战斗状态镜像数据
+message CombatStatusImage {
+  repeated .protocol.CombatBuildingFields building = 1;   // 建筑
+  repeated .protocol.CombatWarriorFields warrior = 2;     // 士兵
+}

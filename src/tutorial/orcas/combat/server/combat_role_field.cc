@@ -2,7 +2,10 @@
 
 #include <google/protobuf/message.h>
 
+#include "tutorial/orcas/combat/server/app_server.h"
 #include "tutorial/orcas/combat/server/app_session.h"
+#include "tutorial/orcas/combat/server/require/cc/require.pb.h"
+#include "tutorial/orcas/combat/server/require/cc/require_combat.pb.h"
 
 namespace tutorial {
 namespace orcas {
@@ -11,12 +14,16 @@ namespace server {
 
 CombatRoleField::CombatRoleField()
   : argent_id_(0), camp_id_(0),
-    combat_field_(NULL), app_session_(NULL) {}
+    combat_field_(NULL), app_session_(NULL),
+    app_server_(NULL) {}
 
 CombatRoleField::~CombatRoleField() {}
 
-bool CombatRoleField::Initialize(uint64_t argent_id) {
+bool CombatRoleField::Initialize(uint64_t argent_id,
+    AppServer *app_server) {
   this->SetArgentId(argent_id);
+  this->app_server_ = app_server;
+  this->app_session_ = NULL;
 
   return true;
 }
@@ -59,8 +66,8 @@ void CombatRoleField::SetCombatField(CombatField *value) {
 
 
 void CombatRoleField::AddWarriorDescription(
-    const ::protocol::WarriorDescription &warroir) {
-  this->warrior_descriptions_.insert(std::make_pair(warroir.id(), warrior));
+    const ::protocol::WarriorDescription &warrior) {
+  this->warrior_descriptions_.insert(std::make_pair(warrior.id(), warrior));
 }
 
 const ::protocol::WarriorDescription *CombatRoleField::GetWarriorDescription(
@@ -69,10 +76,10 @@ const ::protocol::WarriorDescription *CombatRoleField::GetWarriorDescription(
 
   WarriorDescriptionMap::const_iterator iter = this->warrior_descriptions_.find(id);
   if (iter != this->warrior_descriptions_.end()) {
-    warroir = &iter->second;
+    warrior = &iter->second;
  }
 
-  return warroir;
+  return warrior;
 }
 
 void CombatRoleField::SetAppSession(AppSession *session) {
@@ -90,6 +97,43 @@ int CombatRoleField::SendMessage(const ::google::protobuf::Message &message) {
   }
 
   return this->app_session_->SendMessage(message);
+}
+
+bool CombatRoleField::DoAction(const ::protocol::CombatAction &action) {
+  bool result = false;
+
+  switch (action.type()) {
+    case ::protocol::COMBAT_ACTION_TYPE_BUILD:
+      result = this->DoBuildAction(action.build_action());
+      break;
+    case ::protocol::COMBAT_ACTION_TYPE_MOVE:
+      result = this->DoMoveAction(action.move_action());
+      break;
+    case ::protocol::COMBAT_ACTION_TYPE_ATTACK:
+      result = this->DoAttackAction(action.attack_action());
+      break;
+    default:
+      break;
+  }
+
+  return result;
+}
+
+bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action) {
+  // TODO:
+  return false;
+}
+
+bool CombatRoleField::DoMoveAction(const ::protocol::CombatMoveAction &action) {
+  require::RequireCombatMoveAction message;
+  *message.mutable_action() = action;
+  return this->app_server_->GetRequireDispatcher()->Dispatch(
+      require::REQUIRE_COMBAT_MOVE_ACTION, &message) >= 0;
+}
+
+bool CombatRoleField::DoAttackAction(const ::protocol::CombatAttackAction &action) {
+  // TODO:
+  return false;
 }
 
 }  // namespace server

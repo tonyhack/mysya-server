@@ -6,8 +6,5 @@
     <combat_warrior initial_size="100" extend_size="10"/>
     <combat_role initial_size="100" extend_size="10"/>
   </pool>
-  <confs>
-    <value file="[etc_dir]/combat/confs/map1001.xml"/>
-    <value file="[etc_dir]/combat/confs/map1002.xml"/>
-  </confs>
+  <conf_path value="[etc_dir]/combat/confs/"/>
 </config>

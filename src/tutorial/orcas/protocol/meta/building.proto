@@ -1,0 +1,26 @@
+package protocol;
+
+enum BuildingType {
+  BUILDING_TYPE_INFANTRY = 1;
+  BUILDING_TYPE_CAVALRY = 2;
+}
+
+// 建筑描述
+message BuildingDescription {
+  optional int32 id = 1;                          // 配置id
+  optional int32 type = 2;                        // 类型(BuildingType)
+  optional int32 hp = 3;                          // 生命值
+  optional int32 pos_x = 4;                       // 坐标x
+  optional int32 pos_y = 5;                       // 坐标y
+}
+
+// 建筑战斗属性
+message CombatBuildingFields {
+  optional int32 id = 1;                          // id
+  optional int32 conf_id = 2;                     // 配置id
+  optional int32 camp_id = 3;                     // 阵营id
+  optional int32 hp = 4;                          // 生命值
+  optional int32 max_hp = 5;                      // 最大生命值
+  optional int32 pos_x = 6;                       // 当前坐标x
+  optional int32 pos_y = 7;                       // 当前坐标y
+}
