@@ -28,6 +28,7 @@ class Actor;
 
 class AppServer {
  public:
+  typedef ::google::protobuf::Message ProtoMessage;
   typedef std::unordered_map<int, Actor *> ActorHashmap;
 
   AppServer(::mysya::ioevent::EventLoop *event_loop,
@@ -35,8 +36,9 @@ class AppServer {
   ~AppServer();
 
   bool Listen(const ::mysya::ioevent::SocketAddress &addr);
-  int SendMessage(int sockfd, int message_type, ::google::protobuf::Message *message);
+  int SendMessage(int sockfd, int message_type, const ProtoMessage &message);
   MessageDispatcher *GetMessageDispatcher();
+  ::tutorial::orcas::combat::client::CombatSessions &GetCombatClients();
 
  private:
   void AddActor(Actor *actor);

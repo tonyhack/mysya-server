@@ -5,13 +5,17 @@
 #include <mysya/ioevent/logger.h>
 #include <mysya/ioevent/socket_address.h>
 
+#include "tutorial/orcas/combat/protocol/cc/combat_message.pb.h"
 #include "tutorial/orcas/gateway/server/actor.h"
+#include "tutorial/orcas/gateway/server/combat_manager.h"
 #include "tutorial/orcas/gateway/server/config.h"
 
 namespace tutorial {
 namespace orcas {
 namespace gateway {
 namespace server {
+
+using namespace ::tutorial::orcas::combat::protocol;
 
 AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
     int listen_backlog)
@@ -55,6 +59,8 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
           iter->second.port_);
     }
   }
+
+  CombatManager::GetInstance()->SetHost(this);
 }
 
 AppServer::~AppServer() {
@@ -78,10 +84,9 @@ bool AppServer::Listen(const ::mysya::ioevent::SocketAddress &addr) {
   return this->tcp_socket_app_.Listen(addr);
 }
 
-int AppServer::SendMessage(int sockfd, int message_type,
-    ::google::protobuf::Message *message) {
+int AppServer::SendMessage(int sockfd, int message_type, const ProtoMessage &message) {
   std::string buffer;
-  if (message->SerializeToString(&buffer) == false) {
+  if (message.SerializeToString(&buffer) == false) {
     MYSYA_ERROR("[APP_SERVER] Message::SerializeAsString() failed.");
     return -1;
   }
@@ -91,6 +96,10 @@ int AppServer::SendMessage(int sockfd, int message_type,
 
 MessageDispatcher *AppServer::GetMessageDispatcher() {
   return &this->message_dispatcher_;
+}
+
+::tutorial::orcas::combat::client::CombatSessions &AppServer::GetCombatClients() {
+  return this->combat_clients_;
 }
 
 void AppServer::AddActor(Actor *actor) {

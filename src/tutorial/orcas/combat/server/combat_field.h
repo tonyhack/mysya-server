@@ -10,6 +10,8 @@
 #include <mysya/util/class_util.h>
 #include <mysya/util/timestamp.h>
 
+#include "tutorial/orcas/protocol/cc/combat.pb.h"
+
 namespace google {
 namespace protobuf {
 
@@ -69,6 +71,11 @@ class CombatField {
 
   int BroadcastMessage(int type, const ::google::protobuf::Message &message);
 
+  void PushAction(const ::protocol::CombatAction &action);
+  const ::protocol::CombatActionSequence &GetActions() const;
+
+  void ExportStatusImage(::protocol::CombatStatusImage &image) const;
+
  private:
   int32_t id_;
   int32_t map_id_;
@@ -80,6 +87,8 @@ class CombatField {
 
   BuildingFieldMap buildings_;
   WarriorFieldHashmap warriors_;
+
+  ::protocol::CombatActionSequence actions_;
 
   AppSession *app_session_;
   AppServer *app_server_;

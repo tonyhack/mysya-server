@@ -22,34 +22,32 @@ namespace server {
 namespace scene {
 
 CombatEventHandler::CombatEventHandler()
-  : host_(NULL),
-    event_token_begin_(0) {}
+  : event_token_begin_(0) {}
 
 CombatEventHandler::~CombatEventHandler() {}
 
-bool CombatEventHandler::Initialize(SceneApp *host) {
-  this->host_ = host;
+#define SCENE_APP() \
+    SceneApp::GetInstance()
 
-  this->event_token_begin_ = this->host_->GetEventDispatcher()->Attach(
-      event::EVENT_COMBAT_BEGIN, std::bind(&CombatEventHandler::OnEventCombatBegin,
-        this, std::placeholders::_1));
+bool CombatEventHandler::Initialize() {
+  this->event_token_begin_ =
+    SCENE_APP()->GetEventDispatcher()->Attach(event::EVENT_COMBAT_BEGIN,
+        std::bind(&CombatEventHandler::OnEventCombatBegin, this, std::placeholders::_1));
 
   return true;
 }
 
 void CombatEventHandler::Finalize() {
-  this->host_->GetEventDispatcher()->Detach(this->event_token_begin_);
-
-  this->host_ = NULL;
+  SCENE_APP()->GetEventDispatcher()->Detach(this->event_token_begin_);
 }
 
 void CombatEventHandler::OnEventCombatBegin(const ProtoMessage *data) {
   const event::EventCombatBegin *event = (const event::EventCombatBegin *)data;
 
   CombatField *combat_field =
-    CombatFieldManager::GetInstance()->Get(event->id());
+    CombatFieldManager::GetInstance()->Get(event->combat_id());
   if (combat_field == NULL) {
-    MYSYA_ERROR("[SCENE] CombatFieldManager::Get(%d) failed.", event->id());
+    MYSYA_ERROR("[SCENE] CombatFieldManager::Get(%d) failed.", event->combat_id());
     return;
   }
 
@@ -70,7 +68,8 @@ void CombatEventHandler::OnEventCombatBegin(const ProtoMessage *data) {
   const BuildingFieldMap &buildings = combat_field->GetBuildings();
   for (BuildingFieldMap::const_iterator iter = buildings.begin();
       iter != buildings.end(); ++iter) {
-    Building *building = this->host_->GetEntityBuilder()->AllocateBuilding();
+    Building *building =
+      SCENE_APP()->GetEntityBuilder()->AllocateBuilding();
     if (building == NULL) {
       MYSYA_ERROR("[SCENE] EntityBuilder::AllocateBuilding() failed.");
       scene->Finalize();
@@ -80,7 +79,7 @@ void CombatEventHandler::OnEventCombatBegin(const ProtoMessage *data) {
 
     if (building->Initialize(iter->second, scene) == false) {
       MYSYA_ERROR("[SCENE] Building::Initialize() failed.");
-      this->host_->GetEntityBuilder()->DeallocateBuilding(building);
+      SCENE_APP()->GetEntityBuilder()->DeallocateBuilding(building);
       scene->Finalize();
       SceneManager::GetInstance()->Deallocate(scene);
       return;
@@ -89,13 +88,15 @@ void CombatEventHandler::OnEventCombatBegin(const ProtoMessage *data) {
     if (scene->AddBuilding(building) == false) {
       MYSYA_ERROR("[SCENE] Scene::AddBuilding() failed.");
       building->Finalize();
-      this->host_->GetEntityBuilder()->DeallocateBuilding(building);
+      SCENE_APP()->GetEntityBuilder()->DeallocateBuilding(building);
       scene->Finalize();
       SceneManager::GetInstance()->Deallocate(scene);
       return;
     }
   }
 }
+
+#undef SCENE_APP
 
 }  // namespace scene
 }  // namespace server

@@ -30,8 +30,6 @@ class MoveAction {
   void OnMoveTimer(int64_t timer_id);
   void MoveStep();
 
-  void SyncMoveAction(const ::protocol::Position &dest_pos);
-
   ::protocol::Position dest_pos_;
   PositionVector move_paths_;
   int path_index_;

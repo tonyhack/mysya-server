@@ -63,6 +63,8 @@ void CombatField::Finalize() {
 
   this->argent_roles_.clear();
 
+  this->actions_.Clear();
+
   this->app_session_ = NULL;
   this->app_server_ = NULL;
 }
@@ -180,6 +182,26 @@ int CombatField::SendMessage(const ::google::protobuf::Message &message) {
 int CombatField::BroadcastMessage(int type, const ::google::protobuf::Message &message) {
   // TODO:
   return -1;
+}
+
+void CombatField::PushAction(const ::protocol::CombatAction &action) {
+  *this->actions_.add_action() = action;
+}
+
+const ::protocol::CombatActionSequence &CombatField::GetActions() const {
+  return this->actions_;
+}
+
+void CombatField::ExportStatusImage(::protocol::CombatStatusImage &image) const {
+  for (BuildingFieldMap::const_iterator iter = this->buildings_.begin();
+      iter != this->buildings_.end(); ++iter) {
+    *image.add_building() = iter->second->GetFields();
+  }
+
+  for (WarriorFieldHashmap::const_iterator iter = this->warriors_.begin();
+      iter != this->warriors_.end(); ++iter) {
+    *image.add_warrior() = iter->second->GetFields();
+  }
 }
 
 }  // namespace server

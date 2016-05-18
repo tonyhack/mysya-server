@@ -80,7 +80,7 @@ bool SceneManager::LoadConfig(const std::string &file) {
         map_id = atoi(attr);
       } else if (attr_name_str == "map_build_id") {
       } else if (attr_name_str == "tilemap") {
-        block_file_name = Configs::GetInstance()->conf_path_ + attr;
+        block_file_name = Configs::GetInstance()->conf_path_ + attr + ".tmx";
       } else {
       }
 
@@ -109,6 +109,8 @@ Scene *SceneManager::Allocate(int32_t map_id) {
     scene = *iter;
     this->pool_.erase(iter);
   }
+
+  scene->Allocate(map_id);
 
   return scene;
 }
@@ -230,9 +232,9 @@ bool SceneManager::LoadBlockFile(int32_t map_id, const std::string &file) {
         file.data());
     return false;
   }
-  if (std::string(attr) == "base64") {
-    MYSYA_ERROR("Config(%s) /map/layer/data[encoding] is not base64.",
-        file.data());
+  if (std::string(attr) != "base64") {
+    MYSYA_ERROR("Config(%s) /map/layer/data[encoding(%s)] is not base64.",
+        file.data(), attr);
     return false;
   }
 
@@ -242,7 +244,7 @@ bool SceneManager::LoadBlockFile(int32_t map_id, const std::string &file) {
         file.data());
     return false;
   }
-  if (std::string(attr) == "zlib") {
+  if (std::string(attr) != "zlib") {
     MYSYA_ERROR("Config(%s) /map/layer/data[compression] is not zlib.",
         file.data());
     return false;
@@ -265,11 +267,19 @@ bool SceneManager::LoadBlockFile(int32_t map_id, const std::string &file) {
     return false;
   }
 
-  for (size_t i = 0; i < buffer_size; ++i) {
+  for (size_t i = 0; i < buffer_size; i += sizeof(int)) {
     if (*(int *)(&buffer[i]) > 0) {
       conf.blocks_ += "0";
     } else {
       conf.blocks_ += "1";
+    }
+  }
+
+  for (int y = 0; y < conf.height_; ++y) {
+    for (int x = 0; x < conf.width_; ++x) {
+      if (conf.blocks_[y * conf.width_ + x] == '0') {
+        MYSYA_DEBUG("walkable (%d,%d)", x, y);
+      }
     }
   }
 

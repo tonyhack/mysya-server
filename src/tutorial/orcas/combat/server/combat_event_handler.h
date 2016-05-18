@@ -1,5 +1,5 @@
-#ifndef TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_COMBAT_EVENT_HANDLER_H
-#define TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_COMBAT_EVENT_HANDLER_H
+#ifndef TUTORIAL_ORCAS_COMBAT_SERVER_COMBAT_EVENT_HANDLER_H
+#define TUTORIAL_ORCAS_COMBAT_SERVER_COMBAT_EVENT_HANDLER_H
 
 #include <stdint.h>
 
@@ -17,9 +17,6 @@ namespace tutorial {
 namespace orcas {
 namespace combat {
 namespace server {
-namespace scene {
-
-class SceneApp;
 
 class CombatEventHandler {
   typedef ::google::protobuf::Message ProtoMessage;
@@ -32,17 +29,16 @@ class CombatEventHandler {
   void Finalize();
 
  private:
-  void OnEventCombatBegin(const ProtoMessage *data);
+  void EventCombatMoveAction(const ProtoMessage *data);
 
-  uint64_t event_token_begin_;
+  uint64_t event_token_move_action_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatEventHandler);
 };
 
-}  // namespace scene
 }  // namespace server
 }  // namespace combat
 }  // namespace orcas
 }  // namespace tutorial
 
-#endif  // TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_COMBAT_EVENT_HANDLER_H
+#endif  // TUTORIAL_ORCAS_COMBAT_SERVER_COMBAT_EVENT_HANDLER_H

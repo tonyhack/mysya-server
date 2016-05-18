@@ -22,14 +22,34 @@ class Grid;
 class Warrior;
 
 class Scene {
+  typedef ::protocol::Position Position;
+
+  class Node {
+   public:
+    bool operator <(const Node &other) const;
+    int NeighbroGCost(const Node &other) const;
+    int HeursiticConstEstimate(const Node &other) const;
+  
+    Position pos_;
+    bool walkable_;
+    int f_;
+    int g_;
+    int open_list_pos_;
+    int close_list_pos_;
+    Node *parent_;
+  };
+
  public:
+  typedef std::vector<Node> NodeVector;
+  typedef std::vector<Node *> NodePtrVector;
+
   typedef Grid::BuildingSet BuildingSet;
   typedef Grid::WarriorSet WarriorSet;
 
   typedef std::unordered_map<int32_t, Building *> BuildingHashmap;
   typedef std::unordered_map<int32_t, Warrior *> WarriorHashmap;
 
-  typedef std::vector< ::protocol::Position> PositionVector;
+  typedef std::vector<Position> PositionVector;
 
   Scene();
   ~Scene();
@@ -48,30 +68,44 @@ class Scene {
 
   CombatField *GetHost();
 
-  Grid *GetGrid(const ::protocol::Position &pos);
-  const Grid *GetGrid(const ::protocol::Position &pos) const;
+  Grid *GetGrid(const Position &pos);
+  const Grid *GetGrid(const Position &pos) const;
 
-  bool GetWalkable(const ::protocol::Position &pos) const;
+  bool GetWalkable(const Position &pos) const;
   bool GetWalkable(int32_t x, int32_t y) const;
 
   bool AddBuilding(Building *building);
   void RemoveBuilding(Building *building);
   Building *RemoveBuilding(int32_t id);
   Building *GetBuilding(int32_t id);
-  BuildingSet *GetBuildings(const ::protocol::Position &pos);
-  const BuildingSet *GetBuildings(const ::protocol::Position &pos) const;
+  BuildingSet *GetBuildings(const Position &pos);
+  const BuildingSet *GetBuildings(const Position &pos) const;
 
   bool AddWarrior(Warrior *warrior);
   void RemoveWarrior(Warrior *warrior);
   Warrior *RemoveWarrior(int32_t id);
   Warrior *GetWarrior(int32_t id);
-  WarriorSet *GetWarriors(const ::protocol::Position &pos);
-  const WarriorSet *GetWarriors(const ::protocol::Position &pos) const;
+  WarriorSet *GetWarriors(const Position &pos);
+  const WarriorSet *GetWarriors(const Position &pos) const;
 
-  void SearchPath(const ::protocol::Position &src_pos,
-      const ::protocol::Position &dest_pos, PositionVector &paths);
+  void SearchPath(const Position &src_pos, const Position &dest_pos,
+      PositionVector &paths);
+  void PrintSearchPath(const Position &src_pos, const Position &dest_pos);
 
  private:
+  Node *GetNode(const Position &pos);
+  Node *GetNode(int32_t x, int32_t y);
+  void GetNeighborNodes(const Node *node, NodePtrVector &neighbor_nodes);
+  bool IsInOpenList(const Node *node) const;
+  bool IsOpenListEmpty() const;
+  void InsertOpenList(Node *node);
+  Node *GetMinFScoreNodeInOpenList();
+  void DeleteMinFScoreNodeInOpenList();
+  void ResortOpenList(Node *node);
+  bool IsInCloseList(const Node *node) const;
+  void InsertCloseList(Node *node);
+  void ConstructResultPath(PositionVector &result);
+
   int32_t map_id_;
   CombatField *host_;
 
@@ -83,6 +117,11 @@ class Scene {
 
   BuildingHashmap buildings_;
   WarriorHashmap warriors_;
+
+  NodeVector nodes_;
+  Node *start_node_;
+  Node *end_node_;
+  NodePtrVector open_list_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(Scene);
 };

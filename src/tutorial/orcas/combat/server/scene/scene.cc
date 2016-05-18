@@ -14,6 +14,26 @@ namespace combat {
 namespace server {
 namespace scene {
 
+bool Scene::Node::operator <(const Node &other) const {
+  return this->f_ < other.f_;
+}
+
+int Scene::Node::NeighbroGCost(const Node &other) const {
+  if (this->pos_.x() == other.pos_.x() ||
+      this->pos_.y() == other.pos_.y()) {
+    return 10;
+  } else {
+    return 14;
+  }
+}
+
+int Scene::Node::HeursiticConstEstimate(const Node &other) const {
+  int dx = pos_.x() - other.pos_.x();
+  int dy = pos_.y() - other.pos_.y();
+
+  return (int)(sqrt(dx *dx + dy * dy) * 10);
+}
+
 Scene::Scene()
   : map_id_(0), host_(NULL),
     height_(0), width_(0),
@@ -43,6 +63,16 @@ bool Scene::Allocate(int map_id) {
   this->height_ = conf->height_;
   this->width_ = conf->width_;
   this->grid_size_ = this->height_ * this->width_;
+
+  for (int y = 0; y < this->height_; ++y) {
+    for (int x = 0; x < this->width_; ++x) {
+      Node node;
+      node.pos_.set_x(x);
+      node.pos_.set_y(y);
+      node.walkable_ = (conf->blocks_[y * this->width_ + x] == '0');
+      this->nodes_.push_back(node);
+    }
+  }
 
   return true;
 }
@@ -95,7 +125,7 @@ int32_t Scene::GetGridSize() const {
   return this->grid_size_;
 }
 
-Grid *Scene::GetGrid(const ::protocol::Position &pos) {
+Grid *Scene::GetGrid(const Position &pos) {
   if (pos.x() < 0 || pos.x() >= this->width_ ||
       pos.y() < 0 || pos.y() >= this->height_) {
     return NULL;
@@ -104,7 +134,7 @@ Grid *Scene::GetGrid(const ::protocol::Position &pos) {
   return &this->grids_[pos.y()*this->height_+pos.x()];
 }
 
-const Grid *Scene::GetGrid(const ::protocol::Position &pos) const {
+const Grid *Scene::GetGrid(const Position &pos) const {
   if (pos.x() < 0 || pos.x() >= this->width_ ||
       pos.y() < 0 || pos.y() >= this->height_) {
     return NULL;
@@ -113,7 +143,7 @@ const Grid *Scene::GetGrid(const ::protocol::Position &pos) const {
   return &this->grids_[pos.y()*this->height_+pos.x()];
 }
 
-bool Scene::GetWalkable(const ::protocol::Position &pos) const {
+bool Scene::GetWalkable(const Position &pos) const {
   const Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return false;
@@ -123,7 +153,7 @@ bool Scene::GetWalkable(const ::protocol::Position &pos) const {
 }
 
 bool Scene::GetWalkable(int32_t x, int32_t y) const {
-  ::protocol::Position pos;
+  Position pos;
   pos.set_x(x);
   pos.set_y(y);
 
@@ -136,7 +166,7 @@ bool Scene::AddBuilding(Building *building) {
     return false;
   }
 
-  ::protocol::Position pos = building->GetPos();
+  Position pos = building->GetPos();
   Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return false;
@@ -152,7 +182,7 @@ bool Scene::AddBuilding(Building *building) {
 }
 
 void Scene::RemoveBuilding(Building *building) {
-  ::protocol::Position pos = building->GetPos();
+  Position pos = building->GetPos();
   Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return;
@@ -185,7 +215,7 @@ Building *Scene::GetBuilding(int32_t id) {
   return building;
 }
 
-Scene::BuildingSet *Scene::GetBuildings(const ::protocol::Position &pos) {
+Scene::BuildingSet *Scene::GetBuildings(const Position &pos) {
   Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return NULL;
@@ -194,7 +224,7 @@ Scene::BuildingSet *Scene::GetBuildings(const ::protocol::Position &pos) {
   return grid->GetBuildings();
 }
 
-const Scene::BuildingSet *Scene::GetBuildings(const ::protocol::Position &pos) const {
+const Scene::BuildingSet *Scene::GetBuildings(const Position &pos) const {
   const Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return NULL;
@@ -209,7 +239,7 @@ bool Scene::AddWarrior(Warrior *warrior) {
     return false;
   }
 
-  ::protocol::Position pos = warrior->GetPos();
+  Position pos = warrior->GetPos();
   Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return false;
@@ -225,7 +255,7 @@ bool Scene::AddWarrior(Warrior *warrior) {
 }
 
 void Scene::RemoveWarrior(Warrior *warrior) {
-  ::protocol::Position pos = warrior->GetPos();
+  Position pos = warrior->GetPos();
   Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return;
@@ -258,7 +288,7 @@ Warrior *Scene::GetWarrior(int32_t id) {
   return warrior;
 }
 
-Scene::WarriorSet *Scene::GetWarriors(const ::protocol::Position &pos) {
+Scene::WarriorSet *Scene::GetWarriors(const Position &pos) {
   Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return NULL;
@@ -267,7 +297,7 @@ Scene::WarriorSet *Scene::GetWarriors(const ::protocol::Position &pos) {
   return grid->GetWarriors();
 }
 
-const Scene::WarriorSet *Scene::GetWarriors(const ::protocol::Position &pos) const {
+const Scene::WarriorSet *Scene::GetWarriors(const Position &pos) const {
   const Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
     return NULL;
@@ -276,9 +306,264 @@ const Scene::WarriorSet *Scene::GetWarriors(const ::protocol::Position &pos) con
   return grid->GetWarriors();
 }
 
-void Scene::SearchPath(const ::protocol::Position &src_pos,
-    const ::protocol::Position &dest_pos, PositionVector &paths) {
-  // TODO:
+void Scene::SearchPath(const Position &begin_pos, const Position &end_pos,
+    PositionVector &paths) {
+  if (begin_pos.x() < 0 || begin_pos.x() >= this->width_ ||
+      begin_pos.y() < 0 || begin_pos.y() >= this->height_) {
+    MYSYA_ERROR("[SCENE] begin_pos(%d,%d) is invalid.",
+        begin_pos.x(), begin_pos.y());
+    return;
+  }
+  if (end_pos.x() < 0 || end_pos.x() >= this->width_ ||
+      end_pos.y() < 0 || end_pos.y() >= this->height_) {
+    MYSYA_ERROR("[SCENE] end_pos(%d,%d) is invalid.",
+        end_pos.x(), end_pos.y());
+    return;
+  }
+
+  for (size_t i = 0; i < this->nodes_.size(); ++i) {
+    Node *node = &this->nodes_[i];
+    node->f_ = 0;
+    node->g_ = 0;
+    node->open_list_pos_ = 0;
+    node->close_list_pos_ = 0;
+    node->parent_ = NULL;
+  }
+
+  this->start_node_ = this->GetNode(begin_pos);
+  this->end_node_ = this->GetNode(end_pos);
+  this->open_list_.clear();
+  this->open_list_.push_back(NULL);
+
+  this->start_node_->g_ = 0;
+  this->start_node_->f_ = this->start_node_->g_ +
+      this->start_node_->HeursiticConstEstimate(*this->end_node_);
+  this->InsertOpenList(this->start_node_);
+
+  NodePtrVector neighbor_nodes;
+  neighbor_nodes.reserve(8);
+
+  while (this->IsOpenListEmpty() == false) {
+    Node *cur_node = this->GetMinFScoreNodeInOpenList();
+    if (cur_node == this->end_node_) {
+      this->ConstructResultPath(paths);
+      return;
+    }
+
+    this->DeleteMinFScoreNodeInOpenList();
+    this->InsertCloseList(cur_node);
+
+    this->GetNeighborNodes(cur_node, neighbor_nodes);
+
+    for (size_t i = 0; i < neighbor_nodes.size(); ++i) {
+      Node *neighbor = neighbor_nodes[i];
+
+      bool is_in_open_list = this->IsInOpenList(neighbor);
+      bool is_in_close_list = this->IsInCloseList(neighbor);
+      int g_cal = cur_node->g_ + cur_node->NeighbroGCost(*neighbor);
+
+      if (is_in_close_list && g_cal >= neighbor->g_) {
+        continue;
+      }
+
+      if (is_in_open_list == false || g_cal < neighbor->g_) {
+        neighbor->parent_ = cur_node;
+        neighbor->g_ = g_cal;
+        neighbor->f_ = neighbor->g_ +
+          neighbor->HeursiticConstEstimate(*this->end_node_);
+
+        if (is_in_open_list == false) {
+          this->InsertOpenList(neighbor);
+        } else {
+          this->ResortOpenList(neighbor);
+        }
+      }
+    }
+  }
+}
+
+void Scene::PrintSearchPath(const Position &begin_pos, const Position &end_pos) {
+  const SceneConf *conf =
+    SceneManager::GetInstance()->GetSceneConf(this->map_id_);
+  if (conf == NULL) {
+    MYSYA_ERROR("[SCENE] SceneManager::GetSceneConf(%d) failed.", this->map_id_);
+    return;
+  }
+
+  PositionVector result;
+  this->SearchPath(begin_pos, end_pos, result);
+
+  std::string map_string = conf->blocks_;
+  if (result.empty() == true) {
+    MYSYA_ERROR("[SCENE] SearchPath() failed.");
+    return;
+  }
+
+  for (size_t i = 0; i < result.size(); ++i) {
+    if (i == 0) {
+      map_string[result[i].y() * this->width_ + result[i].x()] = 'B';
+    } else if (i == result.size() - 1) {
+      map_string[result[i].y() * this->width_ + result[i].x()] = 'E';
+    } else {
+      map_string[result[i].y() * this->width_ + result[i].x()] = 'X';
+    }
+  }
+
+  for (int y = 0; y < this->height_; ++y) {
+    for (int x = 0; x < this->width_; ++x) {
+      char c = map_string[y * this->width_ + x];
+
+      if (c == 'X' || c == 'B' || c == 'E') {
+        ::printf("\033[;32m");
+        ::printf("%c", c);
+        ::printf("\033[0m");
+      } else {
+        ::printf("%c", c);
+      }
+    }
+    printf("\n");
+  }
+}
+
+Scene::Node *Scene::GetNode(const Position &pos) {
+  return this->GetNode(pos.x(), pos.y());
+}
+
+Scene::Node *Scene::GetNode(int32_t x, int32_t y) {
+  return &this->nodes_[y * this->width_ + x];
+}
+
+void Scene::GetNeighborNodes(const Node *node, NodePtrVector &neighbor_nodes) {
+  neighbor_nodes.clear();
+
+  int start_x = std::max(node->pos_.x() - 1, 0);
+  int end_x = std::min(node->pos_.x() + 1, this->width_ - 1);
+  int start_y = std::max(node->pos_.y() - 1, 0);
+  int end_y = std::min(node->pos_.y() + 1, this->height_ - 1);
+
+  for (int y = start_y; y <= end_y; ++y) {
+    for (int x = start_x; x <= end_x; ++x) {
+      if (x != node->pos_.x() || y != node->pos_.y()) {
+        Node *neighbor = this->GetNode(x, y);
+        if (neighbor->walkable_) {
+          neighbor_nodes.push_back(neighbor);
+        }
+      }
+    }
+  }
+}
+
+bool Scene::IsInOpenList(const Node *node) const {
+  return node->open_list_pos_;
+}
+
+bool Scene::IsOpenListEmpty() const {
+  return this->open_list_.size() <= 1;
+}
+
+void Scene::InsertOpenList(Node *node) {
+  size_t cur_index = this->open_list_.size();
+  this->open_list_.push_back(node);
+  node->open_list_pos_ = cur_index;
+
+  for (;;) {
+    size_t parent_index = cur_index / 2;
+
+    if (parent_index == 0) {
+      break;
+    }
+
+    if (*this->open_list_[parent_index] < *this->open_list_[cur_index]) {
+      break;
+    }
+
+    this->open_list_[parent_index]->open_list_pos_ = cur_index;
+    this->open_list_[cur_index]->open_list_pos_ = parent_index;
+    std::swap(this->open_list_[parent_index], this->open_list_[cur_index]);
+
+    cur_index = parent_index;
+  }
+}
+
+Scene::Node *Scene::GetMinFScoreNodeInOpenList() {
+  if (this->IsOpenListEmpty() == true) {
+    return NULL;
+  }
+
+  return this->open_list_[1];
+}
+
+void Scene::DeleteMinFScoreNodeInOpenList() {
+  if (this->IsOpenListEmpty()) {
+    return;
+  }
+
+  this->open_list_[1]->open_list_pos_ = 0;
+  this->open_list_[1] = this->open_list_.back();
+  this->open_list_.pop_back();
+
+  size_t cur_index = 1;
+
+  for (;;) {
+    size_t child_index = cur_index * 2;
+
+    if (child_index >= this->open_list_.size()) {
+      break;
+    }
+
+    if (child_index + 1 < this->open_list_.size() &&
+        *this->open_list_[child_index + 1] < *this->open_list_[child_index]) {
+      ++child_index;
+    }
+
+    if (*this->open_list_[cur_index] < *this->open_list_[child_index]) {
+      break;
+    }
+
+    this->open_list_[cur_index]->open_list_pos_ = child_index;
+    this->open_list_[child_index]->open_list_pos_ = cur_index;
+    std::swap(this->open_list_[cur_index], this->open_list_[child_index]);
+
+    cur_index = child_index;
+  }
+}
+
+void Scene::ResortOpenList(Node *node) {
+  size_t cur_index = node->open_list_pos_;
+
+  for (;;) {
+    size_t parent_index = cur_index / 2;
+
+    if (0 == parent_index) {
+      break;
+    }
+    if (*this->open_list_[parent_index] < *this->open_list_[cur_index]) {
+      break;
+    }
+
+    this->open_list_[parent_index]->open_list_pos_ = cur_index;
+    this->open_list_[cur_index]->open_list_pos_ = parent_index;
+    std::swap(this->open_list_[parent_index], this->open_list_[cur_index]);
+
+    cur_index = parent_index;
+  }
+}
+
+bool Scene::IsInCloseList(const Node *node) const {
+  return node->close_list_pos_;
+}
+
+void Scene::InsertCloseList(Node *node) {
+  node->close_list_pos_ = 1;
+}
+
+void Scene::ConstructResultPath(PositionVector &result) {
+  for (Node *node = end_node_;
+      node != this->start_node_ && node != NULL;
+      node = node->parent_) {
+    result.push_back(node->pos_);
+  }
+  std::reverse(result.begin(), result.end());
 }
 
 }  // namespace scene

@@ -1,6 +1,14 @@
+import "combat.proto";
+
 package tutorial.orcas.combat.server.event;
 
 // EVENT_COMBAT_BEGIN
 message EventCombatBegin {
-  required int32 id = 1;                                      // 战斗id
+  required int32 combat_id = 1;                               // 战斗id
+}
+
+// EVENT_COMBAT_MOVE_ACTION
+message EventCombatMoveAction {
+  required int32 combat_id = 1;                               // 战斗id
+  required .protocol.CombatAction action = 2;                 // 行动
 }

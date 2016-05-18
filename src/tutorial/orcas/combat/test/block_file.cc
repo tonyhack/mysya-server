@@ -150,9 +150,9 @@ bool BlockConfig::Load(const std::string &file) {
 
   for (size_t i = 0; i < uncompressed_size; i += sizeof(int)) {
     if (*(int *)(&buffer[i]) > 0) {
-      this->blocks_ += " ";
+      this->blocks_ += "0";
     } else {
-      this->blocks_ += "#";
+      this->blocks_ += "1";
     }
   }
 

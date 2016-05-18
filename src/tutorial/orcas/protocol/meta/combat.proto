@@ -40,6 +40,11 @@ message CombatAction {
   optional CombatAttackAction attack_action = 5;          // 攻击指令
 }
 
+// 行动序列
+message CombatActionSequence {
+  repeated CombatAction action = 1;                       // 操作序列
+}
+
 // 战斗状态镜像数据
 message CombatStatusImage {
   repeated .protocol.CombatBuildingFields building = 1;   // 建筑

@@ -45,11 +45,18 @@ set(COMBAT_SERVER_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/combat_warrior_field_pool.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/configs.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/event_dispatcher.cc
-    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/main.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require_dispatcher.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/user_combat_message_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/user_message_dispatcher.cc
     )
 
-add_executable(combat_server ${UTIL_SOURCES} ${COMBAT_SOURCES} ${ORCAS_PROTOCOL_SOURCES} ${COMBAT_PROTOCOL_SOURCES} ${EVENT_SOURCES} ${COMBAT_SERVER_SOURCES} ${COMBAT_SERVER_SCENE_SOURCES})
+set(COMBAT_SERVER_MAIN_SOURCES
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/main.cc
+    )
+
+add_subdirectory(scene/test)
+
+add_executable(combat_server ${UTIL_SOURCES} ${COMBAT_SOURCES} ${ORCAS_PROTOCOL_SOURCES}
+    ${COMBAT_PROTOCOL_SOURCES} ${EVENT_SOURCES} ${REQUIRE_SOURCES} ${COMBAT_SERVER_SOURCES}
+    ${COMBAT_SERVER_SCENE_SOURCES} ${COMBAT_SERVER_MAIN_SOURCES})
 target_link_libraries(combat_server mysya-ioevent mysya-codec mysya-orcas-deps protobuf pthread rt dl)

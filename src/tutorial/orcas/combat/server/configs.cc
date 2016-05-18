@@ -11,7 +11,11 @@ namespace server {
 
 MYSYA_SINGLETON_IMPL(Configs);
 
-Configs::Configs() {}
+Configs::Configs()
+  : combat_initial_size_(1), combat_extend_size_(1),
+    combat_building_initial_size_(1), combat_building_extend_size_(1),
+    combat_role_initial_size_(1), combat_role_extend_size_(1),
+    combat_warrior_initial_size_(1), combat_warrior_extend_size_(1) {}
 Configs::~Configs() {}
 
 bool Configs::Load(const std::string &file) {

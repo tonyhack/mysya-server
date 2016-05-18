@@ -19,6 +19,8 @@ class Scene;
 
 class Warrior {
  public:
+  typedef MoveAction::PositionVector PositionVector;
+
   Warrior();
   ~Warrior();
 
@@ -34,7 +36,8 @@ class Warrior {
   MoveAction *GetMoveAction();
 
   void StartMove(const ::protocol::Position &dest_pos);
-  void SyncMoveAction(const ::protocol::Position &dest_pos);
+  void DispatchMoveActionEvent(const ::protocol::Position &dest_pos,
+      const PositionVector &path);
 
  private:
   Scene *scene_;

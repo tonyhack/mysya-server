@@ -41,7 +41,10 @@ void UserCombatMessageHandler::OnMessageCombatActionRequest(
     return;
   }
 
-  role->DoAction(message.action());
+  if (role->DoAction(message.action()) == false) {
+    MYSYA_ERROR("CombatRoleField::DoAction() failed.");
+    return;
+  }
 }
 
 }  // namespace server

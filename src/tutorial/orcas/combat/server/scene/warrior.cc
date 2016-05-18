@@ -6,6 +6,9 @@
 #include "tutorial/orcas/combat/server/combat_field.h"
 #include "tutorial/orcas/combat/server/combat_role_field.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
+#include "tutorial/orcas/combat/server/event/cc/event.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
+#include "tutorial/orcas/combat/server/scene/scene.h"
 #include "tutorial/orcas/combat/server/scene/scene_app.h"
 
 namespace tutorial {
@@ -37,6 +40,14 @@ int32_t Warrior::GetId() const {
   return this->host_->GetFields().id();
 }
 
+Scene *Warrior::GetScene() {
+  return this->scene_;
+}
+
+CombatWarriorField *Warrior::GetHost() {
+  return this->host_;
+}
+
 ::protocol::Position Warrior::GetPos() {
   ::protocol::Position pos;
   pos.set_x(this->host_->GetFields().origin_pos_x());
@@ -53,25 +64,30 @@ MoveAction *Warrior::GetMoveAction() {
   return &this->move_action_;
 }
 
-void Warrior::SyncMoveAction(const ::protocol::Position &dest_pos) {
+void Warrior::DispatchMoveActionEvent(const ::protocol::Position &dest_pos,
+    const PositionVector &paths) {
+  event::EventCombatMoveAction event;
+  event.set_combat_id(this->scene_->GetId());
+
   const ::mysya::util::Timestamp &begin_timestamp =
-    this->host_->GetRoleField()->GetCombatField()->GetBeginTimestamp();
+    this->GetHost()->GetRoleField()->GetCombatField()->GetBeginTimestamp();
   const ::mysya::util::Timestamp &now_timestamp =
     SceneApp::GetInstance()->GetHost()->GetTimestamp();
 
-  ::protocol::MessageCombatActionSync message;
-
-  ::protocol::CombatAction *action = message.mutable_action();
+  ::protocol::CombatAction *action = event.mutable_action();
   action->set_type(::protocol::COMBAT_ACTION_TYPE_MOVE);
   action->set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
 
   ::protocol::CombatMoveAction *move_action = action->mutable_move_action();
   move_action->add_warrior_id(this->GetId());
   *move_action->mutable_pos() = dest_pos;
+  for (PositionVector::const_iterator iter = paths.begin();
+      iter != paths.end(); ++iter) {
+    *move_action->add_paths() = *iter;
+  }
 
-  // TODO: 是否应该发事件，处理发送、处理战斗记录?
-  this->GetHost()->GetRoleField()->GetCombatField()->BroadcastMessage(
-      ::protocol::MESSAGE_COMBAT_ACTION_SYNC, message);
+  SceneApp::GetInstance()->GetEventDispatcher()->Dispatch(
+      event::EVENT_COMBAT_MOVE_ACTION, &event);
 }
 
 }  // namespace scene

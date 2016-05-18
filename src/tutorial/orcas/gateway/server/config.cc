@@ -3,6 +3,8 @@
 #include <mysya/ioevent/logger.h>
 
 #include "tutorial/orcas/deps/tinyxml/tinyxml.h"
+#include "tutorial/orcas/gateway/server/map_config.h"
+#include "tutorial/orcas/gateway/server/warrior_config.h"
 
 namespace tutorial {
 namespace orcas {
@@ -96,7 +98,47 @@ bool Config::Load(const std::string &file) {
     combat_server_node = combat_server_node->NextSiblingElement("value");
   }
 
+  TiXmlElement *configs_node = config_node->FirstChildElement("configs");
+  if (configs_node == NULL) {
+    MYSYA_ERROR("Config file(%s) /config/configs not found.", file.data());
+    return false;
+  }
+
+  TiXmlElement *value_node = configs_node->FirstChildElement("value");
+  while (value_node != NULL) {
+    attr = value_node->Attribute("file");
+    if (attr == NULL) {
+      MYSYA_ERROR("Config file(%s) /config/configs[value] not found.",
+          file.data());
+      return false;
+    }
+
+    this->configs_.push_back(attr);
+
+    value_node = value_node->NextSiblingElement("value");
+  }
+
+  for (ConfigVector::const_iterator iter = this->configs_.begin();
+      iter != this->configs_.end(); ++iter) {
+    if (this->OnLoadConfig(*iter) == false) {
+      return false;
+    }
+  }
+
   return true;
+}
+
+bool Config::OnLoadConfig(const std::string &file) {
+  std::string file_basename = ::basename(file.data());
+  if (file_basename == "map.xml") {
+    return MapConfig::GetInstance()->LoadMap(file);
+  } else if (file_basename == "map_build.xml") {
+    return MapConfig::GetInstance()->LoadBuilding(file);
+  } else if (file_basename == "soldier.xml") {
+    return WarriorConfig::GetInstance()->Load(file);
+  } else {
+    return false;
+  }
 }
 
 }  // namespace server

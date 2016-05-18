@@ -40,6 +40,7 @@ class CombatSessions {
 
   CombatSession *GetSessionByServerId(int32_t server_id);
   ::mysya::codec::ProtobufCodec *GetCodec();
+  MessageDispatcher *GetMessageDispatcher();
 
  private:
   void AddConnection(int32_t server_id, int sockfd);

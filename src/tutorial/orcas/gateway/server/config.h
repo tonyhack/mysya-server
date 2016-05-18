@@ -1,8 +1,9 @@
 #ifndef TUTORIAL_ORCAS_GATEWAY_SERVER_CONFIG_H
 #define TUTORIAL_ORCAS_GATEWAY_SERVER_CONFIG_H
 
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 #include <mysya/util/class_util.h>
 
@@ -20,6 +21,7 @@ class Config {
   };
 
   typedef std::map<int, CombatServerConf> CombatServerMap;
+  typedef std::vector<std::string> ConfigVector;
 
   bool Load(const std::string &file);
 
@@ -28,8 +30,11 @@ class Config {
   int listen_port_;
 
   CombatServerMap combat_servers_;
+  ConfigVector configs_;
 
  private:
+  bool OnLoadConfig(const std::string &file);
+
   MYSYA_SINGLETON(Config);
 };
 

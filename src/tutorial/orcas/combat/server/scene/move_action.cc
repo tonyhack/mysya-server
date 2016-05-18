@@ -64,7 +64,7 @@ void MoveAction::Start(const ::protocol::Position &dest_pos) {
         std::placeholders::_1));
 
   this->MoveStep();
-  this->host_->SyncMoveAction(dest_pos);
+  this->host_->DispatchMoveActionEvent(dest_pos, this->move_paths_);
 }
 
 void MoveAction::Reset() {
@@ -78,11 +78,11 @@ void MoveAction::Reset() {
 }
 
 void MoveAction::Finish(bool success) {
-  if (success == false) {
-    this->host_->SyncMoveAction(this->host_->GetPos());
-  }
-
   this->Reset();
+
+  if (success == false) {
+    this->host_->DispatchMoveActionEvent(this->host_->GetPos(), this->move_paths_);
+  }
 }
 
 void MoveAction::OnMoveTimer(int64_t timer_id) {

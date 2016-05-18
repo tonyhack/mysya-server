@@ -8,9 +8,16 @@ set(EXECUTABLE_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/tutorial/orcas/gateway/serv
 set(GATEWAY_SERVER_SOURCES
     ${GATEWAY_SOURCE_DIR}/server/actor.cc
     ${GATEWAY_SOURCE_DIR}/server/app_server.cc
+    ${GATEWAY_SOURCE_DIR}/server/combat_actor.cc
+    ${GATEWAY_SOURCE_DIR}/server/combat_actor_manager.cc
+    ${GATEWAY_SOURCE_DIR}/server/combat_manager.cc
+    ${GATEWAY_SOURCE_DIR}/server/combat_message_handler.cc
     ${GATEWAY_SOURCE_DIR}/server/config.cc
     ${GATEWAY_SOURCE_DIR}/server/main.cc
+    ${GATEWAY_SOURCE_DIR}/server/map_config.cc
     ${GATEWAY_SOURCE_DIR}/server/message_dispatcher.cc
+    ${GATEWAY_SOURCE_DIR}/server/user_message_handler.cc
+    ${GATEWAY_SOURCE_DIR}/server/warrior_config.cc
     )
 
 add_executable(gateway_server ${UTIL_SOURCES} ${GATEWAY_SOURCES} ${GATEWAY_SERVER_SOURCES} ${ORCAS_PROTOCOL_SOURCES})

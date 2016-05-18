@@ -40,7 +40,7 @@ bool CommandLineOption::Parse(int argc, char *argv[]) {
 
   std::vector<char> buffer(argv[0], argv[0] + strlen(argv[0]) + 1);
   this->cmd_dirname_ = ::dirname(&buffer[0]);
-  this->cmd_basename_ = ::dirname(&buffer[0]);
+  this->cmd_basename_ = ::basename(&buffer[0]);
 
   opterr = 0;
 

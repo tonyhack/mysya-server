@@ -1,6 +1,16 @@
 #ifndef TUTORIAL_ORCAS_GATEWAY_SERVER_ACTOR_H
 #define TUTORIAL_ORCAS_GATEWAY_SERVER_ACTOR_H
 
+#include <string>
+
+namespace google {
+namespace protobuf {
+
+class Message;
+
+}  // namespace protobuf
+}  // namespace google
+
 namespace mysya {
 namespace ioevent {
 
@@ -15,6 +25,7 @@ namespace gateway {
 namespace server {
 
 class AppServer;
+class CombatActor;
 
 class Actor {
  public:
@@ -26,11 +37,17 @@ class Actor {
   ::mysya::ioevent::TcpSocketApp *GetTcpSocketApp();
   AppServer *GetHost();
 
+  void SetCombatActor(CombatActor *combat_actor);
+  CombatActor *GetCombatActor();
+
+  int SendMessage(int message_type, const ::google::protobuf::Message &message);
+
  private:
   int sockfd_;
   ::mysya::ioevent::TcpSocketApp *tcp_socket_app_;
 
   AppServer *host_;
+  CombatActor *combat_actor_;
 };
 
 }  // namespace server

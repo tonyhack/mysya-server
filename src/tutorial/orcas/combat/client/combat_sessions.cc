@@ -85,6 +85,10 @@ CombatSession *CombatSessions::GetSessionByServerId(int32_t server_id) {
   return &this->codec_;
 }
 
+MessageDispatcher *CombatSessions::GetMessageDispatcher() {
+  return &this->message_dispatcher_;
+}
+
 void CombatSessions::AddConnection(int32_t server_id, int sockfd) {
   this->connections_.insert(std::make_pair(server_id, sockfd));
 }

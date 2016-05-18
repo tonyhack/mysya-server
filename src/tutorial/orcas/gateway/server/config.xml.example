@@ -4,4 +4,9 @@
   <combat_servers>
     <value id="1" ip="0.0.0.0" port="11000"/>
   </combat_servers>
+  <configs>
+    <value file="/home/hantao/code/personal/mysya-server/etc/tutorial/orcas/gateway/server/confs/map_build.xml"/>
+    <value file="/home/hantao/code/personal/mysya-server/etc/tutorial/orcas/gateway/server/confs/map.xml"/>
+    <value file="/home/hantao/code/personal/mysya-server/etc/tutorial/orcas/gateway/server/confs/soldier.xml"/>
+  </configs>
 </config>

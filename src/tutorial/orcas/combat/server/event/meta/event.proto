@@ -4,4 +4,5 @@ enum EventType {
   EVENT_TEST = 1;
 
   EVENT_COMBAT_BEGIN = 2;
+  EVENT_COMBAT_MOVE_ACTION = 3;
 }

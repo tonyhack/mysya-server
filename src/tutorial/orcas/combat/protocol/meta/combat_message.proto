@@ -26,7 +26,7 @@ enum CombatDeployResultType {
 
 // 出战角色数据
 message CombatRoleData {
-  required uint64 argent_id = 1;                              // 代理id
+  required uint64 argent_id = 1;                              // 代理id(要求全局唯一)
   required string ai = 2;                                     // ai
   repeated .protocol.WarriorDescription warrior = 3;          // 兵团列表
 }
@@ -63,6 +63,7 @@ message MessageCombatDeployResponse {
 // 连接代理请求
 message MessageCombatConnectArgentRequest {
   required uint64 argent_id = 1;                              // 代理id
+  required int32 combat_id = 2;                               // 战斗id
 }
 // 连接代理回应
 message MessageCombatConnectArgentResponse {
@@ -71,6 +72,8 @@ message MessageCombatConnectArgentResponse {
     ERROR_CODE_FAILURE = -1;
   }
   required int32 ret_code = 1;                                // 返回码
+  required uint64 argent_id = 2;                              // 代理id
+  required int32 combat_id = 3;                               // 战斗id
 }
 
 // 开战请求
@@ -84,6 +87,7 @@ message MessageCombatBeginResponse {
     ERROR_CODE_FAILURE = -1;
   }
   required int32 ret_code = 1;
+  required int32 combat_id = 2;
 }
 
 // 战斗代理请求
