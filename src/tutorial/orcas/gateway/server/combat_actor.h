@@ -31,6 +31,8 @@ class CombatActor {
   void SetCombat(Combat *combat);
 
   uint64_t GetCombatArgentId() const;
+  int32_t GetCampId() const;
+  void SetCampId(int value);
 
   const std::string &GetName() const;
 
@@ -48,6 +50,8 @@ class CombatActor {
   Combat *combat_;
   // 全局唯一的代理id
   uint64_t combat_argent_id_;
+  // 阵营id
+  int32_t camp_id_;
   std::string name_;
   WarriorDescriptionMap warriors_;
 };

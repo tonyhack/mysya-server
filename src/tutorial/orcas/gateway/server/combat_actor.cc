@@ -12,7 +12,8 @@ uint64_t CombatActor::g_argent_id_allocator_ = 0;
 
 CombatActor::CombatActor(const std::string name)
   : actor_(NULL), combat_(NULL),
-    combat_argent_id_(0), name_(name) {
+    combat_argent_id_(0), camp_id_(0),
+    name_(name) {
   this->GeneratorCombatArgentId();
 }
 CombatActor::~CombatActor() {}
@@ -43,6 +44,14 @@ void CombatActor::SetCombat(Combat *combat) {
 
 uint64_t CombatActor::GetCombatArgentId() const {
   return this->combat_argent_id_;
+}
+
+int32_t CombatActor::GetCampId() const {
+  return this->camp_id_;
+}
+
+void CombatActor::SetCampId(int value) {
+  this->camp_id_ = value;
 }
 
 void CombatActor::GeneratorCombatArgentId() {

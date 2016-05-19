@@ -37,12 +37,16 @@ message MessageCombatRequest {
 // MESSAGE_COMBAT_RESPONSE
 message MessageCombatResponse {
   required bool result = 1;                                         // 结果
-  optional .protocol.CombatStatusImage status_image = 2;            // 状态镜像
+  optional uint64 host_id = 2;                                      // 当前角色的代理id
+  optional int32 camp_id = 3;                                       // 阵营
+  optional .protocol.CombatStatusImage status_image = 4;            // 状态镜像
 }
 
 // MESSAGE_COMBAT_BEGIN_SYNC
 message MessageCombatBeginSync {
-  required .protocol.CombatStatusImage combat_init_image = 1;       // 战斗初始化数据
+  required uint64 host_id = 1;                                      // 当前角色的代理id
+  required int32 camp_id = 2;                                       // 阵营
+  required .protocol.CombatStatusImage combat_init_image = 3;       // 战斗初始化数据
 }
 
 // MESSAGE_COMBAT_ACTION_REQUEST
