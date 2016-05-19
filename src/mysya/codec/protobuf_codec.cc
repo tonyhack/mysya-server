@@ -59,7 +59,8 @@ int ProtobufCodec::OnMessage(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer
     }
 
     int16_t type_bytes = *(int16_t *)(data + ProtobufCodec::kHeaderBytes);
-    std::string type_name(data + ProtobufCodec::kTypeBytes, type_bytes);
+    std::string type_name(data + ProtobufCodec::kHeaderBytes +
+        ProtobufCodec::kTypeBytes, type_bytes);
 
     std::unique_ptr< ::google::protobuf::Message> message(CreateMessage(type_name));
     if (message.get() == NULL) {

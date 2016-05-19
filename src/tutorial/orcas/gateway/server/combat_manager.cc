@@ -189,7 +189,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   PendingCombatActorSet::iterator iter = this->pending_combat_actors_.begin();
   if (iter == this->pending_combat_actors_.end()) {
     this->AddPendingCombatActor(actor);
-    return false;
+    return true;
   }
 
   CombatActor *left_actor = actor;
@@ -198,7 +198,6 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
 
   Combat *combat = this->Allocate();
   if (combat == NULL) {
-    this->AddPendingCombatActor(left_actor);
     this->AddPendingCombatActor(right_actor);
     return false;
   }
@@ -282,7 +281,6 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
     this->host_->GetCombatClients().GetSessionByServerId(1);
   if (session == NULL) {
     MYSYA_ERROR("CombatSessions::GetSessionByServerId(1) failed.");
-    this->AddPendingCombatActor(left_actor);
     this->AddPendingCombatActor(right_actor);
     return false;
   }

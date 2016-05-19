@@ -100,6 +100,8 @@ void CombatMessageHandler::OnMessageCombatDeployResponse(
   session->SendMessage(connect_message);
   connect_message.set_argent_id(right_combat_actor->GetCombatArgentId());
   session->SendMessage(connect_message);
+
+  MYSYA_DEBUG("MessageCombatDeployResponse success.");
 }
 
 void CombatMessageHandler::OnMessageCombatConnectArgentResponse(

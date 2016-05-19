@@ -52,6 +52,8 @@ static void SendMessageLoginResponse(Actor *actor, bool result) {
 
 void UserMessageHandler::OnMessageLoginRequest(Actor *actor,
     const char *data, int size) {
+  MYSYA_DEBUG("OnMessageLoginRequest size=%d.", size);
+
   ::protocol::MessageLoginRequest message;
   if (message.ParseFromArray(data, size) == false) {
     MYSYA_ERROR("MessageLoginRequest::ParseFromArray() failed.");
@@ -117,7 +119,7 @@ void UserMessageHandler::OnMessageCombatRequest(Actor *actor,
     return;
   }
 
-  SendMessageCombatResponse(actor, true);
+  // SendMessageCombatResponse(actor, true);
 }
 
 void UserMessageHandler::OnMessageCombatActionRequest(Actor *actor,

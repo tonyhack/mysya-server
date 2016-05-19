@@ -24,7 +24,9 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
     tcp_socket_app_(event_loop_),
     combat_socket_app_(event_loop_),
     combat_clients_(&combat_socket_app_),
-    codec_(&tcp_socket_app_) {
+    codec_(&tcp_socket_app_),
+    user_message_handler_(this),
+    combat_message_handler_(this) {
   this->tcp_socket_app_.SetConnectionCallback(
       std::bind(&AppServer::OnConnected, this, std::placeholders::_1,
         std::placeholders::_2));
@@ -61,9 +63,15 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
   }
 
   CombatManager::GetInstance()->SetHost(this);
+
+  this->user_message_handler_.SetMessageHandlers();
+  this->combat_message_handler_.SetMessageHandlers();
 }
 
 AppServer::~AppServer() {
+  this->combat_message_handler_.ResetMessageHandlers();
+  this->user_message_handler_.ResetMessageHandlers();
+
   this->codec_.ResetMessageCallback();
 
   this->tcp_socket_app_.ResetConnectionCallback();

@@ -40,9 +40,9 @@ void MessageHandler::OnMessageLoginResponse(Actor *actor,
     return;
   }
 
-  MYSYA_ERROR("<<<<<<< MessageLoginResponse -------");
+  MYSYA_DEBUG("<<<<<<< MessageLoginResponse -------");
   message.PrintDebugString();
-  MYSYA_ERROR("------- MessageLoginResponse >>>>>>>");
+  MYSYA_DEBUG("------- MessageLoginResponse >>>>>>>");
 }
 
 void MessageHandler::OnMessageCombatResponse(Actor *actor,
@@ -53,9 +53,9 @@ void MessageHandler::OnMessageCombatResponse(Actor *actor,
     return;
   }
 
-  MYSYA_ERROR("<<<<<<< MessageCombatResponse -------");
+  MYSYA_DEBUG("<<<<<<< MessageCombatResponse -------");
   message.PrintDebugString();
-  MYSYA_ERROR("------- MessageCombatResponse >>>>>>>");
+  MYSYA_DEBUG("------- MessageCombatResponse >>>>>>>");
 }
 
 void MessageHandler::OnMessageCombatActionResponse(Actor *actor,
@@ -66,9 +66,9 @@ void MessageHandler::OnMessageCombatActionResponse(Actor *actor,
     return;
   }
 
-  MYSYA_ERROR("<<<<<<< MessageCombatActionResponse -------");
+  MYSYA_DEBUG("<<<<<<< MessageCombatActionResponse -------");
   message.PrintDebugString();
-  MYSYA_ERROR("------- MessageCombatActionResponse >>>>>>>");
+  MYSYA_DEBUG("------- MessageCombatActionResponse >>>>>>>");
 }
 
 }  // namespace robot

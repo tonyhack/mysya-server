@@ -60,6 +60,7 @@ RobotApp::~RobotApp() {
 
 void RobotApp::Start() {
   this->message_handler_.SetHandlers();
+  this->PrintPrompt();
   this->loop_.Loop();
 }
 
@@ -73,7 +74,7 @@ void RobotApp::CloseSocket(int sockfd) {
 }
 
 void RobotApp::PrintPrompt() {
-  ::printf("\022[;36m");
+  ::printf("\033[;36m");
   ::printf("robot> ");
   ::printf("\033[0m");
   ::fflush(stdout);
@@ -146,6 +147,7 @@ void RobotApp::SendMessage(int sockfd, int type, ::google::protobuf::Message &da
     return;
   }
   this->codec_.SendMessage(sockfd, type, buffer.data(), buffer.size());
+  MYSYA_DEBUG("SendMessage(%d, %d, %lu)", sockfd, type, buffer.size());
 }
 
 void RobotApp::SetMessageCalback(int type, const MessageCallback &cb) {
@@ -218,6 +220,7 @@ void RobotApp::OnMessage(int sockfd, ::mysya::ioevent::TcpSocketApp *socket_app,
     return;
   }
 
+  this->Dispatch(actor, message_type, data, size);
 }
 
 }  // namespace robot

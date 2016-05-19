@@ -73,6 +73,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
 
   CombatField *combat_field = CombatFieldManager::GetInstance()->Allocate();
   if (combat_field == NULL) {
+    MYSYA_ERROR("CombatFieldManager::Allocate() failed.");
     SendMessageCombatDeployResponse(session, message->host_id(),
         COMBAT_DEPLOY_RESULT_TYPE_FAILURE);
     return;
@@ -81,6 +82,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
   const CombatInitialData &initial_data = message->combat_initial_data();
 
   if (combat_field->Initialize(initial_data.map_id(), this->app_server_, session) == false) {
+    MYSYA_ERROR("CombatField::Initialize() failed.");
     CombatFieldManager::GetInstance()->Deallocate(combat_field);
     SendMessageCombatDeployResponse(session, message->host_id(),
         COMBAT_DEPLOY_RESULT_TYPE_FAILURE);
@@ -88,6 +90,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
   }
 
   if (CombatFieldManager::GetInstance()->Add(combat_field) == false) {
+    MYSYA_ERROR("CombatFieldManager::Add() failed.");
     combat_field->Finalize();
     CombatFieldManager::GetInstance()->Deallocate(combat_field);
     SendMessageCombatDeployResponse(session, message->host_id(),
@@ -104,6 +107,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
       const CombatRoleData &role_data = camp_data.role(j);
       CombatRoleField *role_field = CombatRoleFieldManager::GetInstance()->Allocate();
       if (role_field == NULL) {
+        MYSYA_ERROR("CombatRoleFieldManager::Allocate() failed.");
         CombatFieldManager::GetInstance()->Remove(combat_field->GetId());
         combat_field->Finalize();
         CombatFieldManager::GetInstance()->Deallocate(combat_field);
@@ -113,6 +117,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
       }
 
       if (role_field->Initialize(role_data.argent_id(), this->app_server_) == false) {
+        MYSYA_ERROR("CombatRoleField::Initialize() failed.");
         CombatRoleFieldManager::GetInstance()->Deallocate(role_field);
         CombatFieldManager::GetInstance()->Remove(combat_field->GetId());
         combat_field->Finalize();
@@ -123,6 +128,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
       }
 
       if (CombatRoleFieldManager::GetInstance()->Add(role_field) == false) {
+        MYSYA_ERROR("CombatRoleFieldManager::Add() failed.");
         role_field->Finalize();
         CombatRoleFieldManager::GetInstance()->Deallocate(role_field);
         CombatFieldManager::GetInstance()->Remove(combat_field->GetId());
@@ -148,6 +154,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
 
       CombatBuildingField *building = CombatBuildingFieldPool::GetInstance()->Allocate();
       if (building == NULL) {
+        MYSYA_ERROR("CombatBuildingFieldPool::Allocate() failed.");
         CombatFieldManager::GetInstance()->Remove(combat_field->GetId());
         combat_field->Finalize();
         CombatFieldManager::GetInstance()->Deallocate(combat_field);
@@ -158,6 +165,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
 
       if (building->Initialize(combat_field->AllocateId(), combat_field,
             camp_data.id(), building_description) == false) {
+        MYSYA_ERROR("CombatBuildingField::Initialize() failed.");
         CombatBuildingFieldPool::GetInstance()->Deallocate(building);
         CombatFieldManager::GetInstance()->Remove(combat_field->GetId());
         combat_field->Finalize();

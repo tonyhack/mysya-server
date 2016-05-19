@@ -153,7 +153,7 @@ const MapConf *MapConfig::GetMapConf(int id) const {
   const MapConf *conf = NULL;
 
   MapHashmap::const_iterator iter = this->maps_.find(id);
-  if (iter == this->maps_.end()) {
+  if (iter != this->maps_.end()) {
     conf = &iter->second;
   }
 

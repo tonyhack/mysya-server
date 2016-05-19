@@ -5,6 +5,7 @@
 
 #include <algorithm>
 
+#include <mysya/ioevent/logger.h>
 #include <mysya/ioevent/socket_address.h>
 
 #include "tutorial/orcas/gateway/robot/actor.h"
@@ -73,6 +74,8 @@ static void OnCommandLogin(Actor *actor, const UserCommandHandler::ArgsVector &a
   ::protocol::MessageLoginRequest message;
   message.set_name(args[3]);
   actor->SendMessage(::protocol::MESSAGE_LOGIN_REQUEST, message);
+
+  MYSYA_DEBUG("MessageLoginRequest");
 }
 
 static void OnCommandCombat(Actor *actor, const UserCommandHandler::ArgsVector &args) {

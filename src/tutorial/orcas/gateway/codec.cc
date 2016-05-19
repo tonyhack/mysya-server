@@ -4,6 +4,7 @@
 #include <google/protobuf/message.h>
 
 #include <mysya/ioevent/dynamic_buffer.h>
+#include <mysya/ioevent/logger.h>
 #include <mysya/ioevent/tcp_socket_app.h>
 
 namespace tutorial {
@@ -39,23 +40,28 @@ void Codec::ResetMessageCallback() {
 #define MESSAGE_LENGTH_SIZE sizeof(uint16_t)
 
 int Codec::OnMessage(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
+  MYSYA_DEBUG("Codec::OnMessage.");
+
+  const int kProtocoMinSize = MESSAGE_LENGTH_SIZE + sizeof(ProtocolHeader);
+
   int read_message_bytes = 0;
 
   for (;;) {
-    int readable_bytes = buffer->ReadableBytes();
-    if (readable_bytes <= 0 || readable_bytes < (int)MESSAGE_LENGTH_SIZE) {
+    int readable_bytes = buffer->ReadableBytes() - read_message_bytes;
+    if (readable_bytes <= 0 || readable_bytes < kProtocoMinSize) {
       break;
     }
 
-    uint16_t message_size = *(uint16_t *)buffer->ReadBegin();
+    char *protocol_ptr = buffer->ReadBegin() + read_message_bytes;
+    uint16_t message_size = *(uint16_t *)protocol_ptr;
     if (readable_bytes < message_size + (int)MESSAGE_LENGTH_SIZE) {
       break;
     }
 
     const ProtocolHeader *header =
-      (const ProtocolHeader *)(buffer->ReadBegin() + MESSAGE_LENGTH_SIZE);
+      (const ProtocolHeader *)(protocol_ptr + MESSAGE_LENGTH_SIZE);
 
-    char *data = buffer->ReadBegin() + MESSAGE_LENGTH_SIZE + sizeof(ProtocolHeader);
+    char *data = protocol_ptr + kProtocoMinSize;
     int data_size = message_size - sizeof(ProtocolHeader);
 
     this->aes_.Decode(data, data_size);
@@ -64,7 +70,7 @@ int Codec::OnMessage(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
       this->message_cb_(sockfd, this->socket_app_, header->type_, data, data_size);
     }
 
-    read_message_bytes += message_size + MESSAGE_LENGTH_SIZE;
+    read_message_bytes += message_size + MESSAGE_LENGTH_SIZE + sizeof(ProtocolHeader);
   }
 
   buffer->ReadBytes(read_message_bytes);
@@ -73,14 +79,16 @@ int Codec::OnMessage(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer) {
 }
 
 int Codec::SendMessage(int sockfd, int message_type, const char *data, int size) {
-  char *data_buffer = this->message_send_buffer_ + sizeof(ProtocolHeader) + MESSAGE_LENGTH_SIZE;
-  int data_buffer_size = kMaxMessageSize_ - sizeof(ProtocolHeader) - MESSAGE_LENGTH_SIZE;
+  const int kProtocoMinSize = MESSAGE_LENGTH_SIZE + sizeof(ProtocolHeader);
+
+  char *data_buffer = this->message_send_buffer_ + kProtocoMinSize;
+  int data_buffer_size = kMaxMessageSize_ - kProtocoMinSize;
 
   if (data_buffer_size < size) {
     return -1;
   }
 
-  *(uint32_t *)this->message_send_buffer_ = size;
+  *(uint16_t *)this->message_send_buffer_ = size + sizeof(ProtocolHeader);
 
   ProtocolHeader *header = (ProtocolHeader *)(this->message_send_buffer_ + MESSAGE_LENGTH_SIZE);
   header->type_ = message_type;
@@ -90,7 +98,7 @@ int Codec::SendMessage(int sockfd, int message_type, const char *data, int size)
   this->aes_.Encode(data_buffer, size);
 
   return this->socket_app_->SendMessage(sockfd, this->message_send_buffer_,
-      size + sizeof(ProtocolHeader) + MESSAGE_LENGTH_SIZE);
+      size + kProtocoMinSize);
 }
 
 #undef MESSAGE_LENGTH_SIZE

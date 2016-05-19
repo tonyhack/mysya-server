@@ -7,7 +7,9 @@
 
 #include "tutorial/orcas/combat/client/combat_sessions.h"
 #include "tutorial/orcas/gateway/codec.h"
+#include "tutorial/orcas/gateway/server/combat_message_handler.h"
 #include "tutorial/orcas/gateway/server/message_dispatcher.h"
+#include "tutorial/orcas/gateway/server/user_message_handler.h"
 
 namespace mysya {
 namespace ioevent {
@@ -65,6 +67,9 @@ class AppServer {
 
   Codec codec_;
   MessageDispatcher message_dispatcher_;
+
+  UserMessageHandler user_message_handler_;
+  CombatMessageHandler combat_message_handler_;
 
   ActorHashmap actors_;
 
