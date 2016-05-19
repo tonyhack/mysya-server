@@ -6,3 +6,4 @@ set(GATEWAY_SOURCES
   )
 
 add_subdirectory(server)
+add_subdirectory(robot)

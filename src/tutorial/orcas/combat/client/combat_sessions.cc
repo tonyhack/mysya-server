@@ -218,7 +218,7 @@ void CombatSessions::OnError(::mysya::ioevent::TcpSocketApp *app, int sockfd, in
 
   delete session;
 
-  MYSYA_DEBUG("[COMBAT_SESSION] sockfd(%d) error(%d).", sockfd, error_code);
+  MYSYA_ERROR("[COMBAT_SESSION] sockfd(%d) error(%d).", sockfd, error_code);
 }
 
 void CombatSessions::OnMessage(int sockfd, ::mysya::ioevent::TcpSocketApp *app,

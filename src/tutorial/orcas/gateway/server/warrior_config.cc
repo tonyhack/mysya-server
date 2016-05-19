@@ -45,8 +45,8 @@ bool WarriorConfig::Load(const std::string &file) {
 
       attr = field_node->GetText();
       if (attr == NULL) {
-        MYSYA_ERROR("Config(%s) /resultset/row/field[text] not found.",
-            file.data());
+        MYSYA_ERROR("Config(%s) /resultset/row/field(%s)[text] not found.",
+            file.data(), attr_name);
         return false;
       }
       std::string attr_name_str = attr_name;

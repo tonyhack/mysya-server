@@ -145,6 +145,7 @@ void AppServer::OnConnected(::mysya::ioevent::TcpSocketApp *app, int sockfd) {
 
 void AppServer::OnReceive(::mysya::ioevent::TcpSocketApp *app, int sockfd,
     ::mysya::ioevent::DynamicBuffer *buffer) {
+  this->codec_.OnMessage(sockfd, buffer);
 }
 
 void AppServer::OnSendCompleted(::mysya::ioevent::TcpSocketApp *app, int sockfd) {}
