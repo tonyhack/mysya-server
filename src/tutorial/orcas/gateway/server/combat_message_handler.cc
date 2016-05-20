@@ -32,11 +32,11 @@ void CombatMessageHandler::SetMessageHandlers() {
         std::placeholders::_1, std::placeholders::_2));
   this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCalback(
       protocol::MessageCombatConnectArgentResponse().GetTypeName(), std::bind(
-        &CombatMessageHandler::OnMessageCombatDeployResponse, this,
+        &CombatMessageHandler::OnMessageCombatConnectArgentResponse, this,
         std::placeholders::_1, std::placeholders::_2));
   this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCalback(
       protocol::MessageCombatBeginResponse().GetTypeName(), std::bind(
-        &CombatMessageHandler::OnMessageCombatDeployResponse, this,
+        &CombatMessageHandler::OnMessageCombatBeginResponse, this,
         std::placeholders::_1, std::placeholders::_2));
 }
 
@@ -89,6 +89,7 @@ void CombatMessageHandler::OnMessageCombatDeployResponse(
   }
 
   combat->SetCombatArgentId(message->combat_id());
+  combat->SetCombatServerId(session->GetServerId());
 
   CombatManager::GetInstance()->RemovePending(combat->GetId());
   CombatManager::GetInstance()->AddCombat(combat);
@@ -96,9 +97,9 @@ void CombatMessageHandler::OnMessageCombatDeployResponse(
   // 发送连接请求
   protocol::MessageCombatConnectArgentRequest connect_message;
   connect_message.set_combat_id(message->combat_id());
-  connect_message.set_argent_id(left_combat_actor->GetCombatArgentId());
+  connect_message.set_role_argent_id(left_combat_actor->GetCombatArgentId());
   session->SendMessage(connect_message);
-  connect_message.set_argent_id(right_combat_actor->GetCombatArgentId());
+  connect_message.set_role_argent_id(right_combat_actor->GetCombatArgentId());
   session->SendMessage(connect_message);
 
   MYSYA_DEBUG("MessageCombatDeployResponse success.");
@@ -110,9 +111,11 @@ void CombatMessageHandler::OnMessageCombatConnectArgentResponse(
   protocol::MessageCombatConnectArgentResponse *message =
     (protocol::MessageCombatConnectArgentResponse *)data;
 
-  Combat *combat = CombatManager::GetInstance()->GetPending(message->combat_id());
+  Combat *combat = CombatManager::GetInstance()->GetCombat(
+      session->GetServerId(), message->combat_id());
   if (combat == NULL) {
-    MYSYA_ERROR("CombatManager::GetPending(%d) failed.", message->combat_id());
+    MYSYA_ERROR("CombatManager::GetCombat(%d, %d) failed.",
+        session->GetServerId(), message->combat_id());
     return;
   }
 
@@ -153,13 +156,15 @@ void CombatMessageHandler::OnMessageCombatConnectArgentResponse(
 
 void CombatMessageHandler::OnMessageCombatBeginResponse(
     TransportChannel *channel, const ProtoMessage *data) {
-  // client::CombatSession *session = (client::CombatSession *)channel;
+  client::CombatSession *session = (client::CombatSession *)channel;
   protocol::MessageCombatBeginResponse *message =
     (protocol::MessageCombatBeginResponse *)data;
 
-  Combat *combat = CombatManager::GetInstance()->GetPending(message->combat_id());
+  Combat *combat = CombatManager::GetInstance()->GetCombat(
+      session->GetServerId(), message->combat_id());
   if (combat == NULL) {
-    MYSYA_ERROR("CombatManager::GetPending(%d) failed.", message->combat_id());
+    MYSYA_ERROR("CombatManager::GetCombat(%d, %d) failed.",
+        session->GetServerId(), message->combat_id());
     return;
   }
 
@@ -171,8 +176,9 @@ void CombatMessageHandler::OnMessageCombatBeginResponse(
     return;
   }
 
+  ::protocol::MessageCombatResponse response;
+
   if (message->ret_code() != protocol::MessageCombatConnectArgentResponse::ERROR_CODE_COMPLETE) {
-    ::protocol::MessageCombatResponse response;
     response.set_result(false);
 
     if (left_combat_actor->GetActor() != NULL) {
@@ -186,8 +192,24 @@ void CombatMessageHandler::OnMessageCombatBeginResponse(
     }
 
     CombatManager::GetInstance()->Deallocate(combat);
+  } else {
+    response.set_result(true);
+    response.set_map_id(combat->GetMapId());
+    *response.mutable_status_image() = message->status_image();
 
-    return;
+    response.set_host_id(left_combat_actor->GetCombatArgentId());
+    response.set_camp_id(left_combat_actor->GetCampId());
+    if (left_combat_actor->GetActor() != NULL) {
+      left_combat_actor->GetActor()->SendMessage(
+          ::protocol::MESSAGE_COMBAT_RESPONSE, response);
+    }
+
+    response.set_host_id(right_combat_actor->GetCombatArgentId());
+    response.set_camp_id(right_combat_actor->GetCampId());
+    if (right_combat_actor->GetActor() != NULL) {
+      right_combat_actor->GetActor()->SendMessage(
+          ::protocol::MESSAGE_COMBAT_RESPONSE, response);
+    }
   }
 }
 

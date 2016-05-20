@@ -19,8 +19,9 @@ MYSYA_SINGLETON_IMPL(CombatManager);
 
 Combat::Combat()
   : id_(0), combat_server_id_(0),
+    combat_argent_id_(0), host_(NULL),
     al_(NULL), ar_(NULL),
-    connected_num_(0) {}
+    map_id_(0), connected_num_(0) {}
 Combat::~Combat() {
   if (this->al_ != NULL) { this->al_->SetCombat(NULL); }
   if (this->ar_ != NULL) { this->ar_->SetCombat(NULL); }
@@ -36,6 +37,14 @@ int32_t Combat::GetId() const {
 
 void Combat::SetHost(AppServer *host) {
   this->host_ = host;
+}
+
+void Combat::SetMapId(int32_t id) {
+  this->map_id_ = id;
+}
+
+int32_t Combat::GetMapId() const {
+  return this->map_id_;
 }
 
 void Combat::SetCombatServerId(int32_t id) {
@@ -202,6 +211,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
     return false;
   }
 
+  combat->SetMapId(map_id);
   combat->SetLeft(actor);
   combat->SetRight(right_actor);
 
@@ -211,10 +221,13 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   typedef MapConf::BuildingVectorMap BuildingVectorMap;
   typedef MapConf::BuildingVector BuildingVector;
 
+  MYSYA_DEBUG("MessageCombatDeployRequest host_id(%d).", combat->GetId());
+
   message.set_host_id(combat->GetId());
   ::tutorial::orcas::combat::protocol::CombatInitialData *init_data =
     message.mutable_combat_initial_data();
   init_data->set_map_id(map_id);
+  init_data->set_combat_type(::tutorial::orcas::combat::protocol::COMBAT_TYPE_PVP);
 
   // 左方阵营
   ::tutorial::orcas::combat::protocol::CombatCampData *l_camp_data =

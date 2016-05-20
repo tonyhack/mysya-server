@@ -1,7 +1,9 @@
 #include "tutorial/orcas/combat/server/combat_field.h"
 
 #include <google/protobuf/message.h>
+#include <mysya/ioevent/logger.h>
 
+#include "tutorial/orcas/combat/protocol/cc/combat_message.pb.h"
 #include "tutorial/orcas/combat/server/app_session.h"
 #include "tutorial/orcas/combat/server/combat_building_field.h"
 #include "tutorial/orcas/combat/server/combat_building_field_pool.h"
@@ -179,8 +181,21 @@ int CombatField::SendMessage(const ::google::protobuf::Message &message) {
   return this->app_session_->SendMessage(message);
 }
 
-int CombatField::BroadcastMessage(int type, const ::google::protobuf::Message &message) {
-  // TODO:
+int CombatField::BroadcastMessage(int type, const ::google::protobuf::Message &data) {
+  ::tutorial::orcas::combat::protocol::MessageCombatArgentSync message;
+  message.set_type(type);
+  message.set_data(data.SerializeAsString());
+
+  for (CombatRoleFieldSet::const_iterator iter = this->roles_.begin();
+      iter != this->roles_.end(); ++iter) {
+    CombatRoleField *role = CombatRoleFieldManager::GetInstance()->Get(*iter);
+    if (role == NULL) {
+      MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", *iter);
+      return -1;
+    }
+    message.set_argent_id(*iter);
+    role->SendMessage(message);
+  }
   return -1;
 }
 

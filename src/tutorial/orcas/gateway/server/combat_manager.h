@@ -35,6 +35,8 @@ class Combat {
   void SetId(int32_t id);
   int32_t GetId() const;
   void SetHost(AppServer *host);
+  void SetMapId(int32_t id);
+  int32_t GetMapId() const;
   void SetCombatServerId(int32_t id);
   int32_t GetCombatServerId() const;
   void SetCombatArgentId(int32_t id);
@@ -57,6 +59,7 @@ class Combat {
   AppServer *host_;
   CombatActor *al_;
   CombatActor *ar_;
+  int32_t map_id_;
   int32_t connected_num_;
 };
 

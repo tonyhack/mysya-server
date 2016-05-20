@@ -5,8 +5,10 @@
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
 
+#include <mysya/ioevent/logger.h>
 #include <mysya/ioevent/dynamic_buffer.h>
 #include <mysya/ioevent/tcp_socket_app.h>
+#include <mysya/util/hex_dump.h>
 
 namespace mysya {
 namespace codec {
@@ -45,34 +47,48 @@ int ProtobufCodec::OnMessage(int sockfd, ::mysya::ioevent::DynamicBuffer *buffer
 
   for (;;) {
     int readable_bytes = buffer->ReadableBytes();
-    if (readable_bytes <= 0 || readable_bytes < ProtobufCodec::kHeaderBytes) {
+    if (readable_bytes <= 0 || readable_bytes < kHeaderBytes) {
       break;
     }
 
     char *data = buffer->ReadBegin();
 
-    int32_t message_bytes = *(int32_t *)data;
-    if (readable_bytes < message_bytes) {
+    int32_t protocol_bytes = *(int32_t *)data;
+    if (readable_bytes < protocol_bytes) {
       break;
-    } else if (message_bytes < ProtobufCodec::kTypeBytes) {
+    } else if (protocol_bytes < kTypeBytes) {
       break;
     }
 
-    int16_t type_bytes = *(int16_t *)(data + ProtobufCodec::kHeaderBytes);
-    std::string type_name(data + ProtobufCodec::kHeaderBytes +
-        ProtobufCodec::kTypeBytes, type_bytes);
+    int16_t type_bytes = *(int16_t *)(data + kHeaderBytes);
+    std::string type_name(data + kHeaderBytes +
+        kTypeBytes, type_bytes);
 
     std::unique_ptr< ::google::protobuf::Message> message(CreateMessage(type_name));
     if (message.get() == NULL) {
+      MYSYA_ERROR("CreateMessage(%s) failed.", type_name.data());
       return -1;
     }
 
-    buffer->ReadBytes(message_bytes);
-    read_message_bytes += message_bytes;
+    do {
+      if (message->ParseFromArray(data + kHeaderBytes + kTypeBytes + type_bytes,
+            protocol_bytes - kHeaderBytes - kTypeBytes - type_bytes) == false) {
+        MYSYA_ERROR("%s:ParseFromArray() size(%d) failed.",
+            message->GetTypeName().data(), protocol_bytes - kHeaderBytes -
+            kTypeBytes - type_bytes);
+        break;
+      }
+      // ::mysya::util::Hexdump(data + kHeaderBytes + kTypeBytes + type_bytes,
+      //     protocol_bytes - kHeaderBytes - kTypeBytes - type_bytes,
+      //     std::string("receive " + message->GetTypeName()).data());
 
-    if (this->message_cb_) {
-      this->message_cb_(sockfd, this->socket_app_, message.get());
-    }
+      if (this->message_cb_) {
+        this->message_cb_(sockfd, this->socket_app_, message.get());
+      }
+    } while (false);
+
+    buffer->ReadBytes(protocol_bytes);
+    read_message_bytes += protocol_bytes;
   }
 
   return read_message_bytes;
@@ -83,22 +99,25 @@ int ProtobufCodec::SendMessage(int sockfd, const ::google::protobuf::Message &me
 
   int32_t type_bytes = type_name.size();
   int32_t message_bytes = message.ByteSize();
-  int32_t protocol_bytes = message_bytes + ProtobufCodec::kHeaderBytes +
-    ProtobufCodec::kTypeBytes + type_bytes;
+  int32_t protocol_bytes = message_bytes + kHeaderBytes +
+    kTypeBytes + type_bytes;
 
   ::mysya::ioevent::DynamicBuffer buffer;
-  buffer.Append(&protocol_bytes, ProtobufCodec::kHeaderBytes);
-  buffer.Append(&type_bytes, ProtobufCodec::kTypeBytes);
+  buffer.ReserveWritableBytes(protocol_bytes);
+
+  buffer.Append(&protocol_bytes, kHeaderBytes);
+  buffer.Append(&type_bytes, kTypeBytes);
   buffer.Append(type_name.data(), type_name.size());
 
-  buffer.ReserveWritableBytes(protocol_bytes);
-  ::google::protobuf::uint8 *begin = (::google::protobuf::uint8 *)buffer.WriteBegin();
-  ::google::protobuf::uint8 *end = message.SerializeWithCachedSizesToArray(begin);
-  if (end - begin != message_bytes) {
+  if (message.SerializeToArray(buffer.WriteBegin(), message_bytes) == false) {
+    MYSYA_ERROR("%s.SerializeToArray() failed.", type_name.data());
     return -1;
   }
 
-  buffer.WrittenBytes(protocol_bytes);
+  // ::mysya::util::Hexdump(buffer.WriteBegin(), message_bytes,
+  //     std::string("send " + type_name).data());
+
+  buffer.WrittenBytes(message_bytes);
 
   if (this->socket_app_->SendMessage(sockfd, buffer.ReadBegin(), buffer.ReadableBytes()) == false) {
     return -1;

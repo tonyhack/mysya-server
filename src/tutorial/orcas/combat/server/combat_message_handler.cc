@@ -71,6 +71,8 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
   AppSession *session = (AppSession *)channel;
   const MessageCombatDeployRequest *message = (const MessageCombatDeployRequest *)message_pb;
 
+  MYSYA_DEBUG("MessageCombatDeployRequest host_id(%d).", message->host_id());
+
   CombatField *combat_field = CombatFieldManager::GetInstance()->Allocate();
   if (combat_field == NULL) {
     MYSYA_ERROR("CombatFieldManager::Allocate() failed.");
@@ -193,12 +195,12 @@ void CombatMessageHandler::OnMessageCombatConnectArgentRequest(
   const MessageCombatConnectArgentRequest *message = (const MessageCombatConnectArgentRequest *)message_pb;
 
   MessageCombatConnectArgentResponse response_message;
-  response_message.set_argent_id(message->argent_id());
+  response_message.set_role_argent_id(message->role_argent_id());
   response_message.set_combat_id(message->combat_id());
 
-  CombatRoleField *role_field = CombatRoleFieldManager::GetInstance()->Get(message->argent_id());
+  CombatRoleField *role_field = CombatRoleFieldManager::GetInstance()->Get(message->role_argent_id());
   if (role_field == NULL) {
-    MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", message->argent_id());
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", message->role_argent_id());
     response_message.set_ret_code(MessageCombatConnectArgentResponse::ERROR_CODE_FAILURE);
     session->SendMessage(response_message);
     return;
@@ -238,14 +240,12 @@ void CombatMessageHandler::OnMessageCombatBeginRequest(
   combat_event.set_combat_id(combat_field->GetId());
   this->app_server_->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_BEGIN, &combat_event);
 
-  SendMessageCombatBeginResponse(session, message->combat_id(),
-      MessageCombatBeginResponse::ERROR_CODE_SUCCESS);
-
-  // TODO: instead to add status_image into MessageCombatBeginResponse.
-  ::protocol::MessageCombatResponse user_combat_message;
-  user_combat_message.set_result(true);
-  combat_field->ExportStatusImage(*user_combat_message.mutable_status_image());
-  combat_field->BroadcastMessage(::protocol::MESSAGE_COMBAT_RESPONSE, user_combat_message);
+  // response status image.
+  MessageCombatBeginResponse response_message;
+  response_message.set_ret_code(MessageCombatBeginResponse::ERROR_CODE_SUCCESS);
+  response_message.set_combat_id(message->combat_id());
+  combat_field->ExportStatusImage(*response_message.mutable_status_image());
+  session->SendMessage(response_message);
 }
 
 void CombatMessageHandler::OnMessageCombatArgentRequest(
@@ -254,9 +254,9 @@ void CombatMessageHandler::OnMessageCombatArgentRequest(
   const MessageCombatArgentRequest *message = (const MessageCombatArgentRequest *)message_pb;
 
   CombatRoleField *role = CombatRoleFieldManager::GetInstance()->Get(
-      message->argent_id());
+      message->role_argent_id());
   if (role == NULL) {
-    MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", message->argent_id());
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", message->role_argent_id());
     return;
   }
 

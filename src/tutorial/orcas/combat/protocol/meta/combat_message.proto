@@ -1,4 +1,5 @@
 import "building.proto";
+import "combat.proto";
 import "warrior.proto";
 
 package tutorial.orcas.combat.protocol;
@@ -26,7 +27,7 @@ enum CombatDeployResultType {
 
 // 出战角色数据
 message CombatRoleData {
-  required uint64 argent_id = 1;                              // 代理id(要求全局唯一)
+  required uint64 argent_id = 1;                              // 角色的代理id(全局唯一, 由逻辑服务器分配)
   required string ai = 2;                                     // ai
   repeated .protocol.WarriorDescription warrior = 3;          // 兵团列表
 }
@@ -50,20 +51,20 @@ message CombatInitialData {
 
 // 战斗部署请求
 message MessageCombatDeployRequest {
-  required int32 host_id = 1;                                 // 宿主id
+  required int32 host_id = 1;                                 // 宿主id(逻辑服务器上的战斗逻辑标识)
   required CombatInitialData combat_initial_data = 2;         // 战斗初始数据
 }
 // 战斗部署回应
 message MessageCombatDeployResponse {
-  required int32 host_id = 1;                                 // 宿主id
+  required int32 host_id = 1;                                 // 宿主id(逻辑服务器上的战斗逻辑标识)
   required int32 result_type = 2;                             // 部署结果(CombatDeployResultType)
-  optional int32 combat_id = 3;                               // 战斗id
+  optional int32 combat_id = 3;                               // 战斗id(战斗服务器分配的战斗id)
 }
 
 // 连接代理请求
 message MessageCombatConnectArgentRequest {
-  required uint64 argent_id = 1;                              // 代理id
-  required int32 combat_id = 2;                               // 战斗id
+  required uint64 role_argent_id = 1;                         // 角色的代理id(全局唯一, 由逻辑服务器分配)
+  required int32 combat_id = 2;                               // 战斗id(战斗服务器分配的战斗id)
 }
 // 连接代理回应
 message MessageCombatConnectArgentResponse {
@@ -72,13 +73,13 @@ message MessageCombatConnectArgentResponse {
     ERROR_CODE_FAILURE = -1;
   }
   required int32 ret_code = 1;                                // 返回码
-  required uint64 argent_id = 2;                              // 代理id
-  required int32 combat_id = 3;                               // 战斗id
+  required uint64 role_argent_id = 2;                         // 角色的代理id(全局唯一, 由逻辑服务器分配)
+  required int32 combat_id = 3;                               // 战斗id(战斗服务器分配的战斗id)
 }
 
 // 开战请求
 message MessageCombatBeginRequest {
-  required int32 combat_id = 1;                               // 战斗id
+  required int32 combat_id = 1;                               // 战斗id(战斗服务器分配的战斗id)
 }
 // 开战回应
 message MessageCombatBeginResponse {
@@ -86,20 +87,21 @@ message MessageCombatBeginResponse {
     ERROR_CODE_SUCCESS = 0;
     ERROR_CODE_FAILURE = -1;
   }
-  required int32 ret_code = 1;
-  required int32 combat_id = 2;
+  required int32 ret_code = 1;                                // 返回码
+  required int32 combat_id = 2;                               // 战斗id(战斗服务器分配的战斗id)
+  optional .protocol.CombatStatusImage status_image = 3;      // 状态镜像
 }
 
 // 战斗代理请求
 message MessageCombatArgentRequest {
-  required uint64 argent_id = 1;                              // 代理id
+  required uint64 role_argent_id = 1;                         // 角色的代理id(全局唯一, 由逻辑服务器分配)
   required int32 type = 2;                                    // 类型
   required bytes data = 3;                                    // 二进制数据
 }
 
 // 战斗代理同步
 message MessageCombatArgentSync {
-  required uint64 argent_id = 1;                              // 代理id
+  required uint64 argent_id = 1;                              // 角色的代理id(全局唯一, 由逻辑服务器分配)
   required int32 type = 2;                                    // 类型
   required bytes data = 3;                                    // 二进制数据
 }

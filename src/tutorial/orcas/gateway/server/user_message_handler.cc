@@ -145,7 +145,7 @@ void UserMessageHandler::OnMessageCombatActionRequest(Actor *actor,
   }
 
   ::tutorial::orcas::combat::protocol::MessageCombatArgentRequest message;
-  message.set_argent_id(combat_actor->GetCombatArgentId());
+  message.set_role_argent_id(combat_actor->GetCombatArgentId());
   message.set_type(::protocol::MESSAGE_COMBAT_ACTION_REQUEST);
   message.set_data(data, size);
   session->SendMessage(message);
