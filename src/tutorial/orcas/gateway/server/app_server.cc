@@ -92,6 +92,10 @@ bool AppServer::Listen(const ::mysya::ioevent::SocketAddress &addr) {
   return this->tcp_socket_app_.Listen(addr);
 }
 
+int AppServer::SendMessage(int sockfd, int message_type, const std::string &data) {
+  return this->codec_.SendMessage(sockfd, message_type, data.data(), data.size());
+}
+
 int AppServer::SendMessage(int sockfd, int message_type, const ProtoMessage &message) {
   std::string buffer;
   if (message.SerializeToString(&buffer) == false) {

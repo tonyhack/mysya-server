@@ -16,7 +16,7 @@ Grid::~Grid() {
 }
 
 bool Grid::GetWalkable() const {
-  return this->walkable_ && this->buildings_.empty() == false;
+  return this->walkable_ && this->buildings_.empty() == true;
 }
 
 void Grid::SetWalkable(bool value) {

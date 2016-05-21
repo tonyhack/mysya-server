@@ -38,6 +38,7 @@ class AppServer {
   ~AppServer();
 
   bool Listen(const ::mysya::ioevent::SocketAddress &addr);
+  int SendMessage(int sockfd, int message_type, const std::string &data);
   int SendMessage(int sockfd, int message_type, const ProtoMessage &message);
   MessageDispatcher *GetMessageDispatcher();
   ::tutorial::orcas::combat::client::CombatSessions &GetCombatClients();

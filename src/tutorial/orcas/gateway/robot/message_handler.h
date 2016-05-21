@@ -22,6 +22,7 @@ class MessageHandler {
   void OnMessageLoginResponse(Actor *actor, const char *data, int size);
   void OnMessageCombatResponse(Actor *actor, const char *data, int size);
   void OnMessageCombatActionResponse(Actor *actor, const char *data, int size);
+  void OnMessageCombatActionSync(Actor *actor, const char *data, int size);
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(MessageHandler);
 };

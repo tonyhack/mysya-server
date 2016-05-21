@@ -118,6 +118,8 @@ bool MapConfig::LoadMap(const std::string &file) {
 
       if (attr_name_str == "id") {
         conf.id_ = atoi(attr);
+      } else if (attr_name_str == "map_build_id") {
+        conf.map_id_ = atoi(attr);
       } else {
       }
 
@@ -126,7 +128,7 @@ bool MapConfig::LoadMap(const std::string &file) {
 
     for (BuildingHashmap::iterator iter = this->buildings_.begin();
         iter != this->buildings_.end(); ++iter) {
-      if (iter->second.map_id_ == conf.id_) {
+      if (iter->second.map_id_ != conf.map_id_) {
         continue;
       }
 

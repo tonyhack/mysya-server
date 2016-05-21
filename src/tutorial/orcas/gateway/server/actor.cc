@@ -45,6 +45,10 @@ CombatActor *Actor::GetCombatActor() {
   return this->combat_actor_;
 }
 
+int Actor::SendMessage(int message_type, const std::string &data) {
+  return this->host_->SendMessage(this->sockfd_, message_type, data);
+}
+
 int Actor::SendMessage(int message_type, const ::google::protobuf::Message &message) {
   return this->host_->SendMessage(this->sockfd_, message_type, message);
 }

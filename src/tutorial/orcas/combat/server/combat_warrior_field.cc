@@ -1,8 +1,13 @@
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
 
 #include <mysya/ioevent/logger.h>
+#include <mysya/util/timestamp.h>
 
+#include "tutorial/orcas/combat/server/app_server.h"
+#include "tutorial/orcas/combat/server/combat_field.h"
 #include "tutorial/orcas/combat/server/combat_role_field.h"
+#include "tutorial/orcas/combat/server/event/cc/event.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
 
 namespace tutorial {
 namespace orcas {
@@ -105,6 +110,36 @@ void CombatWarriorField::GenerateFields() {
         this->server_fields_.attack_speed_add_per()));
 
 #undef GENERATE_COMBAT_FIELD
+}
+
+void CombatWarriorField::DispatchBuildActionEvent(int32_t building_id) {
+  CombatField *combat_field = this->GetRoleField()->GetCombatField();
+  if (combat_field == NULL) {
+    MYSYA_ERROR("CombatRoleField::GetCombatField() failed.");
+    return;
+  }
+
+  event::EventCombatBuildAction event;
+  event.set_combat_id(combat_field->GetId());
+
+  const ::mysya::util::Timestamp &begin_timestamp = combat_field->GetBeginTimestamp();
+  const ::mysya::util::Timestamp &now_timestamp = this->GetAppServer()->GetTimestamp();
+
+  ::protocol::CombatAction *action = event.mutable_action();
+  action->set_type(::protocol::COMBAT_ACTION_TYPE_BUILD);
+  action->set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
+
+  ::protocol::CombatBuildAction *build_action = action->mutable_build_action();
+  build_action->set_building_id(building_id);
+  build_action->set_warrior_conf_id(this->fields_.conf_id());
+  *build_action->mutable_fields() = this->fields_;
+
+  this->GetAppServer()->GetEventDispatcher()->Dispatch(
+      event::EVENT_COMBAT_BUILD_ACTION, &event);
+}
+
+AppServer *CombatWarriorField::GetAppServer() {
+  return this->GetRoleField()->GetAppServer();
 }
 
 }  // namespace server

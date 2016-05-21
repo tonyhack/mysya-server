@@ -36,6 +36,8 @@ class CombatRoleField {
   bool Initialize(uint64_t argent_id, AppServer *app_server);
   void Finalize();
 
+  AppServer *GetAppServer();
+
   uint64_t GetArgentId() const;
   void SetArgentId(uint64_t value);
 

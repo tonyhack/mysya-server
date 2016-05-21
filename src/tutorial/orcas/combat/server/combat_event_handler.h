@@ -29,8 +29,10 @@ class CombatEventHandler {
   void Finalize();
 
  private:
+  void EventCombatBuildAction(const ProtoMessage *data);
   void EventCombatMoveAction(const ProtoMessage *data);
 
+  uint64_t event_token_build_action_;
   uint64_t event_token_move_action_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatEventHandler);

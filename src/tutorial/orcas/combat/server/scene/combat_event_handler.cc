@@ -47,7 +47,8 @@ void CombatEventHandler::OnEventCombatBegin(const ProtoMessage *data) {
   CombatField *combat_field =
     CombatFieldManager::GetInstance()->Get(event->combat_id());
   if (combat_field == NULL) {
-    MYSYA_ERROR("[SCENE] CombatFieldManager::Get(%d) failed.", event->combat_id());
+    MYSYA_ERROR("[SCENE] CombatFieldManager::Get(%d) failed.",
+        event->combat_id());
     return;
   }
 
@@ -93,6 +94,13 @@ void CombatEventHandler::OnEventCombatBegin(const ProtoMessage *data) {
       SceneManager::GetInstance()->Deallocate(scene);
       return;
     }
+  }
+
+  if (SceneManager::GetInstance()->Add(scene) == false) {
+    MYSYA_ERROR("[SCENE] SceneManager::Add(%d) failed.", scene->GetId());
+    scene->Finalize();
+    SceneManager::GetInstance()->Deallocate(scene);
+    return;
   }
 }
 

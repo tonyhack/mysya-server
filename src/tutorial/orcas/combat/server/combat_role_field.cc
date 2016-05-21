@@ -1,9 +1,13 @@
 #include "tutorial/orcas/combat/server/combat_role_field.h"
 
 #include <google/protobuf/message.h>
+#include <mysya/ioevent/logger.h>
 
 #include "tutorial/orcas/combat/server/app_server.h"
 #include "tutorial/orcas/combat/server/app_session.h"
+#include "tutorial/orcas/combat/server/combat_field.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
 #include "tutorial/orcas/combat/server/require/cc/require.pb.h"
 #include "tutorial/orcas/combat/server/require/cc/require_combat.pb.h"
 
@@ -38,6 +42,10 @@ void CombatRoleField::Finalize() {
   this->SetArgentId(0);
   this->SetCampId(0);
   this->SetCombatField(NULL);
+}
+
+AppServer *CombatRoleField::GetAppServer() {
+  return this->app_server_;
 }
 
 uint64_t CombatRoleField::GetArgentId() const {
@@ -120,12 +128,53 @@ bool CombatRoleField::DoAction(const ::protocol::CombatAction &action) {
 }
 
 bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action) {
-  // TODO:
-  return false;
+  const ::protocol::WarriorDescription *warrior_description =
+    this->GetWarriorDescription(action.warrior_conf_id());
+  if (warrior_description == NULL) {
+    MYSYA_ERROR("[SCENE] CombatRoleField::GetWarriorDescription(%d) failed.",
+        action.warrior_conf_id());
+    return false;
+  }
+
+  // TODO: 判断 action.building_id 是否可以建 action.warrior_conf_id
+
+  CombatWarriorField *combat_warrior_field =
+    CombatWarriorFieldPool::GetInstance()->Allocate();
+  if (combat_warrior_field == NULL) {
+    MYSYA_ERROR("[SCENE] CombatWarriorFieldPool::Allocate() failed.");
+    return false;
+  }
+
+  if (combat_warrior_field->Initialize(this->combat_field_->AllocateId(), this,
+        *warrior_description) == false) {
+    MYSYA_ERROR("[SCENE] CombatWarriorField::Initialize() failed.");
+    CombatWarriorFieldPool::GetInstance()->Deallocate(combat_warrior_field);
+    return false;
+  }
+
+  this->combat_field_->AddWarrior(combat_warrior_field);
+
+  require::RequireCombatBuildAction message;
+  message.set_combat_id(this->combat_field_->GetId());
+  message.set_warrior_id(combat_warrior_field->GetId());
+  *message.mutable_action() = action;
+  if (this->app_server_->GetRequireDispatcher()->Dispatch(
+        require::REQUIRE_COMBAT_BUILD_ACTION, &message) < 0) {
+    MYSYA_ERROR("[SCENE] require REQUIRE_COMBAT_BUILD_ACTION failed.");
+    this->combat_field_->RemoveWarrior(combat_warrior_field->GetId());
+    combat_warrior_field->Finalize();
+    CombatWarriorFieldPool::GetInstance()->Deallocate(combat_warrior_field);
+    return false;
+  }
+
+  combat_warrior_field->DispatchBuildActionEvent(action.building_id());
+
+  return true;
 }
 
 bool CombatRoleField::DoMoveAction(const ::protocol::CombatMoveAction &action) {
   require::RequireCombatMoveAction message;
+  message.set_combat_id(this->combat_field_->GetId());
   *message.mutable_action() = action;
   return this->app_server_->GetRequireDispatcher()->Dispatch(
       require::REQUIRE_COMBAT_MOVE_ACTION, &message) >= 0;

@@ -2,7 +2,10 @@
 
 #include <mysya/ioevent/logger.h>
 
+#include "tutorial/orcas/combat/server/app_server.h"
+#include "tutorial/orcas/combat/server/combat_building_field.h"
 #include "tutorial/orcas/combat/server/combat_field.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/scene/building.h"
 #include "tutorial/orcas/combat/server/scene/scene_app.h"
 #include "tutorial/orcas/combat/server/scene/scene_manager.h"
@@ -37,7 +40,8 @@ int Scene::Node::HeursiticConstEstimate(const Node &other) const {
 Scene::Scene()
   : map_id_(0), host_(NULL),
     height_(0), width_(0),
-    grid_size_(0), grids_(NULL) {}
+    grid_size_(0), grids_(NULL),
+    timer_id_print_status_image_(-1) {}
 
 Scene::~Scene() {}
 
@@ -84,10 +88,19 @@ void Scene::Deallocate() {
 bool Scene::Initialize(CombatField *host) {
   this->host_ = host;
 
+  this->timer_id_print_status_image_ = SceneApp::GetInstance()->GetHost()->StartTimer(
+      1000, std::bind(&Scene::OnTimerPrintStatusImage, this, std::placeholders::_1), -1);
+
+  MYSYA_DEBUG("[SCENE] Scene(%d) Initialize success.", this->GetId());
+
   return true;
 }
 
 void Scene::Finalize() {
+  if (this->timer_id_print_status_image_ != -1) {
+    SceneApp::GetInstance()->GetHost()->StopTimer(this->timer_id_print_status_image_);
+  }
+
   for (BuildingHashmap::iterator iter = this->buildings_.begin();
       iter != this->buildings_.end(); ++iter) {
     SceneApp::GetInstance()->GetEntityBuilder()->DeallocateBuilding(
@@ -131,7 +144,7 @@ Grid *Scene::GetGrid(const Position &pos) {
     return NULL;
   }
 
-  return &this->grids_[pos.y()*this->height_+pos.x()];
+  return &this->grids_[pos.y()*this->width_+pos.x()];
 }
 
 const Grid *Scene::GetGrid(const Position &pos) const {
@@ -140,7 +153,7 @@ const Grid *Scene::GetGrid(const Position &pos) const {
     return NULL;
   }
 
-  return &this->grids_[pos.y()*this->height_+pos.x()];
+  return &this->grids_[pos.y()*this->width_+pos.x()];
 }
 
 bool Scene::GetWalkable(const Position &pos) const {
@@ -158,6 +171,33 @@ bool Scene::GetWalkable(int32_t x, int32_t y) const {
   pos.set_y(y);
 
   return this->GetWalkable(pos);
+}
+
+bool Scene::GetNearlyWalkablePos(const Position &pos, Position &nearly_pos) const {
+  int start_x = std::max(pos.x() - 1, 0);
+  int end_x = std::min(pos.x() + 1, this->width_ - 1);
+  int start_y = std::max(pos.y() - 1, 0);
+  int end_y = std::min(pos.y() + 1, this->height_ - 1);
+
+  for (int y = start_y; y <= end_y; ++y) {
+    for (int x = start_x; x < end_x; ++x) {
+      nearly_pos.set_x(x);
+      nearly_pos.set_y(y);
+      if (this->GetWalkable(nearly_pos) == true) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool Scene::GetNearlyWalkablePos(int32_t x, int32_t y, Position &nearly_pos) const {
+  Position pos;
+  pos.set_x(x);
+  pos.set_y(y);
+
+  return this->GetNearlyWalkablePos(x, y, nearly_pos);
 }
 
 bool Scene::AddBuilding(Building *building) {
@@ -423,6 +463,76 @@ void Scene::PrintSearchPath(const Position &begin_pos, const Position &end_pos) 
     }
     printf("\n");
   }
+}
+
+void Scene::PrintStatusImage() {
+  ::printf("========================================================= PrintStatusImage =========================================================\n");
+  const char *kWarriorSymbols = "abcdefghijklmnopqrstuvwxyz";
+  const char kBuildingSymbol = 'B';
+  const std::string kCampColors[] = {
+    "\033[1;33m", "\033[1;36m", "\033[1;34m", "\033[1;35m", };
+  const char kBlockSymbol = 'X';
+  size_t warrior_symbols_pos = 0;
+  size_t camp_colors_pos = 0;
+
+  std::map<int, char> warrior_symbols;
+  std::map<int, std::string> camp_colors;
+
+  for (int y = 0; y < this->height_; ++y) {
+    for (int x = 0; x < this->width_; ++x) {
+      typedef Grid::BuildingSet BuildingSet;
+      typedef Grid::WarriorSet WarriorSet;
+
+      Grid *grid = &this->grids_[y * this->width_ + x];
+
+      const BuildingSet *buildings = grid->GetBuildings();
+      const WarriorSet *warriors = grid->GetWarriors();
+
+      if (buildings->empty() == false) {
+        Building *building = *buildings->begin();
+        ::protocol::CombatBuildingFields &fields = building->GetHost()->GetFields();
+        std::map<int, std::string>::iterator camp_iter = camp_colors.find(fields.camp_id());
+        if (camp_iter == camp_colors.end()) {
+          camp_iter = camp_colors.insert(std::make_pair(fields.camp_id(), kCampColors[camp_colors_pos++])).first;
+        }
+        ::printf("%s", camp_iter->second.data());
+        ::printf("%c", kBuildingSymbol);
+        ::printf("\033[0m");
+      } else if (warriors->empty() == false) {
+        Warrior *warrior = *warriors->begin();
+        ::protocol::CombatWarriorFields &fields = warrior->GetHost()->GetFields();
+        std::map<int, char>::iterator warrior_iter = warrior_symbols.find(fields.conf_id());
+        if (warrior_iter == warrior_symbols.end()) {
+          warrior_iter = warrior_symbols.insert(std::make_pair(fields.conf_id(), kWarriorSymbols[warrior_symbols_pos++])).first;
+        }
+        std::map<int, std::string>::iterator camp_iter = camp_colors.find(fields.camp_id());
+        if (camp_iter == camp_colors.end()) {
+          camp_iter = camp_colors.insert(std::make_pair(fields.camp_id(), kCampColors[camp_colors_pos++])).first;
+        }
+        ::printf("%s", camp_iter->second.data());
+        ::printf("%c", warrior_iter->second);
+        ::printf("\033[0m");
+      } else if (grid->GetWalkable() == false) {
+        ::printf("%c", kBlockSymbol);
+      } else {
+        ::printf(" ");
+      }
+    }
+    printf("\n");
+  }
+  ::printf("========================================================= PrintStatusImage =========================================================\n");
+}
+
+void Scene::OnTimerPrintStatusImage(int64_t timer_id) {
+  /*
+  Position pos1, pos2;
+  pos1.set_x(46);
+  pos1.set_y(12);
+  pos2.set_x(79);
+  pos2.set_y(13);
+  this->PrintSearchPath(pos1, pos2);
+  */
+  this->PrintStatusImage();
 }
 
 Scene::Node *Scene::GetNode(const Position &pos) {

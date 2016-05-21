@@ -3,6 +3,7 @@
 #include <google/protobuf/message.h>
 #include <mysya/ioevent/logger.h>
 
+#include "tutorial/orcas/gateway/server/actor.h"
 #include "tutorial/orcas/gateway/server/app_server.h"
 #include "tutorial/orcas/gateway/server/combat_actor.h"
 #include "tutorial/orcas/combat/client/combat_session.h"
@@ -89,6 +90,17 @@ void Combat::SetConnectedNum(int value) {
   this->connected_num_ = value;
 }
 
+CombatActor *Combat::GetActorByArgentId(uint64_t role_argent_id) {
+  if (this->al_ != NULL && this->al_->GetCombatArgentId() == role_argent_id) {
+    return this->al_;
+  }
+  if (this->ar_ != NULL && this->ar_->GetCombatArgentId() == role_argent_id) {
+    return this->al_;
+  }
+
+  return NULL;
+}
+
 Combat::CombatServerArgentKey Combat::GetArgentKey() const {
   return CombatServerArgentKey(this->GetCombatServerId(),
       this->GetCombatArgentId());
@@ -104,6 +116,26 @@ void Combat::SendMessage(const ::google::protobuf::Message &message) {
   }
 
   session->SendMessage(message);
+}
+
+void Combat::BroadcastMessage(int type, const std::string &data) {
+  if (this->al_ != NULL && this->al_->GetActor() != NULL) {
+    this->al_->GetActor()->SendMessage(type, data);
+  }
+
+  if (this->ar_ != NULL && this->ar_->GetActor() != NULL) {
+    this->ar_->GetActor()->SendMessage(type, data);
+  }
+}
+
+void Combat::BroadcastMessage(int type, const ::google::protobuf::Message &message) {
+  if (this->al_ != NULL && this->al_->GetActor() != NULL) {
+    this->al_->GetActor()->SendMessage(type, message);
+  }
+
+  if (this->ar_ != NULL && this->ar_->GetActor() != NULL) {
+    this->ar_->GetActor()->SendMessage(type, message);
+  }
 }
 
 CombatManager::CombatManager()

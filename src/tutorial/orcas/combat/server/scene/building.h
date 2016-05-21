@@ -25,6 +25,7 @@ class Building {
 
   int32_t GetId() const;
   ::protocol::Position GetPos();
+  CombatBuildingField *GetHost();
 
  private:
   Scene *scene_;

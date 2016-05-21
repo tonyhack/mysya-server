@@ -21,7 +21,7 @@ class MessageDispatcher {
   MessageDispatcher();
   ~MessageDispatcher();
 
-  void SetMessageCalback(int type, const MessageCallback &cb);
+  void SetMessageCallback(int type, const MessageCallback &cb);
   void ResetMessageCallback(int type);
 
   void Dispatch(Actor *actor, int type, const char *data, int size);

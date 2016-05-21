@@ -74,6 +74,9 @@ class Scene {
   bool GetWalkable(const Position &pos) const;
   bool GetWalkable(int32_t x, int32_t y) const;
 
+  bool GetNearlyWalkablePos(const Position &pos, Position &nearly_pos) const;
+  bool GetNearlyWalkablePos(int32_t x, int32_t y, Position &nearly_pos) const;
+
   bool AddBuilding(Building *building);
   void RemoveBuilding(Building *building);
   Building *RemoveBuilding(int32_t id);
@@ -92,7 +95,11 @@ class Scene {
       PositionVector &paths);
   void PrintSearchPath(const Position &src_pos, const Position &dest_pos);
 
+  void PrintStatusImage();
+
  private:
+  void OnTimerPrintStatusImage(int64_t timer_id);
+
   Node *GetNode(const Position &pos);
   Node *GetNode(int32_t x, int32_t y);
   void GetNeighborNodes(const Node *node, NodePtrVector &neighbor_nodes);
@@ -122,6 +129,8 @@ class Scene {
   Node *start_node_;
   Node *end_node_;
   NodePtrVector open_list_;
+
+  int64_t timer_id_print_status_image_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(Scene);
 };

@@ -28,6 +28,10 @@ int32_t Building::GetId() const {
   return this->host_->GetFields().id();
 }
 
+CombatBuildingField *Building::GetHost() {
+  return this->host_;
+}
+
 ::protocol::Position Building::GetPos() {
   ::protocol::Position pos;
   pos.set_x(this->host_->GetFields().pos_x());

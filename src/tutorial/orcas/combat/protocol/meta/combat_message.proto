@@ -101,7 +101,8 @@ message MessageCombatArgentRequest {
 
 // 战斗代理同步
 message MessageCombatArgentSync {
-  required uint64 argent_id = 1;                              // 角色的代理id(全局唯一, 由逻辑服务器分配)
-  required int32 type = 2;                                    // 类型
-  required bytes data = 3;                                    // 二进制数据
+  required int32 combat_id = 1;                               // 战斗id(战斗服务器分配的战斗id)
+  optional uint64 role_argent_id = 2;                         // 角色的代理id(全局唯一, 由逻辑服务器分配)
+  required int32 type = 3;                                    // 类型
+  required bytes data = 4;                                    // 二进制数据
 }

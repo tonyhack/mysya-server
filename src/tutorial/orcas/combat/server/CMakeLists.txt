@@ -32,6 +32,7 @@ set(COMBAT_SERVER_SCENE_SOURCES
     )
 
 set(COMBAT_SERVER_SOURCES
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/apps.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/app_server.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/app_session.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/combat_building_field.cc

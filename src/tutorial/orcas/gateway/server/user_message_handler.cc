@@ -24,13 +24,13 @@ UserMessageHandler::UserMessageHandler(AppServer *host)
 UserMessageHandler::~UserMessageHandler() {}
 
 void UserMessageHandler::SetMessageHandlers() {
-  this->host_->GetMessageDispatcher()->SetMessageCalback(::protocol::MESSAGE_LOGIN_REQUEST,
+  this->host_->GetMessageDispatcher()->SetMessageCallback(::protocol::MESSAGE_LOGIN_REQUEST,
       std::bind(&UserMessageHandler::OnMessageLoginRequest, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
-  this->host_->GetMessageDispatcher()->SetMessageCalback(::protocol::MESSAGE_COMBAT_REQUEST,
+  this->host_->GetMessageDispatcher()->SetMessageCallback(::protocol::MESSAGE_COMBAT_REQUEST,
       std::bind(&UserMessageHandler::OnMessageCombatRequest, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
-  this->host_->GetMessageDispatcher()->SetMessageCalback(::protocol::MESSAGE_COMBAT_ACTION_REQUEST,
+  this->host_->GetMessageDispatcher()->SetMessageCallback(::protocol::MESSAGE_COMBAT_ACTION_REQUEST,
       std::bind(&UserMessageHandler::OnMessageCombatActionRequest, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
 }
@@ -113,7 +113,7 @@ void UserMessageHandler::OnMessageCombatRequest(Actor *actor,
   }
 
   // TODO: Magic number 1
-  if (CombatManager::GetInstance()->PushCombat(combat_actor, 1) == false) {
+  if (CombatManager::GetInstance()->PushCombat(combat_actor, 2) == false) {
     MYSYA_ERROR("CombatManager::Push() failed.");
     SendMessageCombatResponse(actor, false);
     return;

@@ -11,7 +11,7 @@ namespace combat {
 MessageDispatcher::MessageDispatcher() {}
 MessageDispatcher::~MessageDispatcher() {}
 
-void MessageDispatcher::SetMessageCalback(const std::string &type_name,
+void MessageDispatcher::SetMessageCallback(const std::string &type_name,
     const MessageCallback &cb) {
   this->message_cbs_[type_name] = cb;
 }

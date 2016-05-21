@@ -40,6 +40,7 @@ class Actor {
   void SetCombatActor(CombatActor *combat_actor);
   CombatActor *GetCombatActor();
 
+  int SendMessage(int message_type, const std::string &data);
   int SendMessage(int message_type, const ::google::protobuf::Message &message);
 
  private:

@@ -28,19 +28,19 @@ CombatMessageHandler::CombatMessageHandler(AppServer *app_server)
 CombatMessageHandler::~CombatMessageHandler() {}
 
 void CombatMessageHandler::SetMessageHandlers() {
-  this->app_server_->GetMessageDispatcher()->SetMessageCalback(
+  this->app_server_->GetMessageDispatcher()->SetMessageCallback(
       MessageCombatDeployRequest().GetTypeName(),
       std::bind(&CombatMessageHandler::OnMessageCombatDeployRequest,
         this, std::placeholders::_1, std::placeholders::_2));
-  this->app_server_->GetMessageDispatcher()->SetMessageCalback(
+  this->app_server_->GetMessageDispatcher()->SetMessageCallback(
       MessageCombatConnectArgentRequest().GetTypeName(),
       std::bind(&CombatMessageHandler::OnMessageCombatConnectArgentRequest,
         this, std::placeholders::_1, std::placeholders::_2));
-  this->app_server_->GetMessageDispatcher()->SetMessageCalback(
+  this->app_server_->GetMessageDispatcher()->SetMessageCallback(
       MessageCombatBeginRequest().GetTypeName(),
       std::bind(&CombatMessageHandler::OnMessageCombatBeginRequest,
         this, std::placeholders::_1, std::placeholders::_2));
-  this->app_server_->GetMessageDispatcher()->SetMessageCalback(
+  this->app_server_->GetMessageDispatcher()->SetMessageCallback(
       MessageCombatArgentRequest().GetTypeName(),
       std::bind(&CombatMessageHandler::OnMessageCombatArgentRequest,
         this, std::placeholders::_1, std::placeholders::_2));
@@ -143,7 +143,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
 
       // combat role's warroior.
       for (int k = 0; k < role_data.warrior_size(); ++k) {
-        role_field->AddWarriorDescription(role_data.warrior(i));
+        role_field->AddWarriorDescription(role_data.warrior(k));
       }
 
       combat_field->AddRole(role_field->GetArgentId());

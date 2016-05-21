@@ -15,6 +15,7 @@ enum CombatActionType {
 message CombatBuildAction {
   required int32 building_id = 1;                         // 建筑id
   required int32 warrior_conf_id = 2;                     // 士兵配置id
+  optional .protocol.CombatWarriorFields fields = 3;      // 士兵数据
 }
 
 // 移动指令

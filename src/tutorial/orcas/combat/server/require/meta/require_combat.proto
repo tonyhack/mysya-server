@@ -5,7 +5,8 @@ package tutorial.orcas.combat.server.require;
 // REQUIRE_COMBAT_BUILD_ACTION
 message RequireCombatBuildAction {
   required int32 combat_id = 1;                             // 战斗id
-  required .protocol.CombatBuildAction action = 2;          // 动作
+  required int32 warrior_id = 2;                            // 士兵id
+  required .protocol.CombatBuildAction action = 3;          // 动作
 }
 
 // REQUIRE_COMBAT_MOVE_ACTION

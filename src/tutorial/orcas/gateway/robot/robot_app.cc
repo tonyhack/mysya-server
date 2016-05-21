@@ -150,7 +150,7 @@ void RobotApp::SendMessage(int sockfd, int type, ::google::protobuf::Message &da
   MYSYA_DEBUG("SendMessage(%d, %d, %lu)", sockfd, type, buffer.size());
 }
 
-void RobotApp::SetMessageCalback(int type, const MessageCallback &cb) {
+void RobotApp::SetMessageCallback(int type, const MessageCallback &cb) {
   this->message_cbs_[type] = cb;
 }
 

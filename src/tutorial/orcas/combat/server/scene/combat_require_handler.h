@@ -28,13 +28,12 @@ class CombatRequireHandler {
   CombatRequireHandler();
   ~CombatRequireHandler();
 
-  bool Initialize(SceneApp *host);
+  bool Initialize();
   void Finalize();
 
  private:
+  int OnRequireCombatBuildAction(ProtoMessage *data);
   int OnRequireCombatMoveAction(ProtoMessage *data);
-
-  SceneApp *host_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatRequireHandler);
 };

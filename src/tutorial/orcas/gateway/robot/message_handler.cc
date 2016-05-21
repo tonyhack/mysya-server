@@ -15,14 +15,17 @@ MessageHandler::MessageHandler() {}
 MessageHandler::~MessageHandler() {}
 
 void MessageHandler::SetHandlers() {
-  RobotApp::GetInstance()->SetMessageCalback(::protocol::MESSAGE_LOGIN_RESPONSE,
+  RobotApp::GetInstance()->SetMessageCallback(::protocol::MESSAGE_LOGIN_RESPONSE,
       std::bind(&MessageHandler::OnMessageLoginResponse, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
-  RobotApp::GetInstance()->SetMessageCalback(::protocol::MESSAGE_COMBAT_RESPONSE,
+  RobotApp::GetInstance()->SetMessageCallback(::protocol::MESSAGE_COMBAT_RESPONSE,
       std::bind(&MessageHandler::OnMessageCombatResponse, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
-  RobotApp::GetInstance()->SetMessageCalback(::protocol::MESSAGE_COMBAT_ACTION_REQUEST,
+  RobotApp::GetInstance()->SetMessageCallback(::protocol::MESSAGE_COMBAT_ACTION_REQUEST,
       std::bind(&MessageHandler::OnMessageCombatActionResponse, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3));
+  RobotApp::GetInstance()->SetMessageCallback(::protocol::MESSAGE_COMBAT_ACTION_SYNC,
+      std::bind(&MessageHandler::OnMessageCombatActionSync, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
 }
 
@@ -69,6 +72,18 @@ void MessageHandler::OnMessageCombatActionResponse(Actor *actor,
   MYSYA_DEBUG("<<<<<<< MessageCombatActionResponse -------");
   message.PrintDebugString();
   MYSYA_DEBUG("------- MessageCombatActionResponse >>>>>>>");
+}
+
+void MessageHandler::OnMessageCombatActionSync(Actor *actor, const char *data, int size) {
+  ::protocol::MessageCombatActionSync message;
+  if (message.ParseFromArray(data, size) == false) {
+    MYSYA_ERROR("MessageCombatActionSync::ParseFromArray() failed.");
+    return;
+  }
+
+  MYSYA_DEBUG("<<<<<<< MessageCombatActionSync -------");
+  message.PrintDebugString();
+  MYSYA_DEBUG("------- MessageCombatActionSync >>>>>>>");
 }
 
 }  // namespace robot

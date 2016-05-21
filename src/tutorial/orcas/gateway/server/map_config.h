@@ -28,6 +28,7 @@ struct MapConf {
   typedef std::map<int, BuildingVector> BuildingVectorMap;
 
   int id_;
+  int map_id_;
   BuildingVectorMap buildings_;
 };
 

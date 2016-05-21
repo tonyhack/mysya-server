@@ -85,6 +85,17 @@ static void OnCommandCombat(Actor *actor, const UserCommandHandler::ArgsVector &
 }
 
 static void OnCommandBuild(Actor *actor, const UserCommandHandler::ArgsVector &args) {
+  ::protocol::MessageCombatActionRequest message;
+
+  ::protocol::CombatAction *action = message.mutable_action();
+  action->set_type(::protocol::COMBAT_ACTION_TYPE_BUILD);
+  action->set_timestamp(0);
+
+  ::protocol::CombatBuildAction *build_action = action->mutable_build_action();
+  build_action->set_building_id(atoi(args[3].data()));
+  build_action->set_warrior_conf_id(atoi(args[4].data()));
+
+  actor->SendMessage(::protocol::MESSAGE_COMBAT_ACTION_REQUEST, message);
 }
 
 static void OnCommandMove(Actor *actor, const UserCommandHandler::ArgsVector &args) {

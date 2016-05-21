@@ -4,6 +4,7 @@
 #include <mysya/util/class_util.h>
 
 #include "tutorial/orcas/combat/server/scene/combat_event_handler.h"
+#include "tutorial/orcas/combat/server/scene/combat_require_handler.h"
 #include "tutorial/orcas/combat/server/scene/entity_builder.h"
 
 namespace tutorial {
@@ -23,13 +24,13 @@ class SceneApp {
 
   AppServer *GetHost();
   EventDispatcher *GetEventDispatcher();
-  CombatEventHandler *GetCombatEventHandler();
   EntityBuilder *GetEntityBuilder();
 
  private:
   AppServer *host_;
 
   CombatEventHandler combat_event_handler_;
+  CombatRequireHandler combat_require_handler_;
   EntityBuilder entity_builder_;
 
   MYSYA_SINGLETON(SceneApp);

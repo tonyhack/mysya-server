@@ -30,7 +30,7 @@ class MessageDispatcher {
   MessageDispatcher();
   ~MessageDispatcher();
 
-  void SetMessageCalback(const std::string &type_name, const MessageCallback &cb);
+  void SetMessageCallback(const std::string &type_name, const MessageCallback &cb);
   void ResetMessageCallback(const std::string &type_name);
 
   void Dispatch(TransportChannel *transport_channel,

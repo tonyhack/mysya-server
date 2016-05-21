@@ -21,7 +21,8 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
     event_loop_(event_loop),
     tcp_socket_app_(event_loop_),
     combat_message_handler_(this),
-    user_combat_message_handler_(this) {
+    user_combat_message_handler_(this),
+    apps_(this) {
   this->combat_message_handler_.SetMessageHandlers();
   this->user_combat_message_handler_.SetMessageHandlers();
 
@@ -40,9 +41,16 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
   this->tcp_socket_app_.SetErrorCallback(
       std::bind(&AppServer::OnError, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
+
+  if (this->apps_.Initialize() == false) {
+    ::mysya::util::ThrowSystemErrorException(
+        "AppServer::Constructor(): Apps::Initialize failed.");
+  }
 }
 
 AppServer::~AppServer() {
+  this->apps_.Finalize();
+
   for (CodecHashmap::iterator iter = this->protobuf_codecs_.begin();
       iter != this->protobuf_codecs_.end(); ++iter) {
     iter->second->ResetMessageCallback();

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <set>
+#include <string>
 #include <unordered_map>
 
 #include <mysya/util/class_util.h>
@@ -48,9 +49,14 @@ class Combat {
   int32_t GetConnectedNum() const;
   void SetConnectedNum(int value);
 
+  CombatActor *GetActorByArgentId(uint64_t role_argent_id);
+
   CombatServerArgentKey GetArgentKey() const;
 
   void SendMessage(const ::google::protobuf::Message &message);
+
+  void BroadcastMessage(int type, const std::string &data);
+  void BroadcastMessage(int type, const ::google::protobuf::Message &message);
 
  private:
   int32_t id_;

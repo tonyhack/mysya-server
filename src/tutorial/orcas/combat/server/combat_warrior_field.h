@@ -10,6 +10,7 @@ namespace orcas {
 namespace combat {
 namespace server {
 
+class AppServer;
 class CombatRoleField;
 
 class CombatWarriorField {
@@ -28,8 +29,11 @@ class CombatWarriorField {
   ::protocol::CombatWarriorServerFields &GetServerFields();
 
   void GenerateFields();
+  void DispatchBuildActionEvent(int32_t building_id);
 
  private:
+  AppServer *GetAppServer();
+
   CombatRoleField *host_;
   ::protocol::CombatWarriorFields fields_;
   ::protocol::CombatWarriorServerFields server_fields_;

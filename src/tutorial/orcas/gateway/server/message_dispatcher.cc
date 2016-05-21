@@ -10,7 +10,7 @@ namespace server {
 MessageDispatcher::MessageDispatcher() {}
 MessageDispatcher::~MessageDispatcher() {}
 
-void MessageDispatcher::SetMessageCalback(int type, const MessageCallback &cb) {
+void MessageDispatcher::SetMessageCallback(int type, const MessageCallback &cb) {
   this->message_cbs_[type] = cb;
 }
 

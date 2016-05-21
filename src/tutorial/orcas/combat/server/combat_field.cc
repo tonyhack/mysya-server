@@ -96,11 +96,27 @@ void CombatField::SetBeginTimestamp(const ::mysya::util::Timestamp &value) {
 }
 
 void CombatField::AddRole(uint64_t role_argent_id) {
+  CombatRoleField *combat_role_field =
+    CombatRoleFieldManager::GetInstance()->Get(role_argent_id);
+  if (combat_role_field == NULL) {
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", role_argent_id);
+    return;
+  }
+
   this->roles_.insert(role_argent_id);
+  combat_role_field->SetCombatField(this);
 }
 
 void CombatField::RemoveRole(uint64_t role_argent_id) {
+  CombatRoleField *combat_role_field =
+    CombatRoleFieldManager::GetInstance()->Get(role_argent_id);
+  if (combat_role_field == NULL) {
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", role_argent_id);
+    return;
+  }
+
   this->roles_.erase(role_argent_id);
+  combat_role_field->SetCombatField(NULL);
 }
 
 const CombatField::CombatRoleFieldSet &CombatField::GetRoles() const {
@@ -183,6 +199,7 @@ int CombatField::SendMessage(const ::google::protobuf::Message &message) {
 
 int CombatField::BroadcastMessage(int type, const ::google::protobuf::Message &data) {
   ::tutorial::orcas::combat::protocol::MessageCombatArgentSync message;
+  message.set_combat_id(this->id_);
   message.set_type(type);
   message.set_data(data.SerializeAsString());
 
@@ -193,7 +210,7 @@ int CombatField::BroadcastMessage(int type, const ::google::protobuf::Message &d
       MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", *iter);
       return -1;
     }
-    message.set_argent_id(*iter);
+    message.set_role_argent_id(*iter);
     role->SendMessage(message);
   }
   return -1;

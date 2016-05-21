@@ -26,17 +26,21 @@ CombatMessageHandler::CombatMessageHandler(AppServer *host)
 CombatMessageHandler::~CombatMessageHandler() {}
 
 void CombatMessageHandler::SetMessageHandlers() {
-  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCalback(
+  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCallback(
       protocol::MessageCombatDeployResponse().GetTypeName(), std::bind(
         &CombatMessageHandler::OnMessageCombatDeployResponse, this,
         std::placeholders::_1, std::placeholders::_2));
-  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCalback(
+  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCallback(
       protocol::MessageCombatConnectArgentResponse().GetTypeName(), std::bind(
         &CombatMessageHandler::OnMessageCombatConnectArgentResponse, this,
         std::placeholders::_1, std::placeholders::_2));
-  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCalback(
+  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCallback(
       protocol::MessageCombatBeginResponse().GetTypeName(), std::bind(
         &CombatMessageHandler::OnMessageCombatBeginResponse, this,
+        std::placeholders::_1, std::placeholders::_2));
+  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCallback(
+      protocol::MessageCombatArgentSync().GetTypeName(), std::bind(
+        &CombatMessageHandler::OnMessageCombatArgentSync, this,
         std::placeholders::_1, std::placeholders::_2));
 }
 
@@ -47,6 +51,8 @@ void CombatMessageHandler::ResetMessageHandlers() {
       protocol::MessageCombatConnectArgentResponse().GetTypeName());
   this->host_->GetCombatClients().GetMessageDispatcher()->ResetMessageCallback(
       protocol::MessageCombatBeginResponse().GetTypeName());
+  this->host_->GetCombatClients().GetMessageDispatcher()->ResetMessageCallback(
+      protocol::MessageCombatArgentSync().GetTypeName());
 }
 
 void CombatMessageHandler::OnMessageCombatDeployResponse(
@@ -209,6 +215,29 @@ void CombatMessageHandler::OnMessageCombatBeginResponse(
     if (right_combat_actor->GetActor() != NULL) {
       right_combat_actor->GetActor()->SendMessage(
           ::protocol::MESSAGE_COMBAT_RESPONSE, response);
+    }
+  }
+}
+
+void CombatMessageHandler::OnMessageCombatArgentSync(TransportChannel *channel,
+    const ProtoMessage *data) {
+  client::CombatSession *session = (client::CombatSession *)channel;
+  protocol::MessageCombatArgentSync *message = (protocol::MessageCombatArgentSync *)data;
+
+  Combat *combat = CombatManager::GetInstance()->GetCombat(
+      session->GetServerId(), message->combat_id());
+  if (combat == NULL) {
+    MYSYA_ERROR("CombatManager::GetCombat(%d, %d) failed.",
+        session->GetServerId(), message->combat_id());
+    return;
+  }
+
+  if (message->has_role_argent_id() == false) {
+    combat->BroadcastMessage(message->type(), message->data());
+  } else {
+    CombatActor *combat_actor = combat->GetActorByArgentId(message->role_argent_id());
+    if (combat_actor != NULL && combat_actor->GetActor() != NULL) {
+      combat_actor->GetActor()->SendMessage(message->type(), message->data());
     }
   }
 }

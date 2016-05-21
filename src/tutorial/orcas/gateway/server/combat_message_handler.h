@@ -43,6 +43,8 @@ class CombatMessageHandler {
       const ProtoMessage *data);
   void OnMessageCombatBeginResponse(TransportChannel *channel,
       const ProtoMessage *data);
+  void OnMessageCombatArgentSync(TransportChannel *channel,
+      const ProtoMessage *data);
 
   AppServer *host_;
 
