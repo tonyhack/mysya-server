@@ -532,7 +532,7 @@ void Scene::OnTimerPrintStatusImage(int64_t timer_id) {
   pos2.set_y(13);
   this->PrintSearchPath(pos1, pos2);
   */
-  this->PrintStatusImage();
+  // this->PrintStatusImage();
 }
 
 Scene::Node *Scene::GetNode(const Position &pos) {

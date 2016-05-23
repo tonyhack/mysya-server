@@ -37,6 +37,7 @@ set(COMBAT_SERVER_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/app_session.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/combat_building_field.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/combat_building_field_pool.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/combat_event_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/combat_field.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/combat_field_manager.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/combat_message_handler.cc

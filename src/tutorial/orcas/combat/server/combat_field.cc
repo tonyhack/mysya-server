@@ -213,7 +213,7 @@ int CombatField::BroadcastMessage(int type, const ::google::protobuf::Message &d
     message.set_role_argent_id(*iter);
     role->SendMessage(message);
   }
-  return -1;
+  return 0;
 }
 
 void CombatField::PushAction(const ::protocol::CombatAction &action) {

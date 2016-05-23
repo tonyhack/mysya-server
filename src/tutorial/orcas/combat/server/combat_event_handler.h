@@ -18,19 +18,23 @@ namespace orcas {
 namespace combat {
 namespace server {
 
+class AppServer;
+
 class CombatEventHandler {
   typedef ::google::protobuf::Message ProtoMessage;
 
  public:
-  CombatEventHandler();
+  CombatEventHandler(AppServer *host);
   ~CombatEventHandler();
 
-  bool Initialize();
-  void Finalize();
+  void SetHandlers();
+  void ResetHandlers();
 
  private:
   void EventCombatBuildAction(const ProtoMessage *data);
   void EventCombatMoveAction(const ProtoMessage *data);
+
+  AppServer *host_;
 
   uint64_t event_token_build_action_;
   uint64_t event_token_move_action_;

@@ -275,6 +275,7 @@ bool SceneManager::LoadBlockFile(int32_t map_id, const std::string &file) {
     }
   }
 
+/*
   for (int y = 0; y < conf.height_; ++y) {
     for (int x = 0; x < conf.width_; ++x) {
       if (conf.blocks_[y * conf.width_ + x] == '0') {
@@ -282,6 +283,7 @@ bool SceneManager::LoadBlockFile(int32_t map_id, const std::string &file) {
       }
     }
   }
+  */
 
   this->scene_confs_.insert(std::make_pair(map_id, conf));
 

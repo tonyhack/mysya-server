@@ -118,6 +118,8 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
         return;
       }
 
+      role_field->SetCampId(camp_data.id());
+
       if (role_field->Initialize(role_data.argent_id(), this->app_server_) == false) {
         MYSYA_ERROR("CombatRoleField::Initialize() failed.");
         CombatRoleFieldManager::GetInstance()->Deallocate(role_field);

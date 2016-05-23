@@ -232,13 +232,26 @@ void CombatMessageHandler::OnMessageCombatArgentSync(TransportChannel *channel,
     return;
   }
 
+  MYSYA_DEBUG("CombatMessageHandler::OnMessageCombatArgentSync rold_argent_id(%d).",
+      message->role_argent_id());
+
   if (message->has_role_argent_id() == false) {
     combat->BroadcastMessage(message->type(), message->data());
   } else {
     CombatActor *combat_actor = combat->GetActorByArgentId(message->role_argent_id());
-    if (combat_actor != NULL && combat_actor->GetActor() != NULL) {
-      combat_actor->GetActor()->SendMessage(message->type(), message->data());
+    if (combat_actor == NULL) {
+      MYSYA_ERROR("CombatField::GetActorByArgentId(%lu) failed.", message->role_argent_id());
+      return;
     }
+
+    if (combat_actor->GetActor() == NULL) {
+      MYSYA_ERROR("CombatActor::GetActor() failed.");
+      return;
+    }
+
+    combat_actor->GetActor()->SendMessage(message->type(), message->data());
+
+    MYSYA_DEBUG("Actor(%p) send message(%d)", combat_actor->GetActor(), message->type());
   }
 }
 

@@ -95,7 +95,7 @@ CombatActor *Combat::GetActorByArgentId(uint64_t role_argent_id) {
     return this->al_;
   }
   if (this->ar_ != NULL && this->ar_->GetCombatArgentId() == role_argent_id) {
-    return this->al_;
+    return this->ar_;
   }
 
   return NULL;
@@ -244,7 +244,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   }
 
   combat->SetMapId(map_id);
-  combat->SetLeft(actor);
+  combat->SetLeft(left_actor);
   combat->SetRight(right_actor);
 
   typedef CombatActor::WarriorDescriptionMap WarriorDescriptionMap;
@@ -262,9 +262,10 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   init_data->set_combat_type(::tutorial::orcas::combat::protocol::COMBAT_TYPE_PVP);
 
   // 左方阵营
+  left_actor->SetCampId(1);
   ::tutorial::orcas::combat::protocol::CombatCampData *l_camp_data =
     init_data->add_camp();
-  l_camp_data->set_id(1);
+  l_camp_data->set_id(left_actor->GetCampId());
   // 左方角色
   ::tutorial::orcas::combat::protocol::CombatRoleData *l_role_data =
     l_camp_data->add_role();
@@ -277,7 +278,8 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
     *l_role_data->add_warrior() = iter->second;
   }
   // 左方初始建筑
-  BuildingVectorMap::const_iterator l_building_iter = map_conf->buildings_.find(1);
+  BuildingVectorMap::const_iterator l_building_iter = map_conf->buildings_.find(
+      left_actor->GetCampId());
   if (l_building_iter != map_conf->buildings_.end()) {
     for (BuildingVector::const_iterator iter = l_building_iter->second.begin();
         iter != l_building_iter->second.end(); ++iter) {
@@ -292,9 +294,10 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   }
 
   // 右方阵营
+  right_actor->SetCampId(2);
   ::tutorial::orcas::combat::protocol::CombatCampData *r_camp_data =
     init_data->add_camp();
-  r_camp_data->set_id(2);
+  r_camp_data->set_id(right_actor->GetCampId());
   // 右方角色
   ::tutorial::orcas::combat::protocol::CombatRoleData *r_role_data =
     r_camp_data->add_role();
@@ -307,7 +310,8 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
     *r_role_data->add_warrior() = iter->second;
   }
   // 右方初始建筑
-  BuildingVectorMap::const_iterator r_building_iter = map_conf->buildings_.find(2);
+  BuildingVectorMap::const_iterator r_building_iter = map_conf->buildings_.find(
+      right_actor->GetCampId());
   if (r_building_iter != map_conf->buildings_.end()) {
     for (BuildingVector::const_iterator iter = r_building_iter->second.begin();
         iter != r_building_iter->second.end(); ++iter) {

@@ -52,7 +52,7 @@ static void SendMessageLoginResponse(Actor *actor, bool result) {
 
 void UserMessageHandler::OnMessageLoginRequest(Actor *actor,
     const char *data, int size) {
-  MYSYA_DEBUG("OnMessageLoginRequest size=%d.", size);
+  MYSYA_DEBUG("OnMessageLoginRequest Actor(%p) size=%d.", actor, size);
 
   ::protocol::MessageLoginRequest message;
   if (message.ParseFromArray(data, size) == false) {
@@ -112,14 +112,12 @@ void UserMessageHandler::OnMessageCombatRequest(Actor *actor,
     return;
   }
 
-  // TODO: Magic number 1
+  // TODO: Magic number 2
   if (CombatManager::GetInstance()->PushCombat(combat_actor, 2) == false) {
     MYSYA_ERROR("CombatManager::Push() failed.");
     SendMessageCombatResponse(actor, false);
     return;
   }
-
-  // SendMessageCombatResponse(actor, true);
 }
 
 void UserMessageHandler::OnMessageCombatActionRequest(Actor *actor,

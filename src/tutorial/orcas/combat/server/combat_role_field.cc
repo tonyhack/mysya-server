@@ -5,6 +5,7 @@
 
 #include "tutorial/orcas/combat/server/app_server.h"
 #include "tutorial/orcas/combat/server/app_session.h"
+#include "tutorial/orcas/combat/server/combat_building_field.h"
 #include "tutorial/orcas/combat/server/combat_field.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
@@ -137,6 +138,19 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
   }
 
   // TODO: 判断 action.building_id 是否可以建 action.warrior_conf_id
+  CombatBuildingField *combat_building_field =
+    this->combat_field_->GetBuilding(action.building_id());
+  if (combat_building_field == NULL) {
+    MYSYA_ERROR("[SCENE] CombatField::GetBuilding(%d) failed.",
+        action.building_id());
+    return false;
+  }
+
+  if (combat_building_field->GetFields().camp_id() != this->GetCampId()) {
+    MYSYA_ERROR("[SCENE] CombatBuildingField.camp_id(%d) not matching(%d).",
+        combat_building_field->GetFields().camp_id(), this->GetCampId());
+    return false;
+  }
 
   CombatWarriorField *combat_warrior_field =
     CombatWarriorFieldPool::GetInstance()->Allocate();

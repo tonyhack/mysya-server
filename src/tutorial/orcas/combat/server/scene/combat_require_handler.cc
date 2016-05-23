@@ -107,6 +107,8 @@ int CombatRequireHandler::OnRequireCombatBuildAction(ProtoMessage *data) {
     return -1;
   }
 
+  scene->PrintStatusImage();
+
   return 0;
 }
 
