@@ -470,7 +470,7 @@ void Scene::PrintStatusImage() {
   const char *kWarriorSymbols = "abcdefghijklmnopqrstuvwxyz";
   const char kBuildingSymbol = 'B';
   const std::string kCampColors[] = {
-    "\033[1;33m", "\033[1;36m", "\033[1;34m", "\033[1;35m", };
+    "\033[1;33m", "\033[1;36m", "\033[1;35m", "\033[1;34m", };
   const char kBlockSymbol = 'X';
   size_t warrior_symbols_pos = 0;
   size_t camp_colors_pos = 0;

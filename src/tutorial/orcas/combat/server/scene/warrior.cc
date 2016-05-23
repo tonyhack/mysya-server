@@ -57,7 +57,7 @@ CombatWarriorField *Warrior::GetHost() {
 }
 
 int32_t Warrior::GetMoveSpeed() const {
-  return this->host_->GetFields().move_speed();
+  return 1000 / this->host_->GetFields().move_speed();
 }
 
 MoveAction *Warrior::GetMoveAction() {

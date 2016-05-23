@@ -125,6 +125,9 @@ void MoveAction::MoveStep() {
   if (this->path_index_ >= (int)this->move_paths_.size()) {
     this->Finish();
   }
+
+  // TODO: for debug.
+  this->host_->GetScene()->PrintStatusImage();
 }
 
 }  // namespace scene
