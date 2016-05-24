@@ -8,10 +8,13 @@ package protocol;
 enum CombatActionType {
   COMBAT_ACTION_TYPE_BUILD = 1;                           // 建造
   COMBAT_ACTION_TYPE_MOVE = 2;                            // 移动
-  COMBAT_ACTION_TYPE_ATTACK = 3;                          // 攻击
+  COMBAT_ACTION_TYPE_LOCK_TARGET = 3;                     // 锁定目标
+  COMBAT_ACTION_TYPE_DEATH = 4;                           // 死亡
+  COMBAT_ACTION_TYPE_CONVERT_CAMP = 5;                    // 转换阵营
 }
 
 // 建造指令
+// COMBAT_ACTION_TYPE_BUILD
 message CombatBuildAction {
   required int32 building_id = 1;                         // 建筑id
   required int32 warrior_conf_id = 2;                     // 士兵配置id
@@ -19,17 +22,31 @@ message CombatBuildAction {
 }
 
 // 移动指令
+// COMBAT_ACTION_TYPE_MOVE
 message CombatMoveAction {
   repeated int32 warrior_id = 1;                          // 士兵id集
   required .protocol.Position pos = 2;                    // 位置
   repeated .protocol.Position paths = 3;                  // 路径点
 }
 
-// 攻击指令
-message CombatAttackAction {
+// 锁定目标指令
+// COMBAT_ACTION_TYPE_LOCK_TARGET
+message CombatLockTargetAction {
   required int32 warrior_id = 1;                          // 士兵id
-  required int32 target_warrior_id = 2;                   // 目标士兵id
-  required int32 damage = 3;                              // 伤害值
+  required int32 target_id = 2;                           // 目标id
+}
+
+// 死亡指令
+// COMBAT_ACTION_TYPE_DEATH
+message CombatDeathAction {
+  required int32 warrior_id = 1;                          // 士兵id
+}
+
+// 转换阵营指令
+// COMBAT_ACTION_TYPE_CONVERT_CAMP
+message CombatConvertCampAction {
+  required int32 id = 1;                                  // 建筑/士兵id
+  required int32 camp_id = 2;                             // 阵营id
 }
 
 // 行动指令
@@ -38,7 +55,9 @@ message CombatAction {
   required int32 timestamp = 2;                           // 时间戳
   optional CombatBuildAction build_action = 3;            // 建造指令
   optional CombatMoveAction move_action = 4;              // 移动指令
-  optional CombatAttackAction attack_action = 5;          // 攻击指令
+  optional CombatLockTargetAction lock_target_action = 5; // 锁定目标指令
+  optional CombatDeathAction death_action = 6;            // 死亡指令
+  optional CombatConvertCampAction convert_camp = 7;      // 转换阵营指令
 }
 
 // 行动序列

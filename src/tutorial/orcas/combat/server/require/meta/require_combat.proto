@@ -14,9 +14,3 @@ message RequireCombatMoveAction {
   required int32 combat_id = 1;                             // 战斗id
   required .protocol.CombatMoveAction action = 2;           // 动作
 }
-
-// REQUIRE_COMBAT_ATTACK_ACTION
-message RequireCombatAttackAction {
-  required int32 combat_id = 1;                             // 战斗id
-  required .protocol.CombatAttackAction action = 2;         // 动作
-}

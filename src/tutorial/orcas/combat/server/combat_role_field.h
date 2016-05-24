@@ -59,7 +59,7 @@ class CombatRoleField {
  private:
   bool DoBuildAction(const ::protocol::CombatBuildAction &action);
   bool DoMoveAction(const ::protocol::CombatMoveAction &action);
-  bool DoAttackAction(const ::protocol::CombatAttackAction &action);
+  bool DoLockTargetAction(const ::protocol::CombatLockTargetAction &action);
 
   uint64_t argent_id_;
   int32_t camp_id_;

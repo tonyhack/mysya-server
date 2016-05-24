@@ -118,8 +118,8 @@ bool CombatRoleField::DoAction(const ::protocol::CombatAction &action) {
     case ::protocol::COMBAT_ACTION_TYPE_MOVE:
       result = this->DoMoveAction(action.move_action());
       break;
-    case ::protocol::COMBAT_ACTION_TYPE_ATTACK:
-      result = this->DoAttackAction(action.attack_action());
+    case ::protocol::COMBAT_ACTION_TYPE_LOCK_TARGET:
+      result = this->DoLockTargetAction(action.lock_target_action());
       break;
     default:
       break;
@@ -194,7 +194,7 @@ bool CombatRoleField::DoMoveAction(const ::protocol::CombatMoveAction &action) {
       require::REQUIRE_COMBAT_MOVE_ACTION, &message) >= 0;
 }
 
-bool CombatRoleField::DoAttackAction(const ::protocol::CombatAttackAction &action) {
+bool CombatRoleField::DoLockTargetAction(const ::protocol::CombatLockTargetAction &action) {
   // TODO:
   return false;
 }
