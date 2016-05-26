@@ -4,6 +4,18 @@ import "warrior.proto";
 
 package protocol;
 
+// 战斗实体类型
+enum CombatEntityType {
+  COMBAT_ENTITY_TYPE_BUILDING = 1;
+  COMBAT_ACTION_TYPE_WARRIOR = 2;
+}
+
+// 战斗目标
+message CombatTarget {
+  required CombatEntityType type = 1;                     // 类型
+  required int32 id = 2;                                  // id
+}
+
 // 战斗动作类型
 enum CombatActionType {
   COMBAT_ACTION_TYPE_BUILD = 1;                           // 建造

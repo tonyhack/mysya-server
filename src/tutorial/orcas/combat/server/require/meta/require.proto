@@ -1,6 +1,7 @@
 package tutorial.orcas.combat.server.require;
 
 enum RequireType {
-  REQUIRE_COMBAT_BUILD_ACTION = 1;
-  REQUIRE_COMBAT_MOVE_ACTION = 2;
+  REQUIRE_SCENE_BUILD = 101;
+  REQUIRE_SCENE_MOVE = 102;
+  REQUIRE_SCENE_FETCH = 103;
 }

@@ -30,13 +30,13 @@ bool SceneApp::Initialize(AppServer *host) {
   }
 
   this->combat_event_handler_.Initialize();
-  this->combat_require_handler_.Initialize();
+  this->require_handler_.Initialize();
 
   return true;
 }
 
 void SceneApp::Finalize() {
-  this->combat_require_handler_.Finalize();
+  this->require_handler_.Finalize();
   this->combat_event_handler_.Finalize();
 
   this->host_ = NULL;

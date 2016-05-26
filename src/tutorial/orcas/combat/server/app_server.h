@@ -13,6 +13,7 @@
 #include "tutorial/orcas/combat/server/combat_message_handler.h"
 #include "tutorial/orcas/combat/server/event_dispatcher.h"
 #include "tutorial/orcas/combat/server/require_dispatcher.h"
+#include "tutorial/orcas/combat/server/vote_dispatcher.h"
 #include "tutorial/orcas/combat/server/user_combat_message_handler.h"
 #include "tutorial/orcas/combat/server/user_message_dispatcher.h"
 
@@ -67,6 +68,7 @@ class AppServer {
       const ::mysya::ioevent::TcpSocketApp *app);
   AppSession *GetSession(int sockfd);
 
+  VoteDispatcher *GetVoteDispatcher();
   EventDispatcher *GetEventDispatcher();
   RequireDispatcher *GetRequireDispatcher();
   MessageDispatcher *GetMessageDispatcher();
@@ -96,6 +98,7 @@ class AppServer {
   CodecHashmap protobuf_codecs_;
   AppSessionHashMap app_sessions_;
 
+  VoteDispatcher vote_dispatcher_;
   EventDispatcher event_dispatcher_;
   RequireDispatcher require_dispatcher_;
   MessageDispatcher message_dispatcher_;

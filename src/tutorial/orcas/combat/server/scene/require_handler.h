@@ -1,5 +1,5 @@
-#ifndef TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_COMBAT_REQUIRE_HANDLER_H
-#define TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_COMBAT_REQUIRE_HANDLER_H
+#ifndef TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_REQUIRE_HANDLER_H
+#define TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_REQUIRE_HANDLER_H
 
 #include <stdint.h>
 
@@ -21,21 +21,22 @@ namespace scene {
 
 class SceneApp;
 
-class CombatRequireHandler {
+class RequireHandler {
   typedef ::google::protobuf::Message ProtoMessage;
 
  public:
-  CombatRequireHandler();
-  ~CombatRequireHandler();
+  RequireHandler();
+  ~RequireHandler();
 
   bool Initialize();
   void Finalize();
 
  private:
-  int OnRequireCombatBuildAction(ProtoMessage *data);
-  int OnRequireCombatMoveAction(ProtoMessage *data);
+  int OnRequireSceneBuild(ProtoMessage *data);
+  int OnRequireSceneMove(ProtoMessage *data);
+  int OnRequireSceneFetch(ProtoMessage *data);
 
-  MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatRequireHandler);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(RequireHandler);
 };
 
 }  // namespace scene
@@ -44,4 +45,4 @@ class CombatRequireHandler {
 }  // namespace orcas
 }  // namespace tutorial
 
-#endif  // TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_COMBAT_REQUIRE_HANDLER_H
+#endif  // TUTORIAL_ORCAS_COMBAT_SERVER_SCENE_REQUIRE_HANDLER_H

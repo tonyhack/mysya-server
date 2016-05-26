@@ -1,0 +1,5 @@
+package tutorial.orcas.combat.server.vote;
+
+enum VoteType {
+  VOTE_TEST = 1;
+}

@@ -169,6 +169,8 @@ void AppServer::OnClose(::mysya::ioevent::TcpSocketApp *app, int sockfd) {
     return;
   }
 
+  MYSYA_DEBUG("[APP_SERVER] RemoveActor(%d) success.", sockfd);
+
   delete actor;
 }
 
@@ -178,6 +180,8 @@ void AppServer::OnError(::mysya::ioevent::TcpSocketApp *app, int sockfd, int err
     MYSYA_ERROR("[APP_SERVER] RemoveActor(%d) failed.", sockfd);
     return;
   }
+
+  MYSYA_DEBUG("[APP_SERVER] RemoveActor(%d) success.", sockfd);
 
   delete actor;
 }

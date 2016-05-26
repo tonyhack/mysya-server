@@ -43,6 +43,9 @@ class Scene {
   typedef std::vector<Node> NodeVector;
   typedef std::vector<Node *> NodePtrVector;
 
+  typedef std::vector<Building *> BuildingVector;
+  typedef std::vector<Warrior *> WarriorVector;
+
   typedef Grid::BuildingSet BuildingSet;
   typedef Grid::WarriorSet WarriorSet;
 
@@ -69,7 +72,9 @@ class Scene {
   CombatField *GetHost();
 
   Grid *GetGrid(const Position &pos);
+  Grid *GetGrid(int32_t x, int32_t y);
   const Grid *GetGrid(const Position &pos) const;
+  const Grid *GetGrid(int32_t x, int32_t y) const;
 
   bool GetWalkable(const Position &pos) const;
   bool GetWalkable(int32_t x, int32_t y) const;
@@ -90,6 +95,9 @@ class Scene {
   Warrior *GetWarrior(int32_t id);
   WarriorSet *GetWarriors(const Position &pos);
   const WarriorSet *GetWarriors(const Position &pos) const;
+
+  bool GetNeighbors(const Position &pos, int32_t range,
+      BuildingVector &buildings, WarriorVector &warriors);
 
   void SearchPath(const Position &src_pos, const Position &dest_pos,
       PositionVector &paths);

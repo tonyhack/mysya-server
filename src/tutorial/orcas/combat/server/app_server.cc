@@ -106,6 +106,10 @@ AppSession *AppServer::GetSession(int sockfd) {
   return session;
 }
 
+VoteDispatcher *AppServer::GetVoteDispatcher() {
+  return &this->vote_dispatcher_;
+}
+
 EventDispatcher *AppServer::GetEventDispatcher() {
   return &this->event_dispatcher_;
 }

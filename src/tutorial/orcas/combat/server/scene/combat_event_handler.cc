@@ -26,8 +26,8 @@ CombatEventHandler::CombatEventHandler()
 
 CombatEventHandler::~CombatEventHandler() {}
 
-#define SCENE_APP() \
-    SceneApp::GetInstance()
+#define SCENE_APP \
+    SceneApp::GetInstance
 
 bool CombatEventHandler::Initialize() {
   this->event_token_begin_ =

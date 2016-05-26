@@ -10,7 +10,7 @@
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
 #include "tutorial/orcas/combat/server/require/cc/require.pb.h"
-#include "tutorial/orcas/combat/server/require/cc/require_combat.pb.h"
+#include "tutorial/orcas/combat/server/require/cc/require_scene.pb.h"
 
 namespace tutorial {
 namespace orcas {
@@ -168,13 +168,13 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
 
   this->combat_field_->AddWarrior(combat_warrior_field);
 
-  require::RequireCombatBuildAction message;
-  message.set_combat_id(this->combat_field_->GetId());
-  message.set_warrior_id(combat_warrior_field->GetId());
-  *message.mutable_action() = action;
+  require::RequireSceneBuild require_message;
+  require_message.set_combat_id(this->combat_field_->GetId());
+  require_message.set_building_id(action.building_id());
+  require_message.set_warrior_id(combat_warrior_field->GetId());
   if (this->app_server_->GetRequireDispatcher()->Dispatch(
-        require::REQUIRE_COMBAT_BUILD_ACTION, &message) < 0) {
-    MYSYA_ERROR("[SCENE] require REQUIRE_COMBAT_BUILD_ACTION failed.");
+        require::REQUIRE_SCENE_BUILD, &require_message) < 0) {
+    MYSYA_ERROR("[SCENE] require REQUIRE_SCENE_BUILD failed.");
     this->combat_field_->RemoveWarrior(combat_warrior_field->GetId());
     combat_warrior_field->Finalize();
     CombatWarriorFieldPool::GetInstance()->Deallocate(combat_warrior_field);
@@ -187,11 +187,17 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
 }
 
 bool CombatRoleField::DoMoveAction(const ::protocol::CombatMoveAction &action) {
-  require::RequireCombatMoveAction message;
-  message.set_combat_id(this->combat_field_->GetId());
-  *message.mutable_action() = action;
-  return this->app_server_->GetRequireDispatcher()->Dispatch(
-      require::REQUIRE_COMBAT_MOVE_ACTION, &message) >= 0;
+  require::RequireSceneMove require_message;
+  require_message.set_combat_id(this->combat_field_->GetId());
+  *require_message.mutable_dest_pos() = action.pos();
+
+  for (int i = 0; i < action.warrior_id_size(); ++i) {
+    require_message.set_warrior_id(action.warrior_id(i));
+    this->app_server_->GetRequireDispatcher()->Dispatch(
+        require::REQUIRE_SCENE_MOVE, &require_message);
+  }
+
+  return true;
 }
 
 bool CombatRoleField::DoLockTargetAction(const ::protocol::CombatLockTargetAction &action) {

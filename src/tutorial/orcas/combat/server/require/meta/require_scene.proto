@@ -1,0 +1,27 @@
+import "position.proto";
+
+package tutorial.orcas.combat.server.require;
+
+// REQUIRE_SCENE_BUILD
+message RequireSceneBuild {
+  required int32 combat_id = 1;                                 // 战斗id(场景id)           [IN]
+  required int32 building_id = 2;                               // 建筑id                   [IN]
+  required int32 warrior_id = 3;                                // 士兵id                   [IN]
+}
+
+// REQUIRE_SCENE_MOVE
+message RequireSceneMove {
+  required int32 combat_id = 1;                                 // 战斗id(场景id)           [IN]
+  required int32 warrior_id = 2;                                // 士兵id                   [IN]
+  required .protocol.Position dest_pos = 3;                     // 目标坐标                 [IN]
+}
+
+// REQUIRE_SCENE_FETCH
+message RequireSceneFetch {
+  required int32 combat_id = 1;                                 // 战斗id(场景id)           [IN]
+  required int32 except_camp_id = 2;                            // 阵营(除去的)             [IN]
+  required .protocol.Position pos = 3;                          // 坐标                     [IN]
+  required int32 range = 4;                                     // 范围                     [IN]
+  repeated int32 warrior = 5;                                   // 士兵id列表               [OUT]
+  repeated int32 building = 6;                                  // 建筑id列表               [OUT]
+}

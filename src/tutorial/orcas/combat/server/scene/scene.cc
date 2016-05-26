@@ -156,6 +156,24 @@ const Grid *Scene::GetGrid(const Position &pos) const {
   return &this->grids_[pos.y()*this->width_+pos.x()];
 }
 
+Grid *Scene::GetGrid(int32_t x, int32_t y) {
+  if (x < 0 || x >= this->width_ ||
+      y < 0 || y >= this->height_) {
+    return NULL;
+  }
+
+  return &this->grids_[y*this->width_+x];
+}
+
+const Grid *Scene::GetGrid(int32_t x, int32_t y) const {
+  if (x < 0 || x >= this->width_ ||
+      y < 0 || y >= this->height_) {
+    return NULL;
+  }
+
+  return &this->grids_[y*this->width_+x];
+}
+
 bool Scene::GetWalkable(const Position &pos) const {
   const Grid *grid = this->GetGrid(pos);
   if (grid == NULL) {
@@ -344,6 +362,46 @@ const Scene::WarriorSet *Scene::GetWarriors(const Position &pos) const {
   }
 
   return grid->GetWarriors();
+}
+
+bool Scene::GetNeighbors(const Position &pos, int32_t range,
+    BuildingVector &buildings, WarriorVector &warriors) {
+  buildings.clear();
+  warriors.clear();
+
+  for (int i = 0; i < range; ++i) {
+    int start_x = std::max(pos.x() - i, 0);
+    int end_x = std::min(pos.x() + i, this->width_ - i);
+    int start_y = std::max(pos.y() - i, 0);
+    int end_y = std::min(pos.y() + i, this->height_ - i);
+
+    for (int y = start_y; y <= end_y; ++y) {
+      for (int x = start_x; x <= end_x; ++x) {
+        Grid *grid = this->GetGrid(x, y);
+        if (grid == NULL) {
+          continue;
+        }
+
+        const WarriorSet *grid_warriors = grid->GetWarriors();
+        if (grid_warriors != NULL) {
+          for (WarriorSet::const_iterator iter = grid_warriors->begin();
+              iter != grid_warriors->end(); ++iter) {
+            warriors.push_back(*iter);
+          }
+        }
+
+        const BuildingSet *grid_buildings = grid->GetBuildings();
+        if (grid_buildings != NULL) {
+          for (BuildingSet::const_iterator iter = grid_buildings->begin();
+              iter != grid_buildings->end(); ++iter) {
+            buildings.push_back(*iter);
+          }
+        }
+      }
+    }
+  }
+
+  return true;
 }
 
 void Scene::SearchPath(const Position &begin_pos, const Position &end_pos,
