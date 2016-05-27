@@ -4,6 +4,8 @@
 
 #include "tutorial/orcas/combat/server/app_server.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
+#include "tutorial/orcas/combat/server/event/cc/event.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_scene.pb.h"
 #include "tutorial/orcas/combat/server/scene/grid.h"
 #include "tutorial/orcas/combat/server/scene/scene.h"
 #include "tutorial/orcas/combat/server/scene/scene_app.h"
@@ -125,6 +127,12 @@ void MoveAction::MoveStep() {
   if (this->path_index_ >= (int)this->move_paths_.size()) {
     this->Finish();
   }
+
+  event::EventSceneMoveStep move_step_event;
+  move_step_event.set_combat_id(scene->GetId());
+  move_step_event.set_warrior_id(this->host_->GetId());
+  SceneApp::GetInstance()->GetEventDispatcher()->Dispatch(
+      event::EVENT_SCENE_MOVE_STEP, &move_step_event);
 
   // TODO: for debug.
   this->host_->GetScene()->PrintStatusImage();

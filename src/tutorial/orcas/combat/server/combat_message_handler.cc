@@ -120,7 +120,8 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
 
       role_field->SetCampId(camp_data.id());
 
-      if (role_field->Initialize(role_data.argent_id(), this->app_server_) == false) {
+      if (role_field->Initialize(role_data.argent_id(), role_data.name(),
+            this->app_server_) == false) {
         MYSYA_ERROR("CombatRoleField::Initialize() failed.");
         CombatRoleFieldManager::GetInstance()->Deallocate(role_field);
         CombatFieldManager::GetInstance()->Remove(combat_field->GetId());
@@ -148,6 +149,41 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
         role_field->AddWarriorDescription(role_data.warrior(k));
       }
 
+      // combat role's building.
+      for (int k = 0; k < role_data.building_size(); ++k) {
+        const ::protocol::BuildingDescription &building_description =
+          role_data.building(k);
+
+        CombatBuildingField *building = CombatBuildingFieldPool::GetInstance()->Allocate();
+        if (building == NULL) {
+          MYSYA_ERROR("CombatBuildingFieldPool::Allocate() failed.");
+          role_field->Finalize();
+          CombatRoleFieldManager::GetInstance()->Deallocate(role_field);
+          CombatFieldManager::GetInstance()->Remove(combat_field->GetId());
+          combat_field->Finalize();
+          CombatFieldManager::GetInstance()->Deallocate(combat_field);
+          SendMessageCombatDeployResponse(session, message->host_id(),
+              COMBAT_DEPLOY_RESULT_TYPE_FAILURE);
+          return;
+        }
+
+        if (building->Initialize(combat_field->AllocateId(), combat_field,
+              role_field->GetArgentId(), camp_data.id(), building_description) == false) {
+          MYSYA_ERROR("CombatBuildingFieldPool::Allocate() failed.");
+          CombatBuildingFieldPool::GetInstance()->Deallocate(building);
+          role_field->Finalize();
+          CombatRoleFieldManager::GetInstance()->Deallocate(role_field);
+          CombatFieldManager::GetInstance()->Remove(combat_field->GetId());
+          combat_field->Finalize();
+          CombatFieldManager::GetInstance()->Deallocate(combat_field);
+          SendMessageCombatDeployResponse(session, message->host_id(),
+              COMBAT_DEPLOY_RESULT_TYPE_FAILURE);
+          return;
+        }
+
+        combat_field->AddBuilding(building);
+      }
+
       combat_field->AddRole(role_field->GetArgentId());
     }
 
@@ -167,7 +203,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
         return;
       }
 
-      if (building->Initialize(combat_field->AllocateId(), combat_field,
+      if (building->Initialize(combat_field->AllocateId(), combat_field, 0,
             camp_data.id(), building_description) == false) {
         MYSYA_ERROR("CombatBuildingField::Initialize() failed.");
         CombatBuildingFieldPool::GetInstance()->Deallocate(building);
@@ -194,13 +230,15 @@ void CombatMessageHandler::OnMessageCombatConnectArgentRequest(
     ::tutorial::orcas::combat::TransportChannel *channel,
     const ::google::protobuf::Message *message_pb) {
   AppSession *session = (AppSession *)channel;
-  const MessageCombatConnectArgentRequest *message = (const MessageCombatConnectArgentRequest *)message_pb;
+  const MessageCombatConnectArgentRequest *message =
+    (const MessageCombatConnectArgentRequest *)message_pb;
 
   MessageCombatConnectArgentResponse response_message;
   response_message.set_role_argent_id(message->role_argent_id());
   response_message.set_combat_id(message->combat_id());
 
-  CombatRoleField *role_field = CombatRoleFieldManager::GetInstance()->Get(message->role_argent_id());
+  CombatRoleField *role_field =
+    CombatRoleFieldManager::GetInstance()->Get(message->role_argent_id());
   if (role_field == NULL) {
     MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", message->role_argent_id());
     response_message.set_ret_code(MessageCombatConnectArgentResponse::ERROR_CODE_FAILURE);

@@ -23,19 +23,20 @@ void AutoManager::Deallocate(Auto *autoz) {
 }
 
 bool AutoManager::Add(Auto *autoz) {
-  AutoHashmap::const_iterator iter = this->autoes_.find(autoz->GetId());
+  AutoHashmap::const_iterator iter = this->autoes_.find(
+      autoz->GetGlobalId());
   if (iter != this->autoes_.end()) {
     return false;
   }
 
-  this->autoes_.insert(std::make_pair(autoz->GetId(), autoz));
+  this->autoes_.insert(std::make_pair(autoz->GetGlobalId(), autoz));
   return true;
 }
 
-Auto *AutoManager::Get(int32_t id) {
+Auto *AutoManager::Get(const AutoGlobalId &global_id) {
   Auto *autoz = NULL;
 
-  AutoHashmap::iterator iter = this->autoes_.find(autoz->GetId());
+  AutoHashmap::iterator iter = this->autoes_.find(global_id);
   if (iter != this->autoes_.end()) {
     autoz = iter->second;
   }
@@ -43,16 +44,24 @@ Auto *AutoManager::Get(int32_t id) {
   return autoz;
 }
 
-Auto *AutoManager::Remove(int32_t id) {
+Auto *AutoManager::Get(int32_t combat_id, int32_t id) {
+  return this->Get(AutoGlobalId(combat_id, id));
+}
+
+Auto *AutoManager::Remove(const AutoGlobalId &global_id) {
   Auto *autoz = NULL;
 
-  AutoHashmap::iterator iter = this->autoes_.find(autoz->GetId());
+  AutoHashmap::iterator iter = this->autoes_.find(global_id);
   if (iter != this->autoes_.end()) {
     autoz = iter->second;
     this->autoes_.erase(iter);
   }
 
   return autoz;
+}
+
+Auto *AutoManager::Remove(int32_t combat_id, int32_t id) {
+  return this->Remove(AutoGlobalId(combat_id, id));
 }
 
 }  // namespace ai

@@ -3,6 +3,8 @@
 
 #include <mysya/util/class_util.h>
 
+#include "tutorial/orcas/combat/server/ai/combat_vote_handler.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {
@@ -25,6 +27,7 @@ class AiApp {
 
  private:
   AppServer *host_;
+  CombatVoteHandler combat_vote_handler_;
 
   MYSYA_SINGLETON(AiApp);
 };

@@ -2,6 +2,7 @@
 #define TUTORIAL_ORCAS_COMBAT_SERVER_COMBAT_ROLE_FIELD_H
 
 #include <map>
+#include <string>
 
 #include <mysya/util/class_util.h>
 
@@ -33,7 +34,8 @@ class CombatRoleField {
   CombatRoleField();
   ~CombatRoleField();
 
-  bool Initialize(uint64_t argent_id, AppServer *app_server);
+  bool Initialize(uint64_t argent_id, const std::string &name,
+      AppServer *app_server);
   void Finalize();
 
   AppServer *GetAppServer();
@@ -43,6 +45,8 @@ class CombatRoleField {
 
   int32_t GetCampId() const;
   void SetCampId(int32_t value);
+
+  const std::string &GetName() const;
 
   CombatField *GetCombatField();
   void SetCombatField(CombatField *value);
@@ -63,6 +67,7 @@ class CombatRoleField {
 
   uint64_t argent_id_;
   int32_t camp_id_;
+  std::string name_;
   CombatField *combat_field_;
   WarriorDescriptionMap warrior_descriptions_;
 

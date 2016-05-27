@@ -11,6 +11,8 @@
 #include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
 #include "tutorial/orcas/combat/server/require/cc/require.pb.h"
 #include "tutorial/orcas/combat/server/require/cc/require_scene.pb.h"
+#include "tutorial/orcas/combat/server/vote/cc/vote.pb.h"
+#include "tutorial/orcas/combat/server/vote/cc/vote_combat.pb.h"
 
 namespace tutorial {
 namespace orcas {
@@ -24,9 +26,10 @@ CombatRoleField::CombatRoleField()
 
 CombatRoleField::~CombatRoleField() {}
 
-bool CombatRoleField::Initialize(uint64_t argent_id,
+bool CombatRoleField::Initialize(uint64_t argent_id, const std::string &name,
     AppServer *app_server) {
   this->SetArgentId(argent_id);
+  this->name_ = name;
   this->app_server_ = app_server;
   this->app_session_ = NULL;
 
@@ -63,6 +66,10 @@ int32_t CombatRoleField::GetCampId() const {
 
 void CombatRoleField::SetCampId(int32_t value) {
   this->camp_id_ = value;
+}
+
+const std::string &CombatRoleField::GetName() const {
+  return this->name_;
 }
 
 CombatField *CombatRoleField::GetCombatField() {
@@ -132,7 +139,7 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
   const ::protocol::WarriorDescription *warrior_description =
     this->GetWarriorDescription(action.warrior_conf_id());
   if (warrior_description == NULL) {
-    MYSYA_ERROR("[SCENE] CombatRoleField::GetWarriorDescription(%d) failed.",
+    MYSYA_ERROR("CombatRoleField::GetWarriorDescription(%d) failed.",
         action.warrior_conf_id());
     return false;
   }
@@ -141,27 +148,27 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
   CombatBuildingField *combat_building_field =
     this->combat_field_->GetBuilding(action.building_id());
   if (combat_building_field == NULL) {
-    MYSYA_ERROR("[SCENE] CombatField::GetBuilding(%d) failed.",
+    MYSYA_ERROR("CombatField::GetBuilding(%d) failed.",
         action.building_id());
     return false;
   }
 
-  if (combat_building_field->GetFields().camp_id() != this->GetCampId()) {
-    MYSYA_ERROR("[SCENE] CombatBuildingField.camp_id(%d) not matching(%d).",
-        combat_building_field->GetFields().camp_id(), this->GetCampId());
+  if (combat_building_field->GetFields().host_id() != this->GetArgentId()) {
+    MYSYA_ERROR("CombatBuildingField.host_id(%ld) not matching(%ld).",
+        combat_building_field->GetFields().host_id(), this->GetArgentId());
     return false;
   }
 
   CombatWarriorField *combat_warrior_field =
     CombatWarriorFieldPool::GetInstance()->Allocate();
   if (combat_warrior_field == NULL) {
-    MYSYA_ERROR("[SCENE] CombatWarriorFieldPool::Allocate() failed.");
+    MYSYA_ERROR("CombatWarriorFieldPool::Allocate() failed.");
     return false;
   }
 
   if (combat_warrior_field->Initialize(this->combat_field_->AllocateId(), this,
         *warrior_description) == false) {
-    MYSYA_ERROR("[SCENE] CombatWarriorField::Initialize() failed.");
+    MYSYA_ERROR("CombatWarriorField::Initialize() failed.");
     CombatWarriorFieldPool::GetInstance()->Deallocate(combat_warrior_field);
     return false;
   }
@@ -174,7 +181,7 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
   require_message.set_warrior_id(combat_warrior_field->GetId());
   if (this->app_server_->GetRequireDispatcher()->Dispatch(
         require::REQUIRE_SCENE_BUILD, &require_message) < 0) {
-    MYSYA_ERROR("[SCENE] require REQUIRE_SCENE_BUILD failed.");
+    MYSYA_ERROR("require REQUIRE_SCENE_BUILD failed.");
     this->combat_field_->RemoveWarrior(combat_warrior_field->GetId());
     combat_warrior_field->Finalize();
     CombatWarriorFieldPool::GetInstance()->Deallocate(combat_warrior_field);
@@ -187,10 +194,23 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
 }
 
 bool CombatRoleField::DoMoveAction(const ::protocol::CombatMoveAction &action) {
+  // Vote.
+  vote::VoteCombatMoveAction vote_message;
+  vote_message.set_combat_id(this->combat_field_->GetId());
+  for (int i = 0; i < action.warrior_id_size(); ++i) {
+    vote_message.set_warrior_id(action.warrior_id(i));
+    int result_code = this->app_server_->GetVoteDispatcher()->Dispatch(
+        vote::VOTE_COMBAT_MOVE_ACTION, &vote_message);
+    if (result_code < 0) {
+      MYSYA_ERROR("VOTE_COMBAT_MOVE_ACTION result_code(%d).", result_code);
+      return false;
+    }
+  }
+
+  // Require.
   require::RequireSceneMove require_message;
   require_message.set_combat_id(this->combat_field_->GetId());
   *require_message.mutable_dest_pos() = action.pos();
-
   for (int i = 0; i < action.warrior_id_size(); ++i) {
     require_message.set_warrior_id(action.warrior_id(i));
     this->app_server_->GetRequireDispatcher()->Dispatch(

@@ -1,5 +1,5 @@
-#ifndef TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_MOVE_H
-#define TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_MOVE_H
+#ifndef TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_CHASE_H
+#define TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_CHASE_H
 
 #include <mysya/util/class_util.h>
 
@@ -11,10 +11,10 @@ namespace combat {
 namespace server {
 namespace ai {
 
-class AutoStatusMove : public AutoStatus {
+class AutoStatusChase : public AutoStatus {
  public:
-  AutoStatusMove(Auto *host);
-  virtual ~AutoStatusMove();
+  AutoStatusChase(Auto *host);
+  virtual ~AutoStatusChase();
 
   virtual void Start();
   virtual void Stop();
@@ -22,7 +22,7 @@ class AutoStatusMove : public AutoStatus {
   virtual void OnEvent(int type, ProtoMessage *data);
 
  private:
-  MYSYA_DISALLOW_COPY_AND_ASSIGN(AutoStatusMove);
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(AutoStatusChase);
 };
 
 }  // namespace ai
@@ -31,4 +31,4 @@ class AutoStatusMove : public AutoStatus {
 }  // namespace orcas
 }  // namespace tutorial
 
-#endif  // TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_MOVE_H
+#endif  // TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_CHASE_H

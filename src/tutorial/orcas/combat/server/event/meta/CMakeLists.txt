@@ -1,6 +1,7 @@
 set(PROTO_SOURCES
   ${COMBAT_SOURCE_DIR}/server/event/meta/event.proto
   ${COMBAT_SOURCE_DIR}/server/event/meta/event_combat.proto
+  ${COMBAT_SOURCE_DIR}/server/event/meta/event_scene.proto
     )
 
 foreach (script ${PROTO_SOURCES})

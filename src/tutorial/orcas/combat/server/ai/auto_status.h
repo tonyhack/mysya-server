@@ -22,9 +22,9 @@ class AutoStatus {
   typedef ::google::protobuf::Message ProtoMessage;
 
   enum type {
-    SEARCH = 1;
-    MOVE = 2;
-    ATTACK = 3;
+    SEARCH = 1;           // 搜索目标
+    CHASE = 2;            // 追击目标
+    ATTACK = 3;           // 攻击目标
   };
 
   AutoStatus(Auto *host);
@@ -33,6 +33,7 @@ class AutoStatus {
   virtual void Start() = 0;
   virtual void Stop() = 0;
 
+  virtual type GetType() const = 0;
   virtual void OnEvent(int type, ProtoMessage *data) = 0;
 
  protected:

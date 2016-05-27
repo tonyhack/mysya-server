@@ -15,14 +15,22 @@ class Auto;
 
 class AutoManager {
  public:
-  typedef std::unordered_map<int32_t, Auto *> AutoHashmap;
+  typedef std::pair<int32_t, int32_t> AutoGlobalId;
+  struct AutoGlobalIdHash {
+    std::size_t operator()(const AutoGlobalId &key) const {
+      return ((size_t)key.first << 32) + (size_t)key.second;
+    }
+  };
+  typedef std::unordered_map<AutoGlobalId, Auto *, AutoGlobalIdHash> AutoHashmap;
 
-  Auto *Allocate(CombatWarriorField *host);
+  Auto *Allocate();
   void Deallocate(Auto *autoz);
 
   bool Add(Auto *autoz);
-  Auto *Get(int32_t id);
-  Auto *Remove(int32_t id);
+  Auto *Get(const AutoGlobalId &global_id);
+  Auto *Get(int32_t combat_id, int32_t id);
+  Auto *Remove(const AutoGlobalId &global_id);
+  Auto *Remove(int32_t combat_id, int32_t id);
 
  private:
   AutoHashmap autoes_;

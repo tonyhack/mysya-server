@@ -3,6 +3,7 @@ set(PROTO_SOURCES
   combat.proto
   message.proto
   position.proto
+  role.proto
   warrior.proto
   )
 

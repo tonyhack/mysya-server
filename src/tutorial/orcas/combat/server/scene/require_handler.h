@@ -19,8 +19,6 @@ namespace combat {
 namespace server {
 namespace scene {
 
-class SceneApp;
-
 class RequireHandler {
   typedef ::google::protobuf::Message ProtoMessage;
 

@@ -1,6 +1,8 @@
 #ifndef TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_H
 #define TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_H
 
+#include "tutorial/orcas/combat/server/ai/auto_manager.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {
@@ -12,6 +14,8 @@ class CombatWarriorField;
 
 class Auto {
  public:
+  typedef AutoManager::AutoGlobalId AutoGlobalId;
+
   Auto();
   ~Auto();
 
@@ -19,6 +23,7 @@ class Auto {
   void Finalize();
 
   CombatWarriorField *GetHost();
+  AutoGlobalId GetGlobalId() const;
 
   void SetTarget(::protocol::CombatEntityType type, int32_t id);
   ::protocol::CombatTarget &GetTarget();
@@ -32,7 +37,7 @@ class Auto {
 
   AutoStatus *present_status_;
   AutoStatusSearch status_search_;
-  AutoStatusMove status_move_;
+  AutoStatusChase status_chase_;
   AutoStatusAttack status_attack_;
 };
 

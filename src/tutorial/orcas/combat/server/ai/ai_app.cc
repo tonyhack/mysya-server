@@ -22,10 +22,17 @@ AiApp::~AiApp() {}
 bool AiApp::Initialize(AppServer *hosts) {
   this->host_ = host;
 
+  if (this->combat_vote_handler_.Initialize() == false) {
+    MYSYA_ERROR("[AI] CombatVoteHandler::Initialize() failed.");
+    return false;
+  }
+
   return true;
 }
 
 void AiApp::Finalize() {
+  this->combat_vote_handler_.Finalize();
+
   this->host_ = NULL;
 }
 

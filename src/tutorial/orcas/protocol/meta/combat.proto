@@ -1,5 +1,6 @@
 import "building.proto";
 import "position.proto";
+import "role.proto";
 import "warrior.proto";
 
 package protocol;
@@ -81,4 +82,5 @@ message CombatActionSequence {
 message CombatStatusImage {
   repeated .protocol.CombatBuildingFields building = 1;   // 建筑
   repeated .protocol.CombatWarriorFields warrior = 2;     // 士兵
+  repeated .protocol.CombatRoleFields role = 3;           // 角色
 }

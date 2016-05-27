@@ -234,6 +234,21 @@ void CombatField::ExportStatusImage(::protocol::CombatStatusImage &image) const 
       iter != this->warriors_.end(); ++iter) {
     *image.add_warrior() = iter->second->GetFields();
   }
+
+  for (CombatRoleFieldSet::const_iterator iter = this->roles_.begin();
+      iter != this->roles_.end(); ++iter) {
+    CombatRoleField *combat_role_field =
+      CombatRoleFieldManager::GetInstance()->Get(*iter);
+    if (combat_role_field == NULL) {
+      MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", *iter);
+      continue;
+    }
+
+    ::protocol::CombatRoleFields *role_fields = image.add_role();
+    role_fields->set_id(combat_role_field->GetArgentId());
+    role_fields->set_name(combat_role_field->GetName());
+    role_fields->set_camp_id(combat_role_field->GetCampId());
+  }
 }
 
 }  // namespace server

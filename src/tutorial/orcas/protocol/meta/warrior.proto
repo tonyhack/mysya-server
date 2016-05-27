@@ -30,7 +30,7 @@ message CombatWarriorFields {
   optional int32 id = 1;                            // id
   optional int32 conf_id = 2;                       // 配置id
   optional int32 type = 3;                          // 类型
-  optional uint64 host_id = 4;                      // 宿主id
+  optional uint64 host_id = 4;                      // 宿主id(战斗角色id)
   optional int32 camp_id = 5;                       // 阵营id
   optional int32 hp = 6;                            // 当前生命值
   optional int32 max_hp = 7;                        // 当前最大生命值

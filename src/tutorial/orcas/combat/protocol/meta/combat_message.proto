@@ -28,15 +28,17 @@ enum CombatDeployResultType {
 // 出战角色数据
 message CombatRoleData {
   required uint64 argent_id = 1;                              // 角色的代理id(全局唯一, 由逻辑服务器分配)
-  required string ai = 2;                                     // ai
-  repeated .protocol.WarriorDescription warrior = 3;          // 兵团列表
+  required string name = 2;                                   // 名称
+  required string ai = 3;                                     // ai
+  repeated .protocol.WarriorDescription warrior = 4;          // 兵团列表
+  repeated .protocol.BuildingDescription building = 5;        // 建筑列表(初始属于角色的建筑)
 }
 
 // 出战阵营数据
 message CombatCampData {
   required int32 id = 1;                                      // 阵营id
-  repeated .protocol.BuildingDescription building = 2;        // 建筑列表
-  repeated CombatRoleData role = 3;                           // 角色列表
+  repeated CombatRoleData role = 2;                           // 角色列表
+  repeated .protocol.BuildingDescription building = 3;        // 建筑列表(初始属于阵营的非角色建筑)
 }
 
 // 出战初始化数据

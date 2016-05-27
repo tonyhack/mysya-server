@@ -270,6 +270,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   ::tutorial::orcas::combat::protocol::CombatRoleData *l_role_data =
     l_camp_data->add_role();
   l_role_data->set_ai("");
+  l_role_data->set_name(left_actor->GetName());
   l_role_data->set_argent_id(left_actor->GetCombatArgentId());
   // 左方初始兵种
   const WarriorDescriptionMap &l_warriors = left_actor->GetWarriors();
@@ -284,7 +285,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
     for (BuildingVector::const_iterator iter = l_building_iter->second.begin();
         iter != l_building_iter->second.end(); ++iter) {
       const BuildingConf *building_conf = *iter;
-      ::protocol::BuildingDescription *building = l_camp_data->add_building();
+      ::protocol::BuildingDescription *building = l_role_data->add_building();
       building->set_id(building_conf->id_);
       building->set_type(building_conf->type_);
       building->set_hp(building_conf->hp_);
@@ -302,6 +303,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   ::tutorial::orcas::combat::protocol::CombatRoleData *r_role_data =
     r_camp_data->add_role();
   r_role_data->set_ai("");
+  r_role_data->set_name(right_actor->GetName());
   r_role_data->set_argent_id(right_actor->GetCombatArgentId());
   // 右方初始兵种
   const WarriorDescriptionMap r_warriors = right_actor->GetWarriors();
@@ -316,7 +318,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
     for (BuildingVector::const_iterator iter = r_building_iter->second.begin();
         iter != r_building_iter->second.end(); ++iter) {
       const BuildingConf *building_conf = *iter;
-      ::protocol::BuildingDescription *building = r_camp_data->add_building();
+      ::protocol::BuildingDescription *building = r_role_data->add_building();
       building->set_id(building_conf->id_);
       building->set_type(building_conf->type_);
       building->set_hp(building_conf->hp_);

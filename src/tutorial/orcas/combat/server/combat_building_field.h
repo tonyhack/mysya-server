@@ -17,17 +17,19 @@ class CombatBuildingField {
   CombatBuildingField();
   ~CombatBuildingField();
 
-  bool Initialize(int32_t id, CombatField *host, int32_t camp_id,
-      const ::protocol::BuildingDescription &description);
+  bool Initialize(int32_t id, CombatField *host_combat, int64_t role_argent_id,
+      int32_t camp_id, const ::protocol::BuildingDescription &description);
   void Finalize();
 
   int32_t GetId() const;
 
-  CombatField *GetHost();
+  CombatField *GetCombatField();
+  int32_t GetCombatRoleArgentId() const;
   ::protocol::CombatBuildingFields &GetFields();
 
  private:
-  CombatField *host_;
+  int64_t role_argent_id_;
+  CombatField *host_combat_;
   ::protocol::CombatBuildingFields fields_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatBuildingField);
