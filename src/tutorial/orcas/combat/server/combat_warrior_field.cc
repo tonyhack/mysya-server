@@ -68,12 +68,20 @@ int32_t CombatWarriorField::GetId() const {
   return this->fields_;
 }
 
+const ::protocol::CombatWarriorFields &CombatWarriorField::GetFields() const {
+  return this->fields_;
+}
+
 CombatRoleField *CombatWarriorField::GetRoleField() {
   return this->host_;
 }
 
 ::protocol::CombatWarriorServerFields &CombatWarriorField::GetServerFields() {
   return this->server_fields_;
+}
+
+const ::protocol::WarriorDescription *CombatWarriorField::GetDescription() const {
+  return this->host_->GetWarriorDescription(this->GetFields().conf_id());
 }
 
 void CombatWarriorField::GenerateFields() {

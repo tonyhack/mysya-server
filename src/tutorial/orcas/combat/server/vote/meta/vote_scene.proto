@@ -1,0 +1,14 @@
+import "combat.proto";
+
+package tutorial.orcas.combat.server.vote;
+
+// VOTE_SCENE_MOVE
+message VoteSceneMove {
+  enum ResultCode {
+    UNKOWN = -1;
+    INCORRECT_STATUS = -2;
+  }
+
+  required int32 combat_id = 1;                                   // 战斗id
+  required int32 warrior_id = 2;                                  // 士兵id
+}

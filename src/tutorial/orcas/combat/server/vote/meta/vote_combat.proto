@@ -14,17 +14,6 @@ message VoteCombatBuildAction {
   required int32 warrior_conf_id = 3;                             // 士兵配置id
 }
 
-// VOTE_COMBAT_MOVE_ACTION
-message VoteCombatMoveAction {
-  enum ResultCode {
-    UNKOWN = -1;
-    INCORRECT_STATUS = -2;
-  }
-
-  required int32 combat_id = 1;                                   // 战斗id
-  required int32 warrior_id = 2;                                  // 士兵id
-}
-
 // VOTE_COMBAT_ATTACK_ACTION
 message VoteCombatAttackAction {
   required int32 combat_id = 1;                                   // 战斗id

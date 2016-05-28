@@ -31,7 +31,24 @@ void SceneEventHandler::Finalize() {
 
 #undef EVENT_DISPATCHER
 
-void SceneEventHandler::OnEventSceneMoveStep(const ProtoMessage *data) {}
+void SceneEventHandler::OnEventSceneMoveStep(const ProtoMessage *data) {
+  event::EventSceneMoveStep *event = (event::EventSceneMoveStep *)data;
+
+  Auto *autoz = AutoManager::GetInstance(event->combat_id(), event->warrior_id());
+  if (autoz == NULL) {
+    MYSYA_ERROR("[AI] AutoManager::Get(%d, %d) failed.",
+        event->combat_id(), event->warrior_id());
+    return;
+  }
+
+  AutoStatus *auto_status = autoz->GetPresentStatus();
+  if (auto_status == NULL) {
+    MYSYA_ERROR("[AI] Auto::GetPresentStatus() faild.");
+    return;
+  }
+
+  auto_status->OnEvent(event::EVENT_SCENE_MOVE_STEP, data);
+}
 
 #undef AI_APP
 

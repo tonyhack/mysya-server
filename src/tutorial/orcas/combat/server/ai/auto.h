@@ -3,6 +3,11 @@
 
 #include "tutorial/orcas/combat/server/ai/auto_manager.h"
 
+#include "tutorial/orcas/combat/server/ai/auto_status.h"
+#include "tutorial/orcas/combat/server/ai/auto_status_attack.h"
+#include "tutorial/orcas/combat/server/ai/auto_status_chase.h"
+#include "tutorial/orcas/combat/server/ai/auto_status_search.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {
@@ -22,23 +27,29 @@ class Auto {
   bool Initialize(CombatWarriorField *host);
   void Finalize();
 
-  CombatWarriorField *GetHost();
+  int32_t Getid() const;
   AutoGlobalId GetGlobalId() const;
+  CombatWarriorField *GetHost();
 
   void SetTarget(::protocol::CombatEntityType type, int32_t id);
   ::protocol::CombatTarget &GetTarget();
+  int GetTargetDistance() const;
 
   AutoStatus *GetPresentStatus();
   void GotoStatus(int status);
+
+  bool MoveTarget();
+  bool SearchTarget();
+  bool AttackTarget();
 
  private:
   CombatWarriorField *host_;
   ::protocol::CombatTarget target_;
 
   AutoStatus *present_status_;
-  AutoStatusSearch status_search_;
-  AutoStatusChase status_chase_;
   AutoStatusAttack status_attack_;
+  AutoStatusChase status_chase_;
+  AutoStatusSearch status_search_;
 };
 
 }  // namespace ai

@@ -18,3 +18,9 @@ message EventCombatBuildAction {
   required int32 combat_id = 1;                               // 战斗id
   required .protocol.CombatAction action = 2;                 // 行动数据
 }
+
+// EVENT_COMBAT_DEATH
+message EventCombatDeath {
+  required int32 combat_id = 1;                               // 战斗id
+  required .protocol.CombatTarget target = 2;                 // 目标
+}

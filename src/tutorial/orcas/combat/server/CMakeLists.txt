@@ -12,6 +12,7 @@ set(EXECUTABLE_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/tutorial/orcas/combat/serve
 set(VOTE_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/vote/cc/vote.pb.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/vote/cc/vote_combat.pb.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/vote/cc/vote_scene.pb.cc
     )
 
 set(EVENT_SOURCES

@@ -1,6 +1,9 @@
 #ifndef TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_H
 #define TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_H
 
+#include <map>
+#include <functional>
+
 namespace google {
 namespace protobuf {
 
@@ -20,6 +23,9 @@ class Auto;
 class AutoStatus {
  public:
   typedef ::google::protobuf::Message ProtoMessage;
+  typedef std::function<void (const ProtoMessage *data)> EventCallback;
+  typedef std::map<int, EventCallback> EventCallbackMap;
+  typedef std::map<int, uint64_t> EventTokenMap;
 
   enum type {
     SEARCH = 1;           // 搜索目标
@@ -30,14 +36,19 @@ class AutoStatus {
   AutoStatus(Auto *host);
   virtual ~AutoStatus();
 
-  virtual void Start() = 0;
-  virtual void Stop() = 0;
+  virtual void Start();
+  virtual void Stop();
 
   virtual type GetType() const = 0;
-  virtual void OnEvent(int type, ProtoMessage *data) = 0;
 
  protected:
+  void AttachEvent(int type, const EventCallback &cb);
+  void DetachEvent(int type);
+  void DispatchEvent(int type, const ProtoMessage *data);
+
   Auto *host_;
+  EventCallbackMap event_cbs_;
+  EventTokenMap event_tokens_;
 };
 
 }  // namespace ai

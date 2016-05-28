@@ -1,5 +1,5 @@
-#ifndef TUTORIAL_ORCAS_COMBAT_SERVER_AI_COMBAT_VOTE_HANDLER_H
-#define TUTORIAL_ORCAS_COMBAT_SERVER_AI_COMBAT_VOTE_HANDLER_H
+#ifndef TUTORIAL_ORCAS_COMBAT_SERVER_AI_VOTE_HANDLER_H
+#define TUTORIAL_ORCAS_COMBAT_SERVER_AI_VOTE_HANDLER_H
 
 #include <stdint.h>
 
@@ -19,20 +19,22 @@ namespace combat {
 namespace server {
 namespace ai {
 
-class CombatVoteHandler {
+class VoteHandler {
  public:
   typedef ::google::protobuf::Message ProtoMessage;
 
-  CombatVoteHandler();
-  ~CombatVoteHandler();
+  VoteHandler();
+  ~VoteHandler();
 
   bool Initialize();
   void Finalize();
 
  private:
-  int OnVoteCombatMoveAction(const ProtoMessage *data);
+  int OnVoteSceneMove(const ProtoMessage *data);
 
-  MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatVoteHandler);
+  uint64_t token_scene_move_;
+
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(VoteHandler);
 };
 
 }  // namespace ai
@@ -41,4 +43,4 @@ class CombatVoteHandler {
 }  // namespace orcas
 }  // namespace tutorial
 
-#endif  // TUTORIAL_ORCAS_COMBAT_SERVER_AI_COMBAT_VOTE_HANDLER_H
+#endif  // TUTORIAL_ORCAS_COMBAT_SERVER_AI_VOTE_HANDLER_H

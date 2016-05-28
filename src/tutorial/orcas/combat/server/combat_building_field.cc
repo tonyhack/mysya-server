@@ -19,6 +19,7 @@ bool CombatBuildingField::Initialize(int32_t id, CombatField *host_combat,
 
   this->fields_.set_id(id);
   this->fields_.set_conf_id(description.id());
+  this->fields_.set_type(description.type());
   this->fields_.set_host_id(this->role_argent_id_);
   this->fields_.set_camp_id(camp_id);
   this->fields_.set_hp(description.hp());

@@ -13,15 +13,21 @@ namespace ai {
 
 class AutoStatusAttack : public AutoStatus {
  public:
-  AutoStatusAttack();
+  AutoStatusAttack(Auto *host);
   virtual ~AutoStatusAttack();
 
   virtual void Start();
   virtual void Stop();
 
-  virtual void OnEvent(int type, ProtoMessage *data);
-
  private:
+  void SetAttackTimer();
+  void ResetAttackTimer();
+
+  void OnTimerAttack(int64_t timer_id);
+  void OnEventCombatDeath(const ProtoMessage *data);
+
+  int64_t timer_id_attack_;
+
   MYSYA_DISALLOW_COPY_AND_ASSIGN(AutoStatusAttack);
 }
 

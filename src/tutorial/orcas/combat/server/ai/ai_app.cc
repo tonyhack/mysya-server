@@ -22,8 +22,8 @@ AiApp::~AiApp() {}
 bool AiApp::Initialize(AppServer *hosts) {
   this->host_ = host;
 
-  if (this->combat_vote_handler_.Initialize() == false) {
-    MYSYA_ERROR("[AI] CombatVoteHandler::Initialize() failed.");
+  if (this->vote_handler_.Initialize() == false) {
+    MYSYA_ERROR("[AI] VoteHandler::Initialize() failed.");
     return false;
   }
 
@@ -31,7 +31,7 @@ bool AiApp::Initialize(AppServer *hosts) {
 }
 
 void AiApp::Finalize() {
-  this->combat_vote_handler_.Finalize();
+  this->vote_handler_.Finalize();
 
   this->host_ = NULL;
 }
@@ -44,8 +44,12 @@ EventDispatcher *AiApp::GetEventDispatcher() {
   return this->host_->GetEventDispatcher();
 }
 
-RequireDispatcher *GetRequireDispatcher() {
+RequireDispatcher *AiApp::GetRequireDispatcher() {
   return this->host_->GetRequireDispatcher();
+}
+
+VoteDispatcher *AiApp::GetVoteDispatcher() {
+  return this->host_->GetVoteDispatcher();
 }
 
 }  // namespace ai

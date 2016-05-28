@@ -19,12 +19,10 @@ class AutoStatusSearch : public AutoStatus {
   virtual void Start();
   virtual void Stop();
 
-  virtual void OnEvent(int type, ProtoMessage *data);
-
  private:
   void OnTimerSearch(int64_t timer_id);
 
-  static const int kSearchExpireMsec_ = 100;
+  static const int kSearchExpireMsec_ = 200;
 
   int64_t timer_id_search_;
 

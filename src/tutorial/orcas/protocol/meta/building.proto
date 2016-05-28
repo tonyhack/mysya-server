@@ -18,10 +18,11 @@ message BuildingDescription {
 message CombatBuildingFields {
   optional int32 id = 1;                          // id
   optional int32 conf_id = 2;                     // 配置id
-  optional uint64 host_id = 3;                    // 宿主id(战斗角色id)
-  optional int32 camp_id = 4;                     // 阵营id
-  optional int32 hp = 5;                          // 生命值
-  optional int32 max_hp = 6;                      // 最大生命值
-  optional int32 pos_x = 7;                       // 当前坐标x
-  optional int32 pos_y = 8;                       // 当前坐标y
+  optional int32 type = 3;                        // 类型
+  optional uint64 host_id = 4;                    // 宿主id(战斗角色id)
+  optional int32 camp_id = 5;                     // 阵营id
+  optional int32 hp = 6;                          // 生命值
+  optional int32 max_hp = 7;                      // 最大生命值
+  optional int32 pos_x = 8;                       // 当前坐标x
+  optional int32 pos_y = 9;                       // 当前坐标y
 }

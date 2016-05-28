@@ -11,8 +11,6 @@
 #include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
 #include "tutorial/orcas/combat/server/require/cc/require.pb.h"
 #include "tutorial/orcas/combat/server/require/cc/require_scene.pb.h"
-#include "tutorial/orcas/combat/server/vote/cc/vote.pb.h"
-#include "tutorial/orcas/combat/server/vote/cc/vote_combat.pb.h"
 
 namespace tutorial {
 namespace orcas {
@@ -194,19 +192,6 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
 }
 
 bool CombatRoleField::DoMoveAction(const ::protocol::CombatMoveAction &action) {
-  // Vote.
-  vote::VoteCombatMoveAction vote_message;
-  vote_message.set_combat_id(this->combat_field_->GetId());
-  for (int i = 0; i < action.warrior_id_size(); ++i) {
-    vote_message.set_warrior_id(action.warrior_id(i));
-    int result_code = this->app_server_->GetVoteDispatcher()->Dispatch(
-        vote::VOTE_COMBAT_MOVE_ACTION, &vote_message);
-    if (result_code < 0) {
-      MYSYA_ERROR("VOTE_COMBAT_MOVE_ACTION result_code(%d).", result_code);
-      return false;
-    }
-  }
-
   // Require.
   require::RequireSceneMove require_message;
   require_message.set_combat_id(this->combat_field_->GetId());

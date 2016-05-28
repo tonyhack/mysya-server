@@ -19,9 +19,17 @@ class AutoStatusChase : public AutoStatus {
   virtual void Start();
   virtual void Stop();
 
-  virtual void OnEvent(int type, ProtoMessage *data);
-
  private:
+  void SetRefindPathTimer();
+
+  void OnTimerRefindPath(int64_t timer_id);
+  void OnEventSceneMoveStep(const ProtoMessage *data);
+
+  static const int kRefindPathMsec_ = 600;
+
+  bool refind_path_;
+  int64_t timer_id_refind_path_;
+
   MYSYA_DISALLOW_COPY_AND_ASSIGN(AutoStatusChase);
 };
 

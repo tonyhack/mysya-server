@@ -1,6 +1,7 @@
 set(PROTO_SOURCES
     ${COMBAT_SOURCE_DIR}/server/vote/meta/vote.proto
     ${COMBAT_SOURCE_DIR}/server/vote/meta/vote_combat.proto
+    ${COMBAT_SOURCE_DIR}/server/vote/meta/vote_scene.proto
     )
 
 foreach (script ${PROTO_SOURCES})
