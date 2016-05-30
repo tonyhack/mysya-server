@@ -3,7 +3,7 @@
 
 #include <mysya/util/class_util.h>
 
-#include "tutorial/orcas/combat/server/ai/auto_state.h"
+#include "tutorial/orcas/combat/server/ai/auto_status.h"
 
 namespace tutorial {
 namespace orcas {
@@ -18,6 +18,7 @@ class AutoStatusChase : public AutoStatus {
 
   virtual void Start();
   virtual void Stop();
+  virtual type GetType() const;
 
  private:
   void SetRefindPathTimer();

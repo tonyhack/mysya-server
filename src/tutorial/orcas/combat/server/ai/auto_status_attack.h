@@ -3,7 +3,7 @@
 
 #include <mysya/util/class_util.h>
 
-#include "tutorial/orcas/combat/server/ai/auto_state.h"
+#include "tutorial/orcas/combat/server/ai/auto_status.h"
 
 namespace tutorial {
 namespace orcas {
@@ -18,6 +18,7 @@ class AutoStatusAttack : public AutoStatus {
 
   virtual void Start();
   virtual void Stop();
+  virtual type GetType() const;
 
  private:
   void SetAttackTimer();
@@ -29,7 +30,7 @@ class AutoStatusAttack : public AutoStatus {
   int64_t timer_id_attack_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(AutoStatusAttack);
-}
+};
 
 }  // namespace ai
 }  // namespace server

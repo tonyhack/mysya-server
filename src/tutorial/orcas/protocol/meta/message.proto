@@ -41,6 +41,7 @@ message MessageCombatResponse {
   optional uint64 host_id = 3;                                      // 当前角色的代理id
   optional int32 camp_id = 4;                                       // 阵营
   optional .protocol.CombatStatusImage status_image = 5;            // 状态镜像
+  repeated int32 combat_warrior_id = 6;                             // 出战斗士兵列表
 }
 
 // MESSAGE_COMBAT_BEGIN_SYNC
@@ -49,6 +50,7 @@ message MessageCombatBeginSync {
   required uint64 host_id = 2;                                      // 当前角色的代理id
   required int32 camp_id = 3;                                       // 阵营
   required .protocol.CombatStatusImage init_status_image = 4;       // 战斗初始化数据
+  repeated int32 combat_warrior_id = 5;                             // 出战斗士兵列表
 }
 
 // MESSAGE_COMBAT_ACTION_REQUEST

@@ -1,5 +1,13 @@
 #include "tutorial/orcas/combat/server/ai/auto_status_search.h"
 
+#include <functional>
+
+#include <mysya/ioevent/logger.h>
+
+#include "tutorial/orcas/combat/server/app_server.h"
+#include "tutorial/orcas/combat/server/ai/ai_app.h"
+#include "tutorial/orcas/combat/server/ai/auto.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {
@@ -13,7 +21,7 @@ AutoStatusSearch::~AutoStatusSearch() {}
 void AutoStatusSearch::Start() {
   this->timer_id_search_ =
     AiApp::GetInstance()->GetHost()->StartTimer(kSearchExpireMsec_,
-      std::bind(&AutoStatusSearch::OnTimerSearch, this, std::placehoder::_1));
+      std::bind(&AutoStatusSearch::OnTimerSearch, this, std::placeholders::_1));
 }
 
 void AutoStatusSearch::Stop() {
@@ -21,9 +29,13 @@ void AutoStatusSearch::Stop() {
   this->timer_id_search_ = -1;
 }
 
+AutoStatus::type AutoStatusSearch::GetType() const {
+  return AutoStatus::SEARCH;
+}
+
 void AutoStatusSearch::OnTimerSearch(int64_t timer_id) {
   if (this->host_->SearchTarget() == true) {
-    this->host_->GotoStatus(AutoStatus::CHASE);
+    this->GotoStatus(AutoStatus::CHASE);
   }
 }
 

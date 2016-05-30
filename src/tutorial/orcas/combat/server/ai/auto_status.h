@@ -1,8 +1,12 @@
 #ifndef TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_H
 #define TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_H
 
+#include <stdint.h>
+
 #include <map>
 #include <functional>
+
+#include <mysya/util/class_util.h>
 
 namespace google {
 namespace protobuf {
@@ -28,9 +32,9 @@ class AutoStatus {
   typedef std::map<int, uint64_t> EventTokenMap;
 
   enum type {
-    SEARCH = 1;           // 搜索目标
-    CHASE = 2;            // 追击目标
-    ATTACK = 3;           // 攻击目标
+    SEARCH = 1,           // 搜索目标
+    CHASE = 2,            // 追击目标
+    ATTACK = 3,           // 攻击目标
   };
 
   AutoStatus(Auto *host);
@@ -41,14 +45,18 @@ class AutoStatus {
 
   virtual type GetType() const = 0;
 
+  void DispatchEvent(int type, const ProtoMessage *data);
+
  protected:
+  bool GotoStatus(int status);
   void AttachEvent(int type, const EventCallback &cb);
   void DetachEvent(int type);
-  void DispatchEvent(int type, const ProtoMessage *data);
 
   Auto *host_;
   EventCallbackMap event_cbs_;
   EventTokenMap event_tokens_;
+
+  MYSYA_DISALLOW_COPY_AND_ASSIGN(AutoStatus);
 };
 
 }  // namespace ai

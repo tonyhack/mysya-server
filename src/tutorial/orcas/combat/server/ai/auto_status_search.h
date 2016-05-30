@@ -1,9 +1,9 @@
 #ifndef TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_SEARCH_H
-#define TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATE_SEARCH_H
+#define TUTORIAL_ORCAS_COMBAT_SERVER_AI_AUTO_STATUS_SEARCH_H
 
 #include <mysya/util/class_util.h>
 
-#include "tutorial/orcas/combat/server/ai/auto_state.h"
+#include "tutorial/orcas/combat/server/ai/auto_status.h"
 
 namespace tutorial {
 namespace orcas {
@@ -18,6 +18,7 @@ class AutoStatusSearch : public AutoStatus {
 
   virtual void Start();
   virtual void Stop();
+  virtual type GetType() const;
 
  private:
   void OnTimerSearch(int64_t timer_id);

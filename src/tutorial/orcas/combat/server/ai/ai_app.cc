@@ -6,6 +6,7 @@
 #include "tutorial/orcas/combat/server/configs.h"
 #include "tutorial/orcas/combat/server/event_dispatcher.h"
 #include "tutorial/orcas/combat/server/require_dispatcher.h"
+#include "tutorial/orcas/combat/server/ai/vote_handler.h"
 
 namespace tutorial {
 namespace orcas {
@@ -19,7 +20,7 @@ AiApp::AiApp()
   : host_(NULL) {}
 AiApp::~AiApp() {}
 
-bool AiApp::Initialize(AppServer *hosts) {
+bool AiApp::Initialize(AppServer *host) {
   this->host_ = host;
 
   if (this->vote_handler_.Initialize() == false) {

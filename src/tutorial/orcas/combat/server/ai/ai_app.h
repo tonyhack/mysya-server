@@ -13,12 +13,13 @@ namespace server {
 class AppServer;
 class EventDispatcher;
 class RequireDispatcher;
+class VoteDispatcher;
 
 namespace ai {
 
 class AiApp {
  public:
-  bool Initialize(AppServer *hosts);
+  bool Initialize(AppServer *host);
   void Finalize();
 
   AppServer *GetHost();

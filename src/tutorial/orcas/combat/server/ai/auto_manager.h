@@ -5,6 +5,8 @@
 
 #include <mysya/util/class_util.h>
 
+#include "tutorial/orcas/combat/pool_template.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {

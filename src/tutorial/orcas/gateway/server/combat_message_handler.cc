@@ -205,6 +205,15 @@ void CombatMessageHandler::OnMessageCombatBeginResponse(
 
     response.set_host_id(left_combat_actor->GetCombatArgentId());
     response.set_camp_id(left_combat_actor->GetCampId());
+
+    typedef CombatActor::WarriorDescriptionMap WarriorDescriptionMap;
+
+    const WarriorDescriptionMap &left_combat_warriors = left_combat_actor->GetWarriors();
+    for (WarriorDescriptionMap::const_iterator iter = left_combat_warriors.begin();
+        iter != left_combat_warriors.end(); ++iter) {
+      response.add_combat_warrior_id(iter->second.id());
+    }
+
     if (left_combat_actor->GetActor() != NULL) {
       left_combat_actor->GetActor()->SendMessage(
           ::protocol::MESSAGE_COMBAT_RESPONSE, response);
@@ -212,6 +221,14 @@ void CombatMessageHandler::OnMessageCombatBeginResponse(
 
     response.set_host_id(right_combat_actor->GetCombatArgentId());
     response.set_camp_id(right_combat_actor->GetCampId());
+
+    response.clear_combat_warrior_id();
+    const WarriorDescriptionMap &right_combat_warriors = right_combat_actor->GetWarriors();
+    for (WarriorDescriptionMap::const_iterator iter = right_combat_warriors.begin();
+        iter != right_combat_warriors.end(); ++iter) {
+      response.add_combat_warrior_id(iter->second.id());
+    }
+
     if (right_combat_actor->GetActor() != NULL) {
       right_combat_actor->GetActor()->SendMessage(
           ::protocol::MESSAGE_COMBAT_RESPONSE, response);

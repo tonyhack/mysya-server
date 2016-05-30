@@ -3,6 +3,13 @@
 #include <google/protobuf/message.h>
 #include <mysya/ioevent/logger.h>
 
+#include "tutorial/orcas/combat/server/app_server.h"
+#include "tutorial/orcas/combat/server/event_dispatcher.h"
+#include "tutorial/orcas/combat/server/ai/ai_app.h"
+#include "tutorial/orcas/combat/server/ai/event_observer.h"
+#include "tutorial/orcas/combat/server/event/cc/event.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_scene.pb.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {
@@ -17,12 +24,14 @@ SceneEventHandler::SceneEventHandler()
 SceneEventHandler::~SceneEventHandler() {}
 
 #define EVENT_DISPATCHER \
-  AI_APP()->GetHost()->GetEventDispatcher
+    AI_APP()->GetHost()->GetEventDispatcher
 
 bool SceneEventHandler::Initialize() {
   this->event_token_scene_move_step_ =
     EVENT_DISPATCHER()->Attach(event::EVENT_SCENE_MOVE_STEP, std::bind(
           &SceneEventHandler::OnEventSceneMoveStep, this, std::placeholders::_1));
+
+  return true;
 }
 
 void SceneEventHandler::Finalize() {
@@ -34,20 +43,8 @@ void SceneEventHandler::Finalize() {
 void SceneEventHandler::OnEventSceneMoveStep(const ProtoMessage *data) {
   event::EventSceneMoveStep *event = (event::EventSceneMoveStep *)data;
 
-  Auto *autoz = AutoManager::GetInstance(event->combat_id(), event->warrior_id());
-  if (autoz == NULL) {
-    MYSYA_ERROR("[AI] AutoManager::Get(%d, %d) failed.",
-        event->combat_id(), event->warrior_id());
-    return;
-  }
-
-  AutoStatus *auto_status = autoz->GetPresentStatus();
-  if (auto_status == NULL) {
-    MYSYA_ERROR("[AI] Auto::GetPresentStatus() faild.");
-    return;
-  }
-
-  auto_status->OnEvent(event::EVENT_SCENE_MOVE_STEP, data);
+  EventObserver::GetInstance()->Dispatch(event->combat_id(), event->warrior_id(),
+      event::EVENT_SCENE_MOVE_STEP, event);
 }
 
 #undef AI_APP

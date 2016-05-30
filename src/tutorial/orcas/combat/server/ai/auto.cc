@@ -1,5 +1,19 @@
 #include "tutorial/orcas/combat/server/ai/auto.h"
 
+#include <mysya/ioevent/logger.h>
+
+#include "tutorial/orcas/combat/server/combat_field.h"
+#include "tutorial/orcas/combat/server/combat_building_field.h"
+#include "tutorial/orcas/combat/server/combat_role_field.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field.h"
+#include "tutorial/orcas/combat/server/math.h"
+#include "tutorial/orcas/combat/server/require_dispatcher.h"
+#include "tutorial/orcas/combat/server/ai/ai_app.h"
+#include "tutorial/orcas/combat/server/ai/event_observer.h"
+#include "tutorial/orcas/combat/server/require/cc/require.pb.h"
+#include "tutorial/orcas/combat/server/require/cc/require_scene.pb.h"
+#include "tutorial/orcas/protocol/cc/position.pb.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {
@@ -7,7 +21,11 @@ namespace server {
 namespace ai {
 
 Auto::Auto()
-  : host_(NULL), present_status_(NULL) {}
+  : host_(NULL),
+    present_status_(NULL),
+    status_attack_(this),
+    status_chase_(this),
+    status_search_(this) {}
 Auto::~Auto() {}
 
 bool Auto::Initialize(CombatWarriorField *host) {
@@ -28,14 +46,16 @@ void Auto::Finalize() {
   this->host_ = NULL;
 }
 
-int32_t Auto::Getid() const {
+int32_t Auto::GetId() const {
   return this->host_->GetId();
 }
 
-AutoGlobalId Auto::GetGlobalId() const {
-  return AutoGlobalId(
-      this->host_->GetRoleField()->GetCombatField()->GetId(),
-      this->GetId());
+int32_t Auto::GetCombatId() const {
+  return this->host_->GetRoleField()->GetCombatField()->GetId();
+}
+
+Auto::AutoGlobalId Auto::GetGlobalId() const {
+  return AutoGlobalId(this->GetCombatId(), this->GetId());
 }
 
 CombatWarriorField *Auto::GetHost() {
@@ -45,6 +65,16 @@ CombatWarriorField *Auto::GetHost() {
 void Auto::SetTarget(::protocol::CombatEntityType type, int32_t id) {
   this->target_.set_type(type);
   this->target_.set_id(id);
+
+  EventObserver::GetInstance()->Add(this->GetCombatId(),
+      this->target_.id(), this->GetId());
+}
+
+void Auto::ResetTarget() {
+  EventObserver::GetInstance()->Remove(this->GetCombatId(),
+      this->target_.id(), this->GetId());
+
+  this->target_.set_id(0);
 }
 
 ::protocol::CombatTarget &Auto::GetTarget() {
@@ -98,14 +128,14 @@ bool Auto::GotoStatus(int status) {
   AutoStatus *goto_status = NULL;
 
   switch (status) {
-    AutoStatus::SEARCH:
-      goto_status = &this->auto_status_search_;
+    case AutoStatus::SEARCH:
+      goto_status = &this->status_search_;
       break;
-    AutoStatus::CHASE:
-      goto_status = &this->auto_status_chase_;
+    case AutoStatus::CHASE:
+      goto_status = &this->status_chase_;
       break;
-    AutoStatus::ATTACK:
-      goto_status = &this->auto_status_attack_;
+    case AutoStatus::ATTACK:
+      goto_status = &this->status_attack_;
       break;
     default:
       break;
@@ -134,25 +164,25 @@ bool Auto::MoveTarget() {
     return false;
   }
 
-  ;:protocol::Position pos;
+  ::protocol::Position pos;
   if (this->target_.type() == ::protocol::COMBAT_ENTITY_TYPE_BUILDING) {
     CombatBuildingField *combat_building_field = combat_field->GetBuilding(
         this->target_.id());
     if (combat_building_field == NULL) {
-      MYSYA_ERROR("[AI] CombatField::GetBuilding(%d) failed.", this->targe_.id());
+      MYSYA_ERROR("[AI] CombatField::GetBuilding(%d) failed.", this->target_.id());
       return false;
     }
-    pos.set_x(combat_building_.pos_x());
-    pos.set_y(combat_building_.pos_y());
+    pos.set_x(combat_building_field->GetFields().pos_x());
+    pos.set_y(combat_building_field->GetFields().pos_y());
   } else if (this->target_.type() == ::protocol::COMBAT_ENTITY_TYPE_WARRIOR) {
     CombatWarriorField *combat_warrior_field = combat_field->GetWarrior(
         this->target_.id());
     if (combat_warrior_field == NULL) {
-      MYSYA_ERROR("[AI] CombatField::GetWarrior(%d) failed.", this->targe_.id());
+      MYSYA_ERROR("[AI] CombatField::GetWarrior(%d) failed.", this->target_.id());
       return false;
     }
-    pos.set_x(combat_building_.origin_pos_x());
-    pos.set_y(combat_building_.origin_pos_y());
+    pos.set_x(combat_warrior_field->GetFields().origin_pos_x());
+    pos.set_y(combat_warrior_field->GetFields().origin_pos_y());
   } else {
     MYSYA_ERROR("[AI] CombatWarriorField::target_.type(%d) error.",
         this->target_.type());
@@ -160,9 +190,9 @@ bool Auto::MoveTarget() {
   }
 
   require::RequireSceneMove require_message;
-  require_message.set_combat_id(combat_field->Getid());
-  require_message.set_warrior_id(this->host->GetId());
-  require_message.set_dest_pos(pos);
+  require_message.set_combat_id(combat_field->GetId());
+  require_message.set_warrior_id(this->host_->GetId());
+  *require_message.mutable_dest_pos() = pos;
   if (AiApp::GetInstance()->GetRequireDispatcher()->Dispatch(
         require::REQUIRE_SCENE_MOVE, &require_message) < 0) {
     MYSYA_ERROR("[AI] REQUIRE_SCENE_MOVE failed.");
@@ -196,8 +226,8 @@ bool Auto::SearchTarget() {
   require::RequireSceneFetch require_message;
   require_message.set_combat_id(combat_field->GetId());
   require_message.set_except_camp_id(this->host_->GetFields().camp_id());
-  require_message.set_x(this->host_->GetFields().origin_pos_x());
-  require_message.set_y(this->host_->GetFields().origin_pos_y());
+  require_message.mutable_pos()->set_x(this->host_->GetFields().origin_pos_x());
+  require_message.mutable_pos()->set_y(this->host_->GetFields().origin_pos_y());
   // TODO: search range
   require_message.set_range(warrior_description->attack_range());
   if (AiApp::GetInstance()->GetRequireDispatcher()->Dispatch(
@@ -214,22 +244,27 @@ bool Auto::SearchTarget() {
       continue;
     }
 
-    this->SetTarget(::protocol::COMBAT_ENTITY_BUILDING, building_id);
+    this->SetTarget(::protocol::COMBAT_ENTITY_TYPE_BUILDING, building_id);
     return true;
   }
 
   for (int i = 0; i < require_message.warrior_size(); ++i) {
     int32_t warrior_id = require_message.warrior(i);
-    CombatWarriorField *combat_warrior_field = combat_field-.GetWarrior(
+    CombatWarriorField *combat_warrior_field = combat_field->GetWarrior(
         warrior_id);
     if (combat_warrior_field == NULL) {
       continue;
     }
 
-    this->SetTarget(::protocol::COMBAT_ACTION_TYPE_WARRIOR, warrior_id);
+    this->SetTarget(::protocol::COMBAT_ENTITY_TYPE_WARRIOR, warrior_id);
     return true;
   }
 
+  return false;
+}
+
+bool Auto::AttackTarget() {
+  // TODO:
   return false;
 }
 

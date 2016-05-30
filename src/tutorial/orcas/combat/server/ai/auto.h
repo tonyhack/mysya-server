@@ -7,15 +7,18 @@
 #include "tutorial/orcas/combat/server/ai/auto_status_attack.h"
 #include "tutorial/orcas/combat/server/ai/auto_status_chase.h"
 #include "tutorial/orcas/combat/server/ai/auto_status_search.h"
+#include "tutorial/orcas/protocol/cc/combat.pb.h"
 
 namespace tutorial {
 namespace orcas {
 namespace combat {
 namespace server {
+
+class CombatWarriorField;
+
 namespace ai {
 
 class AutoStatus;
-class CombatWarriorField;
 
 class Auto {
  public:
@@ -27,16 +30,18 @@ class Auto {
   bool Initialize(CombatWarriorField *host);
   void Finalize();
 
-  int32_t Getid() const;
+  int32_t GetId() const;
+  int32_t GetCombatId() const;
   AutoGlobalId GetGlobalId() const;
   CombatWarriorField *GetHost();
 
   void SetTarget(::protocol::CombatEntityType type, int32_t id);
+  void ResetTarget();
   ::protocol::CombatTarget &GetTarget();
   int GetTargetDistance() const;
 
   AutoStatus *GetPresentStatus();
-  void GotoStatus(int status);
+  bool GotoStatus(int status);
 
   bool MoveTarget();
   bool SearchTarget();

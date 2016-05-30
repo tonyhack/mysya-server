@@ -9,17 +9,19 @@ namespace combat {
 namespace server {
 namespace ai {
 
+MYSYA_SINGLETON_IMPL(AutoManager);
+
 AutoManager::AutoManager()
   : pool_(Configs::GetInstance()->combat_warrior_initial_size_,
       Configs::GetInstance()->combat_warrior_extend_size_) {}
 AutoManager::~AutoManager() {}
 
 Auto *AutoManager::Allocate() {
-  return this->pool_->Allocate();
+  return this->pool_.Allocate();
 }
 
 void AutoManager::Deallocate(Auto *autoz) {
-  this->pool_->Deallocate(autoz);
+  this->pool_.Deallocate(autoz);
 }
 
 bool AutoManager::Add(Auto *autoz) {

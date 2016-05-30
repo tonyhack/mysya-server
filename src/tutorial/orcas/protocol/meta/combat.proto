@@ -8,7 +8,7 @@ package protocol;
 // 战斗实体类型
 enum CombatEntityType {
   COMBAT_ENTITY_TYPE_BUILDING = 1;
-  COMBAT_ACTION_TYPE_WARRIOR = 2;
+  COMBAT_ENTITY_TYPE_WARRIOR = 2;
 }
 
 // 战斗目标

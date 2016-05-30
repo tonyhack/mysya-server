@@ -1,5 +1,8 @@
 #include "tutorial/orcas/combat/server/math.h"
 
+#include <math.h>
+#include <stdlib.h>
+
 namespace tutorial {
 namespace orcas {
 namespace combat {

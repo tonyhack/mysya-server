@@ -1,5 +1,7 @@
 #include "tutorial/orcas/combat/server/ai/auto_status.h"
 
+#include "tutorial/orcas/combat/server/ai/auto.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {
@@ -13,11 +15,15 @@ AutoStatus::~AutoStatus() {}
 void AutoStatus::Start() {}
 void AutoStatus::Stop() {}
 
-void AttachEvent::AttachEvent(int type, const EventCallback &cb) {
+bool AutoStatus::GotoStatus(int status) {
+  return this->host_->GotoStatus(status);
+}
+
+void AutoStatus::AttachEvent(int type, const EventCallback &cb) {
   this->event_cbs_[type] = cb;
 }
 
-void AttachEvent::DetachEvent(int type) {
+void AutoStatus::DetachEvent(int type) {
   this->event_cbs_.erase(type);
 }
 

@@ -1,7 +1,20 @@
 #include "tutorial/orcas/combat/server/ai/combat_event_handler.h"
 
+#include <functional>
+
 #include <google/protobuf/message.h>
 #include <mysya/ioevent/logger.h>
+
+#include "tutorial/orcas/combat/server/app_server.h"
+#include "tutorial/orcas/combat/server/combat_field.h"
+#include "tutorial/orcas/combat/server/combat_field_manager.h"
+#include "tutorial/orcas/combat/server/event_dispatcher.h"
+#include "tutorial/orcas/combat/server/ai/ai_app.h"
+#include "tutorial/orcas/combat/server/ai/auto.h"
+#include "tutorial/orcas/combat/server/ai/auto_manager.h"
+#include "tutorial/orcas/combat/server/ai/event_observer.h"
+#include "tutorial/orcas/combat/server/event/cc/event.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
 
 namespace tutorial {
 namespace orcas {
@@ -14,25 +27,30 @@ namespace ai {
 
 CombatEventHandler::CombatEventHandler()
   : event_token_build_action_(0),
-    event_token_move_action_(0) {}
+    event_token_death_(0) {}
 CombatEventHandler::~CombatEventHandler() {}
+
+#define EVENT_DISPATCHER \
+    AI_APP()->GetHost()->GetEventDispatcher
 
 bool CombatEventHandler::Initialize() {
   this->event_token_build_action_ =
-    AI_APP()->GetEventDispatcher()->Attach(event::EVENT_COMBAT_BUILD_ACTION,
-        std::bind(&CombatEventHandler::OnEventCombatBuildAction, this, std::placeholders::_1));
-  this->event_token_build_action_ =
-    AI_APP()->GetEventDispatcher()->Attach(event::EVENT_COMBAT_BUILD_ACTION,
-        std::bind(&CombatEventHandler::OnEventCombatMoveAction, this, std::placeholders::_1));
+    EVENT_DISPATCHER()->Attach(event::EVENT_COMBAT_BUILD_ACTION, std::bind(
+          &CombatEventHandler::OnEventCombatBuildAction, this, std::placeholders::_1));
+  this->event_token_death_ =
+    EVENT_DISPATCHER()->Attach(event::EVENT_COMBAT_DEATH, std::bind(
+          &CombatEventHandler::OnEventCombatDeath, this, std::placeholders::_1));
 
   return true;
 
 }
 
 void CombatEventHandler::Finalize() {
-  AI_APP()->GetEventDispatcher()->Detach(this->event_token_build_action_);
-  AI_APP()->GetEventDispatcher()->Detach(this->event_token_move_action_);
+  EVENT_DISPATCHER()->Detach(this->event_token_build_action_);
+  EVENT_DISPATCHER()->Detach(this->event_token_death_);
 }
+
+#undef EVENT_DISPATCHER
 
 void CombatEventHandler::OnEventCombatBuildAction(const ProtoMessage *data) {
   const event::EventCombatBuildAction *event = (const event::EventCombatBuildAction *)data;
@@ -71,7 +89,11 @@ void CombatEventHandler::OnEventCombatBuildAction(const ProtoMessage *data) {
   }
 }
 
-void CombatEventHandler::OnEventCombatMoveAction(const ProtoMessage *data) {
+void CombatEventHandler::OnEventCombatDeath(const ProtoMessage *data) {
+  const event::EventCombatDeath *event = (const event::EventCombatDeath *)data;
+
+  EventObserver::GetInstance()->Dispatch(event->combat_id(), event->target().id(),
+      event::EVENT_COMBAT_DEATH, event);
 }
 
 #undef AI_APP

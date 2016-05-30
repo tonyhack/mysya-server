@@ -1,5 +1,19 @@
 #include "tutorial/orcas/combat/server/ai/auto_status_chase.h"
 
+#include <functional>
+
+#include <mysya/ioevent/logger.h>
+
+#include "tutorial/orcas/combat/server/app_server.h"
+#include "tutorial/orcas/combat/server/combat_field.h"
+#include "tutorial/orcas/combat/server/combat_role_field.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field.h"
+#include "tutorial/orcas/combat/server/ai/ai_app.h"
+#include "tutorial/orcas/combat/server/ai/auto.h"
+#include "tutorial/orcas/combat/server/event/cc/event.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_scene.pb.h"
+#include "tutorial/orcas/protocol/cc/combat.pb.h"
+
 namespace tutorial {
 namespace orcas {
 namespace combat {
@@ -10,16 +24,16 @@ AutoStatusChase::AutoStatusChase(Auto *host)
   : AutoStatus(host), refind_path_(false),
     timer_id_refind_path_(-1) {
   this->AttachEvent(event::EVENT_SCENE_MOVE_STEP, std::bind(
-        &AutoStatusChase::OnEventSceneMoveStep, this, std::placehoder::_1));
+        &AutoStatusChase::OnEventSceneMoveStep, this, std::placeholders::_1));
 }
 
 AutoStatusChase::~AutoStatusChase() {
-  this->AttachEvent(event::EVENT_SCENE_MOVE_STEP);
+  this->DetachEvent(event::EVENT_SCENE_MOVE_STEP);
 }
 
 void AutoStatusChase::Start() {
-  if (this->MoveTarget() == false) {
-    this->host_->GotoStatus(AutoStatus::SEARCH);
+  if (this->host_->MoveTarget() == false) {
+    this->GotoStatus(AutoStatus::SEARCH);
     return;
   }
 }
@@ -32,10 +46,14 @@ void AutoStatusChase::Stop() {
   }
 }
 
+AutoStatus::type AutoStatusChase::GetType() const {
+  return AutoStatus::CHASE;
+}
+
 void AutoStatusChase::SetRefindPathTimer() {
   this->timer_id_refind_path_ = AiApp::GetInstance()->GetHost()->StartTimer(
       AutoStatusChase::kRefindPathMsec_, std::bind(&AutoStatusChase::OnTimerRefindPath,
-        std::placehoder::_1), 1);
+        this, std::placeholders::_1), 1);
   this->refind_path_ = true;
 }
 
@@ -60,7 +78,7 @@ void AutoStatusChase::OnEventSceneMoveStep(const ProtoMessage *data) {
 
     // the moving warrior is myself.
     if (this->host_->GetId() == event->warrior_id()) {
-      ::protocol::WarriorDescription *warrior_description =
+      const ::protocol::WarriorDescription *warrior_description =
         this->host_->GetHost()->GetDescription();
       if (warrior_description == NULL) {
         MYSYA_ERROR("[AI] CombatWarriorField::GetDescription() failed.");
