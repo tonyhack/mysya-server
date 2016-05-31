@@ -47,11 +47,12 @@ int VoteHandler::OnVoteSceneMove(const ProtoMessage *data) {
   Auto *autoz = AutoManager::GetInstance()->Get(vote->combat_id(),
       vote->warrior_id());
   if (autoz == NULL) {
-    MYSYA_ERROR("AutoManager::Get(%d) failed.", vote->combat_id());
+    MYSYA_ERROR("AutoManager::Get(%d, %d) failed.",
+        vote->combat_id(), vote->warrior_id());
     return vote::VoteSceneMove::UNKOWN;
   }
 
-  if (autoz->GetPresentStatus()->GetType() != AutoStatus::type::SEARCH) {
+  if (autoz->GetPresentStatus()->GetType() == AutoStatus::type::ATTACK) {
     return vote::VoteSceneMove::INCORRECT_STATUS;
   }
 

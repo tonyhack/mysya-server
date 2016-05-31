@@ -11,6 +11,7 @@
 #include "tutorial/orcas/combat/server/ai/ai_app.h"
 #include "tutorial/orcas/combat/server/ai/event_observer.h"
 #include "tutorial/orcas/combat/server/require/cc/require.pb.h"
+#include "tutorial/orcas/combat/server/require/cc/require_formula.pb.h"
 #include "tutorial/orcas/combat/server/require/cc/require_scene.pb.h"
 #include "tutorial/orcas/protocol/cc/position.pb.h"
 
@@ -51,7 +52,7 @@ int32_t Auto::GetId() const {
 }
 
 int32_t Auto::GetCombatId() const {
-  return this->host_->GetRoleField()->GetCombatField()->GetId();
+  return this->host_->GetCombatField()->GetId();
 }
 
 Auto::AutoGlobalId Auto::GetGlobalId() const {
@@ -146,7 +147,14 @@ bool Auto::GotoStatus(int status) {
     return false;
   }
 
-  this->present_status_->Stop();
+  if (this->present_status_ != NULL) {
+    MYSYA_DEBUG("[AI] Auto(%d,%d) status(%d->%d).", this->GetId(),
+        this->GetCombatId(), this->present_status_->GetType(),
+        goto_status->GetType());
+
+    this->present_status_->Stop();
+  }
+
   this->present_status_ = goto_status;
   this->present_status_->Start();
 
@@ -154,6 +162,8 @@ bool Auto::GotoStatus(int status) {
 }
 
 bool Auto::MoveTarget() {
+  MYSYA_DEBUG("[AI] Auto(%d,%d) Move taget.", this->GetId(), this->GetCombatId());
+
   if (this->target_.id() == 0) {
     return false;
   }
@@ -203,6 +213,8 @@ bool Auto::MoveTarget() {
 }
 
 bool Auto::SearchTarget() {
+  // MYSYA_DEBUG("[AI] do search target.");
+
   CombatRoleField *combat_role_field = this->host_->GetRoleField();
   if (combat_role_field == NULL) {
     MYSYA_ERROR("[AI] CombatWarriorField::GetRoleField() failed.");
@@ -264,8 +276,31 @@ bool Auto::SearchTarget() {
 }
 
 bool Auto::AttackTarget() {
-  // TODO:
-  return false;
+  MYSYA_DEBUG("[AI] do attack target.");
+
+  CombatRoleField *combat_role_field = this->host_->GetRoleField();
+  if (combat_role_field == NULL) {
+    MYSYA_ERROR("[AI] CombatWarriorField::GetRoleField() failed.");
+    return false;
+  }
+
+  CombatField *combat_field = combat_role_field->GetCombatField();
+  if (combat_field == NULL) {
+    MYSYA_ERROR("[AI] CombatRoleField::GetCombatField() failed.");
+    return false;
+  }
+
+  require::RequireFormulaAttack require_message;
+  require_message.set_combat_id(combat_field->GetId());
+  require_message.set_warrior_id(this->GetId());
+  *require_message.mutable_target() = this->GetTarget();
+  if (AiApp::GetInstance()->GetRequireDispatcher()->Dispatch(
+        require::REQUIRE_FORMULA_ATTACK, &require_message) < 0) {
+    MYSYA_ERROR("[AI] REQUIRE_FORMULA_ATTACK failed.");
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace ai

@@ -72,6 +72,10 @@ const ::protocol::CombatWarriorFields &CombatWarriorField::GetFields() const {
   return this->fields_;
 }
 
+CombatField *CombatWarriorField::GetCombatField() {
+  return this->host_->GetCombatField();
+}
+
 CombatRoleField *CombatWarriorField::GetRoleField() {
   return this->host_;
 }

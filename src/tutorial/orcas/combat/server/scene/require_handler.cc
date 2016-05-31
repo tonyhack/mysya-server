@@ -133,7 +133,7 @@ int RequireHandler::OnRequireSceneMove(ProtoMessage *data) {
   int result_code = SCENE_APP()->GetHost()->GetVoteDispatcher()->Dispatch(
       vote::VOTE_SCENE_MOVE, &vote_message);
   if (result_code < 0) {
-    MYSYA_ERROR("VOTE_SCENE_MOVE_ACTION result_code(%d).", result_code);
+    MYSYA_ERROR("VOTE_SCENE_MOVE result_code(%d).", result_code);
     return result_code;
   }
 

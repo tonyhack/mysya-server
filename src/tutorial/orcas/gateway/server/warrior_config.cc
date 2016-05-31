@@ -68,7 +68,7 @@ bool WarriorConfig::Load(const std::string &file) {
       } else if (attr_name_str == "armor") {
         conf.defence_ = atoi(attr);
       } else if (attr_name_str == "atk_speed") {
-        conf.move_speed_ = atoi(attr);
+        conf.attack_speed_ = atoi(attr);
       } else if (attr_name_str == "atk_range") {
         conf.attack_range_ = atoi(attr);
       } else if (attr_name_str == "move_speed") {

@@ -11,6 +11,7 @@ namespace combat {
 namespace server {
 
 class AppServer;
+class CombatField;
 class CombatRoleField;
 
 class CombatWarriorField {
@@ -24,6 +25,7 @@ class CombatWarriorField {
 
   int32_t GetId() const;
 
+  CombatField *GetCombatField();
   CombatRoleField *GetRoleField();
   ::protocol::CombatWarriorFields &GetFields();
   const ::protocol::CombatWarriorFields &GetFields() const;

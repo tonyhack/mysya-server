@@ -1,0 +1,10 @@
+import "combat.proto";
+
+package tutorial.orcas.combat.server.require;
+
+// REQUIRE_FORMULA_ATTACK
+message RequireFormulaAttack {
+  required int32 combat_id = 1;                                   // 战斗id         [IN]
+  required int32 warrior_id = 2;                                  // 士兵id         [IN]
+  required .protocol.CombatTarget target = 3;                     // 目标           [OUT]
+};

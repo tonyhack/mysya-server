@@ -31,13 +31,17 @@ class CombatEventHandler {
   void ResetHandlers();
 
  private:
-  void EventCombatBuildAction(const ProtoMessage *data);
-  void EventCombatMoveAction(const ProtoMessage *data);
+  void OnEventCombatBuildAction(const ProtoMessage *data);
+  void OnEventCombatMoveAction(const ProtoMessage *data);
+  void OnEventCombatDeath(const ProtoMessage *data);
+  void OnEventCombatLockTarget(const ProtoMessage *data);
 
   AppServer *host_;
 
   uint64_t event_token_build_action_;
   uint64_t event_token_move_action_;
+  uint64_t event_token_death_;
+  uint64_t event_token_lock_target_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatEventHandler);
 };

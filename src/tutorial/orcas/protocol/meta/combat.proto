@@ -46,13 +46,13 @@ message CombatMoveAction {
 // COMBAT_ACTION_TYPE_LOCK_TARGET
 message CombatLockTargetAction {
   required int32 warrior_id = 1;                          // 士兵id
-  required int32 target_id = 2;                           // 目标id
+  required .protocol.CombatTarget target = 2;             // 目标
 }
 
 // 死亡指令
 // COMBAT_ACTION_TYPE_DEATH
 message CombatDeathAction {
-  required int32 warrior_id = 1;                          // 士兵id
+  required .protocol.CombatTarget target = 1;             // 目标
 }
 
 // 转换阵营指令

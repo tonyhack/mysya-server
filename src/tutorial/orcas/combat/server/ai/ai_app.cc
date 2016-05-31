@@ -3,7 +3,6 @@
 #include <mysya/ioevent/logger.h>
 
 #include "tutorial/orcas/combat/server/app_server.h"
-#include "tutorial/orcas/combat/server/configs.h"
 #include "tutorial/orcas/combat/server/event_dispatcher.h"
 #include "tutorial/orcas/combat/server/require_dispatcher.h"
 #include "tutorial/orcas/combat/server/ai/vote_handler.h"
@@ -23,6 +22,16 @@ AiApp::~AiApp() {}
 bool AiApp::Initialize(AppServer *host) {
   this->host_ = host;
 
+  if (this->combat_event_handler_.Initialize() == false) {
+    MYSYA_ERROR("[AI] CombatEventHandler::Initialize failed.");
+    return false;
+  }
+
+  if (this->scene_event_handler_.Initialize() == false) {
+    MYSYA_ERROR("[AI] SceneEventHandler::Initialize failed.");
+    return false;
+  }
+
   if (this->vote_handler_.Initialize() == false) {
     MYSYA_ERROR("[AI] VoteHandler::Initialize() failed.");
     return false;
@@ -32,6 +41,8 @@ bool AiApp::Initialize(AppServer *host) {
 }
 
 void AiApp::Finalize() {
+  this->combat_event_handler_.Finalize();
+  this->scene_event_handler_.Finalize();
   this->vote_handler_.Finalize();
 
   this->host_ = NULL;

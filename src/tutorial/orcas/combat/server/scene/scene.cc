@@ -369,7 +369,7 @@ bool Scene::GetNeighbors(const Position &pos, int32_t range,
   buildings.clear();
   warriors.clear();
 
-  for (int i = 0; i < range; ++i) {
+  for (int i = 0; i <= range; ++i) {
     int start_x = std::max(pos.x() - i, 0);
     int end_x = std::min(pos.x() + i, this->width_ - i);
     int start_y = std::max(pos.y() - i, 0);

@@ -23,6 +23,7 @@ set(EVENT_SOURCES
 
 set(REQUIRE_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require/cc/require.pb.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require/cc/require_formula.pb.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require/cc/require_scene.pb.cc
     )
 
@@ -38,6 +39,11 @@ set(COMBAT_SERVER_AI_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/event_observer.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/scene_event_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/vote_handler.cc
+    )
+
+set(COMBAT_SERVER_FORMULA_SOURCES
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/formula/formula_app.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/formula/require_handler.cc
     )
 
 set(COMBAT_SERVER_SCENE_SOURCES
@@ -82,10 +88,11 @@ set(COMBAT_SERVER_MAIN_SOURCES
 
 set(COMBAT_SERVER_APPS_SOURCES
     ${COMBAT_SERVER_AI_SOURCES}
+    ${COMBAT_SERVER_FORMULA_SOURCES}
     ${COMBAT_SERVER_SCENE_SOURCES}
     )
 
-add_subdirectory(scene/test)
+# add_subdirectory(scene/test)
 
 add_executable(combat_server ${UTIL_SOURCES} ${COMBAT_SOURCES} ${ORCAS_PROTOCOL_SOURCES}
     ${COMBAT_PROTOCOL_SOURCES} ${VOTE_SOURCES} ${EVENT_SOURCES} ${REQUIRE_SOURCES}

@@ -5,6 +5,7 @@
 #include <mysya/ioevent/logger.h>
 
 #include "tutorial/orcas/combat/server/app_server.h"
+#include "tutorial/orcas/combat/server/combat_field.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/ai/ai_app.h"
 #include "tutorial/orcas/combat/server/ai/auto.h"
@@ -30,6 +31,14 @@ AutoStatusAttack::~AutoStatusAttack() {
 
 void AutoStatusAttack::Start() {
   this->SetAttackTimer();
+
+  // TODO: break move.
+
+  event::EventCombatLockTarget event;
+  event.set_combat_id(this->host_->GetHost()->GetCombatField()->GetId());
+  event.set_warrior_id(this->host_->GetId());
+  *event.mutable_target() = this->host_->GetTarget();
+  AiApp::GetInstance()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_LOCK_TARGET, &event);
 
   if (this->host_->AttackTarget() == false) {
     MYSYA_ERROR("[AI] Auto::AttackTarget() failed.");

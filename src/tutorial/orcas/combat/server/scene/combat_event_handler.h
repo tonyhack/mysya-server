@@ -31,8 +31,12 @@ class CombatEventHandler {
 
  private:
   void OnEventCombatBegin(const ProtoMessage *data);
+  void OnEventCombatDeath(const ProtoMessage *data);
+  void OnEventCombatLockTarget(const ProtoMessage *data);
 
   uint64_t event_token_begin_;
+  uint64_t event_token_death_;
+  uint64_t event_token_lock_target_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatEventHandler);
 };

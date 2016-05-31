@@ -28,7 +28,9 @@ MoveAction::~MoveAction() {
 
 void MoveAction::SetHost(Warrior *warrior) {
   this->host_ = warrior;
-  this->move_ms_ = warrior->GetMoveSpeed();
+  if (this->host_ != NULL) {
+    this->move_ms_ = warrior->GetMoveSpeed();
+  }
 }
 
 void MoveAction::Start(const ::protocol::Position &dest_pos) {
