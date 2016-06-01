@@ -23,11 +23,19 @@ message EventCombatBuildAction {
 message EventCombatLockTarget {
   required int32 combat_id = 1;                               // 战斗id
   required int32 warrior_id = 2;                              // 士兵id
-  required .protocol.CombatTarget target = 3;                 // 目标
+  required .protocol.CombatEntity target = 3;                 // 目标
 }
 
 // EVENT_COMBAT_DEATH
 message EventCombatDeath {
   required int32 combat_id = 1;                               // 战斗id
-  required .protocol.CombatTarget target = 2;                 // 目标
+  required .protocol.CombatEntity target = 2;                 // 目标
+  required int32 opponent_warrior_id = 3;                     // 士兵id
+}
+
+// EVENT_COMBAT_CONVERT_CAMP
+message EventCombatConvertCamp {
+  required int32 combat_id = 1;                               // 战斗id
+  required .protocol.CombatEntity host = 2;                   // 主体
+  required int32 camp_id = 3;                                 // 当前阵营id
 }

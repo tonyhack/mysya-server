@@ -25,8 +25,10 @@ void AutoStatusSearch::Start() {
 }
 
 void AutoStatusSearch::Stop() {
-  AiApp::GetInstance()->GetHost()->StopTimer(this->timer_id_search_);
-  this->timer_id_search_ = -1;
+  if (this->timer_id_search_ != -1) {
+    AiApp::GetInstance()->GetHost()->StopTimer(this->timer_id_search_);
+    this->timer_id_search_ = -1;
+  }
 }
 
 AutoStatus::type AutoStatusSearch::GetType() const {

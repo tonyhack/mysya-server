@@ -37,7 +37,7 @@ class Auto {
 
   void SetTarget(::protocol::CombatEntityType type, int32_t id);
   void ResetTarget();
-  ::protocol::CombatTarget &GetTarget();
+  ::protocol::CombatEntity &GetTarget();
   int GetTargetDistance() const;
 
   AutoStatus *GetPresentStatus();
@@ -49,7 +49,7 @@ class Auto {
 
  private:
   CombatWarriorField *host_;
-  ::protocol::CombatTarget target_;
+  ::protocol::CombatEntity target_;
 
   AutoStatus *present_status_;
   AutoStatusAttack status_attack_;

@@ -43,7 +43,7 @@ void Auto::Finalize() {
   this->present_status_->Stop();
   this->present_status_ = NULL;
 
-  this->target_.Clear();
+  this->ResetTarget();
   this->host_ = NULL;
 }
 
@@ -72,13 +72,14 @@ void Auto::SetTarget(::protocol::CombatEntityType type, int32_t id) {
 }
 
 void Auto::ResetTarget() {
-  EventObserver::GetInstance()->Remove(this->GetCombatId(),
-      this->target_.id(), this->GetId());
-
-  this->target_.set_id(0);
+  if (this->target_.id() != 0) {
+    EventObserver::GetInstance()->Remove(this->GetCombatId(),
+        this->target_.id(), this->GetId());
+    this->target_.set_id(0);
+  }
 }
 
-::protocol::CombatTarget &Auto::GetTarget() {
+::protocol::CombatEntity &Auto::GetTarget() {
   return this->target_;
 }
 
@@ -213,8 +214,6 @@ bool Auto::MoveTarget() {
 }
 
 bool Auto::SearchTarget() {
-  // MYSYA_DEBUG("[AI] do search target.");
-
   CombatRoleField *combat_role_field = this->host_->GetRoleField();
   if (combat_role_field == NULL) {
     MYSYA_ERROR("[AI] CombatWarriorField::GetRoleField() failed.");

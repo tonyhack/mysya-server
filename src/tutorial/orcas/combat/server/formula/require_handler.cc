@@ -46,11 +46,21 @@ void RequireHandler::Finalize() {
 #undef REQUIRE_DISPATCHER
 
 void RequireHandler::SendEventCombatDeath(int32_t combat_id,
-    const ::protocol::CombatTarget &target) {
+    int32_t opponent_warrior_id, const ::protocol::CombatEntity &target) {
   event::EventCombatDeath event;
   event.set_combat_id(combat_id);
   *event.mutable_target() = target;
+  event.set_opponent_warrior_id(opponent_warrior_id);
   FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_DEATH, &event);
+}
+
+void RequireHandler::SendEventCombatConvertCamp(int32_t combat_id,
+    int32_t camp_id, const ::protocol::CombatEntity &host) {
+    event::EventCombatConvertCamp event;
+    event.set_combat_id(combat_id);
+    *event.mutable_host() = host;
+    event.set_camp_id(camp_id);
+    FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_CONVERT_CAMP, &event);
 }
 
 int RequireHandler::FormulaDamage(CombatWarriorField *active,
@@ -122,7 +132,8 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
     this->FormulaDamage(combat_warrior_field, target_combat_warrior_field);
 
     if (target_combat_warrior_field->GetFields().hp() <= 0) {
-      this->SendEventCombatDeath(message->combat_id(), message->target());
+      this->SendEventCombatDeath(message->combat_id(), message->warrior_id(),
+          message->target());
     }
 
     return 0;
@@ -138,7 +149,12 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
     this->FormulaDamage(combat_warrior_field, target_combat_building_field);
 
     if (target_combat_building_field->GetFields().hp() <= 0) {
-      this->SendEventCombatDeath(message->combat_id(), message->target());
+      // convert building's camp_id.
+      target_combat_building_field->GetFields().set_camp_id(
+          combat_warrior_field->GetFields().camp_id());
+      // send event.
+      this->SendEventCombatConvertCamp(message->combat_id(),
+          target_combat_building_field->GetFields().camp_id(), message->target());
     }
 
     return 0;

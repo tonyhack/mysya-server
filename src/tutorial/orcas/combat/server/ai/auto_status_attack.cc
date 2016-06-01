@@ -91,7 +91,7 @@ void AutoStatusAttack::OnTimerAttack(int64_t timer_id) {
 void AutoStatusAttack::OnEventCombatDeath(const ProtoMessage *data) {
   event::EventCombatDeath *event = (event::EventCombatDeath *)data;
 
-  const ::protocol::CombatTarget &target = this->host_->GetTarget();
+  const ::protocol::CombatEntity &target = this->host_->GetTarget();
   if (target.id() != event->target().id() || target.type() != event->target().type()) {
     return;
   }

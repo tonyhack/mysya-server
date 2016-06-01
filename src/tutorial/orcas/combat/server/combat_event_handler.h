@@ -35,6 +35,7 @@ class CombatEventHandler {
   void OnEventCombatMoveAction(const ProtoMessage *data);
   void OnEventCombatDeath(const ProtoMessage *data);
   void OnEventCombatLockTarget(const ProtoMessage *data);
+  void OnEventCombatConvertCamp(const ProtoMessage *data);
 
   AppServer *host_;
 
@@ -42,6 +43,7 @@ class CombatEventHandler {
   uint64_t event_token_move_action_;
   uint64_t event_token_death_;
   uint64_t event_token_lock_target_;
+  uint64_t event_token_convert_camp_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(CombatEventHandler);
 };

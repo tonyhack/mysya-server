@@ -11,6 +11,7 @@
 #include "tutorial/orcas/combat/server/ai/ai_app.h"
 #include "tutorial/orcas/combat/server/ai/auto.h"
 #include "tutorial/orcas/combat/server/event/cc/event.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
 #include "tutorial/orcas/combat/server/event/cc/event_scene.pb.h"
 #include "tutorial/orcas/protocol/cc/combat.pb.h"
 
@@ -25,10 +26,16 @@ AutoStatusChase::AutoStatusChase(Auto *host)
     timer_id_refind_path_(-1) {
   this->AttachEvent(event::EVENT_SCENE_MOVE_STEP, std::bind(
         &AutoStatusChase::OnEventSceneMoveStep, this, std::placeholders::_1));
+  this->AttachEvent(event::EVENT_COMBAT_DEATH, std::bind(
+        &AutoStatusChase::OnEventCombatDeath, this, std::placeholders::_1));
+  this->AttachEvent(event::EVENT_COMBAT_CONVERT_CAMP, std::bind(
+        &AutoStatusChase::OnEventCombatConvertCamp, this, std::placeholders::_1));
 }
 
 AutoStatusChase::~AutoStatusChase() {
   this->DetachEvent(event::EVENT_SCENE_MOVE_STEP);
+  this->DetachEvent(event::EVENT_COMBAT_DEATH);
+  this->DetachEvent(event::EVENT_COMBAT_CONVERT_CAMP);
 }
 
 void AutoStatusChase::Start() {
@@ -58,6 +65,7 @@ void AutoStatusChase::SetRefindPathTimer() {
 }
 
 void AutoStatusChase::OnTimerRefindPath(int64_t timer_id) {
+  this->timer_id_refind_path_ = -1;
   this->refind_path_ = false;
   if (this->host_->MoveTarget() == false) {
     this->SetRefindPathTimer();
@@ -67,8 +75,9 @@ void AutoStatusChase::OnTimerRefindPath(int64_t timer_id) {
 void AutoStatusChase::OnEventSceneMoveStep(const ProtoMessage *data) {
   event::EventSceneMoveStep *event = (event::EventSceneMoveStep *)data;
 
-  const ::protocol::CombatTarget &target = this->host_->GetTarget();
-  if (this->host_->GetId() != event->warrior_id() && target.id() != event->warrior_id()) {
+  const ::protocol::CombatEntity &target = this->host_->GetTarget();
+  if (this->host_->GetId() != event->warrior_id() &&
+      target.id() != event->warrior_id()) {
     return;
   }
 
@@ -94,6 +103,28 @@ void AutoStatusChase::OnEventSceneMoveStep(const ProtoMessage *data) {
   if (this->refind_path_ == false) {
     this->SetRefindPathTimer();
   }
+}
+
+void AutoStatusChase::OnEventCombatDeath(const ProtoMessage *data) {
+  const event::EventCombatDeath *event = (const event::EventCombatDeath *)data;
+
+  const ::protocol::CombatEntity &target = this->host_->GetTarget();
+  if (target.id() != event->target().id() || target.type() != event->target().type()) {
+    return;
+  }
+
+  this->GotoStatus(AutoStatus::SEARCH);
+}
+
+void AutoStatusChase::OnEventCombatConvertCamp(const ProtoMessage *data) {
+  const event::EventCombatConvertCamp *event = (const event::EventCombatConvertCamp *)data;
+
+  const ::protocol::CombatEntity &target = this->host_->GetTarget();
+  if (target.id() != event->host().id() || target.type() != event->host().type()) {
+    return;
+  }
+
+  this->GotoStatus(AutoStatus::SEARCH);
 }
 
 }  // namespace ai

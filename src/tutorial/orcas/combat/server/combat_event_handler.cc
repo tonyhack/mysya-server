@@ -20,7 +20,8 @@ CombatEventHandler::CombatEventHandler(AppServer *host)
     event_token_build_action_(0),
     event_token_move_action_(0),
     event_token_death_(0),
-    event_token_lock_target_(0) {}
+    event_token_lock_target_(0),
+    event_token_convert_camp_(0) {}
 CombatEventHandler::~CombatEventHandler() {}
 
 void CombatEventHandler::SetHandlers() {
@@ -36,6 +37,9 @@ void CombatEventHandler::SetHandlers() {
   this->event_token_lock_target_ =
     this->host_->GetEventDispatcher()->Attach(event::EVENT_COMBAT_LOCK_TARGET, std::bind(
           &CombatEventHandler::OnEventCombatLockTarget, this, std::placeholders::_1));
+  this->event_token_convert_camp_ =
+    this->host_->GetEventDispatcher()->Attach(event::EVENT_COMBAT_CONVERT_CAMP, std::bind(
+          &CombatEventHandler::OnEventCombatConvertCamp, this, std::placeholders::_1));
 }
 
 void CombatEventHandler::ResetHandlers() {
@@ -43,6 +47,7 @@ void CombatEventHandler::ResetHandlers() {
   this->host_->GetEventDispatcher()->Detach(this->event_token_build_action_);
   this->host_->GetEventDispatcher()->Detach(this->event_token_death_);
   this->host_->GetEventDispatcher()->Detach(this->event_token_lock_target_);
+  this->host_->GetEventDispatcher()->Detach(this->event_token_convert_camp_);
 }
 
 void CombatEventHandler::OnEventCombatBuildAction(const ProtoMessage *data) {
@@ -99,7 +104,7 @@ void CombatEventHandler::OnEventCombatDeath(const ProtoMessage *data) {
   action.set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
 
   ::protocol::CombatDeathAction *death_action = action.mutable_death_action();
-  *death_action->mutable_target() = event->target();
+  *death_action->mutable_host() = event->target();
 
   combat_field->PushAction(action);
 
@@ -129,6 +134,34 @@ void CombatEventHandler::OnEventCombatLockTarget(const ProtoMessage *data) {
     action.mutable_lock_target_action();
   lock_target_action->set_warrior_id(event->warrior_id());
   *lock_target_action->mutable_target() = event->target();
+
+  combat_field->PushAction(action);
+
+  ::protocol::MessageCombatActionSync message;
+  *message.mutable_action() = action;
+  combat_field->BroadcastMessage(::protocol::MESSAGE_COMBAT_ACTION_SYNC, message);
+}
+
+void CombatEventHandler::OnEventCombatConvertCamp(const ProtoMessage *data) {
+  const event::EventCombatConvertCamp *event = (const event::EventCombatConvertCamp *)data;
+
+  CombatField *combat_field =
+    CombatFieldManager::GetInstance()->Get(event->combat_id());
+  if (combat_field == NULL) {
+    MYSYA_ERROR("CombatFieldManager::Get(%d) failed.", event->combat_id());
+    return;
+  }
+
+  const ::mysya::util::Timestamp &begin_timestamp = combat_field->GetBeginTimestamp();
+  const ::mysya::util::Timestamp &now_timestamp = this->host_->GetTimestamp();
+
+  ::protocol::CombatAction action;
+  action.set_type(::protocol::COMBAT_ACTION_TYPE_CONVERT_CAMP);
+  action.set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
+
+  ::protocol::CombatConvertCampAction *convert_camp_action =
+    action.mutable_convert_camp_action();
+  *convert_camp_action->mutable_host() = event->host();
 
   combat_field->PushAction(action);
 

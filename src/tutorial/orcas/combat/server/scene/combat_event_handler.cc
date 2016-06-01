@@ -118,14 +118,6 @@ void CombatEventHandler::OnEventCombatBegin(const ProtoMessage *data) {
 void CombatEventHandler::OnEventCombatDeath(const ProtoMessage *data) {
   const event::EventCombatDeath *event = (const event::EventCombatDeath *)data;
 
-  CombatField *combat_field =
-    CombatFieldManager::GetInstance()->Get(event->combat_id());
-  if (combat_field == NULL) {
-    MYSYA_ERROR("[SCENE] CombatFieldManager::Get(%d) failed.",
-        event->combat_id());
-    return;
-  }
-
   Scene *scene = SceneManager::GetInstance()->Get(event->combat_id());
   if (scene == NULL) {
     MYSYA_ERROR("[SCENE] SceneManager::Get(%d) failed.", event->combat_id());
@@ -143,7 +135,7 @@ void CombatEventHandler::OnEventCombatDeath(const ProtoMessage *data) {
     warrior->Finalize();
     SCENE_APP()->GetEntityBuilder()->DeallocateWarrior(warrior);
   } else if (event->target().type() == ::protocol::COMBAT_ENTITY_TYPE_BUILDING) {
-    // TODO:
+    // Do nothing.
   } else {
     return;
   }

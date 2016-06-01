@@ -25,6 +25,8 @@ class AutoStatusChase : public AutoStatus {
 
   void OnTimerRefindPath(int64_t timer_id);
   void OnEventSceneMoveStep(const ProtoMessage *data);
+  void OnEventCombatDeath(const ProtoMessage *data);
+  void OnEventCombatConvertCamp(const ProtoMessage *data);
 
   static const int kRefindPathMsec_ = 600;
 

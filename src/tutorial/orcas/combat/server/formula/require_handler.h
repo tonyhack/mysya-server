@@ -36,7 +36,10 @@ class RequireHandler {
   void Finalize();
 
  private:
-  void SendEventCombatDeath(int32_t combat_id, const ::protocol::CombatTarget &target);
+  void SendEventCombatDeath(int32_t combat_id, int32_t opponent_warrior_id,
+      const ::protocol::CombatEntity &target);
+  void SendEventCombatConvertCamp(int32_t combat_id, int32_t camp_id,
+      const ::protocol::CombatEntity &host);
 
   int FormulaDamage(CombatWarriorField *active, CombatWarriorField *passive);
   int FormulaDamage(CombatWarriorField *active, CombatBuildingField *passive);

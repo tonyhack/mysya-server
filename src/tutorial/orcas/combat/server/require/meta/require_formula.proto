@@ -6,5 +6,5 @@ package tutorial.orcas.combat.server.require;
 message RequireFormulaAttack {
   required int32 combat_id = 1;                                   // 战斗id         [IN]
   required int32 warrior_id = 2;                                  // 士兵id         [IN]
-  required .protocol.CombatTarget target = 3;                     // 目标           [OUT]
+  required .protocol.CombatEntity target = 3;                     // 目标           [OUT]
 };

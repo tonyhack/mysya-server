@@ -18,5 +18,5 @@ message VoteCombatBuildAction {
 message VoteCombatAttackAction {
   required int32 combat_id = 1;                                   // 战斗id
   required int32 warrior_id = 2;                                  // 士兵id
-  required .protocol.CombatTarget target = 3;                     // 目标
+  required .protocol.CombatEntity target = 3;                     // 目标
 }
