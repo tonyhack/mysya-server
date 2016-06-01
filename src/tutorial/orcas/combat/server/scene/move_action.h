@@ -20,7 +20,8 @@ class MoveAction {
   MoveAction();
   ~MoveAction();
 
-  void SetHost(Warrior *warrior);
+  bool Initialize(Warrior *host);
+  void Finalize();
 
   void Start(const ::protocol::Position &dest_pos);
   void Reset();

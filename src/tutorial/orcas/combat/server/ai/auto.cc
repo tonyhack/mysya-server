@@ -240,7 +240,7 @@ bool Auto::SearchTarget() {
   require_message.mutable_pos()->set_x(this->host_->GetFields().origin_pos_x());
   require_message.mutable_pos()->set_y(this->host_->GetFields().origin_pos_y());
   // TODO: search range
-  require_message.set_range(warrior_description->attack_range());
+  require_message.set_range(4);
   if (AiApp::GetInstance()->GetRequireDispatcher()->Dispatch(
         require::REQUIRE_SCENE_FETCH, &require_message) < 0) {
     MYSYA_ERROR("[AI] Dispatch REQUIRE_SCENE_FETCH failed.");
@@ -275,8 +275,6 @@ bool Auto::SearchTarget() {
 }
 
 bool Auto::AttackTarget() {
-  MYSYA_DEBUG("[AI] do attack target.");
-
   CombatRoleField *combat_role_field = this->host_->GetRoleField();
   if (combat_role_field == NULL) {
     MYSYA_ERROR("[AI] CombatWarriorField::GetRoleField() failed.");
@@ -298,6 +296,10 @@ bool Auto::AttackTarget() {
     MYSYA_ERROR("[AI] REQUIRE_FORMULA_ATTACK failed.");
     return false;
   }
+
+  MYSYA_DEBUG("[AI] Attack {warrior[camp(%d),id(%d)]} => {target[type(%d),id(%d)]}.",
+      this->host_->GetFields().camp_id(), this->GetId(),
+      this->target_.type(), this->target_.id());
 
   return true;
 }

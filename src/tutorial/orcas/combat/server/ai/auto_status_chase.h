@@ -22,6 +22,7 @@ class AutoStatusChase : public AutoStatus {
 
  private:
   void SetRefindPathTimer();
+  bool CheckTargetAttackReachable();
 
   void OnTimerRefindPath(int64_t timer_id);
   void OnEventSceneMoveStep(const ProtoMessage *data);

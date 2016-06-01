@@ -25,7 +25,9 @@ class AutoStatusAttack : public AutoStatus {
   void ResetAttackTimer();
 
   void OnTimerAttack(int64_t timer_id);
+  void OnEventSceneMoveStep(const ProtoMessage *data);
   void OnEventCombatDeath(const ProtoMessage *data);
+  void OnEventCombatConvertCamp(const ProtoMessage *data);
 
   int64_t timer_id_attack_;
 

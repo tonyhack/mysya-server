@@ -11,6 +11,7 @@
 #include "tutorial/orcas/combat/server/ai/auto.h"
 #include "tutorial/orcas/combat/server/event/cc/event.pb.h"
 #include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_scene.pb.h"
 #include "tutorial/orcas/protocol/cc/warrior.pb.h"
 
 namespace tutorial {
@@ -20,19 +21,23 @@ namespace server {
 namespace ai {
 
 AutoStatusAttack::AutoStatusAttack(Auto *host)
-  : AutoStatus(host), timer_id_attack_(0) {
+  : AutoStatus(host), timer_id_attack_(-1) {
+  this->AttachEvent(event::EVENT_SCENE_MOVE_STEP, std::bind(
+        &AutoStatusAttack::OnEventSceneMoveStep, this, std::placeholders::_1));
   this->AttachEvent(event::EVENT_COMBAT_DEATH, std::bind(
         &AutoStatusAttack::OnEventCombatDeath, this, std::placeholders::_1));
+  this->AttachEvent(event::EVENT_COMBAT_CONVERT_CAMP, std::bind(
+        &AutoStatusAttack::OnEventCombatConvertCamp, this, std::placeholders::_1));
 }
 
 AutoStatusAttack::~AutoStatusAttack() {
+  this->DetachEvent(event::EVENT_SCENE_MOVE_STEP);
   this->DetachEvent(event::EVENT_COMBAT_DEATH);
+  this->DetachEvent(event::EVENT_COMBAT_CONVERT_CAMP);
 }
 
 void AutoStatusAttack::Start() {
   this->SetAttackTimer();
-
-  // TODO: break move.
 
   event::EventCombatLockTarget event;
   event.set_combat_id(this->host_->GetHost()->GetCombatField()->GetId());
@@ -40,11 +45,13 @@ void AutoStatusAttack::Start() {
   *event.mutable_target() = this->host_->GetTarget();
   AiApp::GetInstance()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_LOCK_TARGET, &event);
 
+/*
   if (this->host_->AttackTarget() == false) {
     MYSYA_ERROR("[AI] Auto::AttackTarget() failed.");
     this->GotoStatus(AutoStatus::SEARCH);
     return;
   }
+  */
 }
 
 void AutoStatusAttack::Stop() {
@@ -88,11 +95,51 @@ void AutoStatusAttack::OnTimerAttack(int64_t timer_id) {
   this->host_->AttackTarget();
 }
 
+void AutoStatusAttack::OnEventSceneMoveStep(const ProtoMessage *data) {
+  event::EventSceneMoveStep *event = (event::EventSceneMoveStep *)data;
+
+  const ::protocol::CombatEntity &target = this->host_->GetTarget();
+  if (target.id() != event->warrior_id() ||
+      target.type() != ::protocol::COMBAT_ENTITY_TYPE_WARRIOR) {
+    return;
+  }
+
+  const ::protocol::WarriorDescription *warrior_description =
+    this->host_->GetHost()->GetDescription();
+  if (warrior_description == NULL) {
+    MYSYA_ERROR("[AI] CombatWarriorField::GetDescription() failed.");
+    return;
+  }
+
+  int target_distance = this->host_->GetTargetDistance();
+  if (target_distance < 0) {
+    MYSYA_ERROR("[AI] Auto::GetTargetDistance() failed.");
+    return;
+  }
+
+  // TODO: if target_distance > search_range giveup target, and goto search status.
+  if (target_distance > warrior_description->attack_range()) {
+    this->GotoStatus(AutoStatus::CHASE);
+    return;
+  }
+}
+
 void AutoStatusAttack::OnEventCombatDeath(const ProtoMessage *data) {
   event::EventCombatDeath *event = (event::EventCombatDeath *)data;
 
   const ::protocol::CombatEntity &target = this->host_->GetTarget();
   if (target.id() != event->target().id() || target.type() != event->target().type()) {
+    return;
+  }
+
+  this->GotoStatus(AutoStatus::SEARCH);
+}
+
+void AutoStatusAttack::OnEventCombatConvertCamp(const ProtoMessage *data) {
+  const event::EventCombatConvertCamp *event = (const event::EventCombatConvertCamp *)data;
+
+  const ::protocol::CombatEntity &target = this->host_->GetTarget();
+  if (target.id() != event->host().id() || target.type() != event->host().type()) {
     return;
   }
 

@@ -524,6 +524,7 @@ void Scene::PrintSearchPath(const Position &begin_pos, const Position &end_pos) 
 }
 
 void Scene::PrintStatusImage() {
+  return;
   ::printf("========================================================= PrintStatusImage =========================================================\n");
   const char *kWarriorSymbols = "abcdefghijklmnopqrstuvwxyz";
   const char kBuildingSymbol = 'B';

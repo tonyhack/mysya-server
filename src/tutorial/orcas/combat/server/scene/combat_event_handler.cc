@@ -159,9 +159,7 @@ void CombatEventHandler::OnEventCombatLockTarget(const ProtoMessage *data) {
   }
 
   MoveAction *move_action = warrior->GetMoveAction();
-  move_action->Reset();
-
-  // TODO: notify client move reset.
+  move_action->Finish(false);
 }
 
 #undef SCENE_APP

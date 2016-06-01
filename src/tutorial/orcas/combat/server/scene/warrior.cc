@@ -1,5 +1,6 @@
 #include "tutorial/orcas/combat/server/scene/warrior.h"
 
+#include <mysya/ioevent/logger.h>
 #include <mysya/util/timestamp.h>
 
 #include "tutorial/orcas/combat/server/app_server.h"
@@ -25,15 +26,18 @@ bool Warrior::Initialize(CombatWarriorField *host, Scene *scene) {
   this->host_ = host;
   this->scene_ = scene;
 
-  this->move_action_.SetHost(this);
+  if (this->move_action_.Initialize(this) == false) {
+    MYSYA_ERROR("[SCENE] MoveAction::Initialize() failed.");
+    return false;
+  }
 
   return true;
 }
 
 void Warrior::Finalize() {
+  this->move_action_.Finalize();
   this->host_ = NULL;
   this->scene_ = NULL;
-  this->move_action_.SetHost(NULL);
 }
 
 int32_t Warrior::GetId() const {

@@ -132,6 +132,7 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
     this->FormulaDamage(combat_warrior_field, target_combat_warrior_field);
 
     if (target_combat_warrior_field->GetFields().hp() <= 0) {
+      MYSYA_DEBUG("[FORMULA] warrior(%d) dead.", target_combat_warrior_field->GetId());
       this->SendEventCombatDeath(message->combat_id(), message->warrior_id(),
           message->target());
     }

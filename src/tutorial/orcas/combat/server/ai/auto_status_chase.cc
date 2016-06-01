@@ -39,6 +39,11 @@ AutoStatusChase::~AutoStatusChase() {
 }
 
 void AutoStatusChase::Start() {
+  if (this->CheckTargetAttackReachable() == true) {
+    this->GotoStatus(AutoStatus::ATTACK);
+    return;
+  }
+
   if (this->host_->MoveTarget() == false) {
     this->GotoStatus(AutoStatus::SEARCH);
     return;
@@ -64,11 +69,36 @@ void AutoStatusChase::SetRefindPathTimer() {
   this->refind_path_ = true;
 }
 
+bool AutoStatusChase::CheckTargetAttackReachable() {
+  const ::protocol::WarriorDescription *warrior_description =
+    this->host_->GetHost()->GetDescription();
+  if (warrior_description == NULL) {
+    MYSYA_ERROR("[AI] CombatWarriorField::GetDescription() failed.");
+    return false;
+  }
+
+  int target_distance = this->host_->GetTargetDistance();
+  if (target_distance < 0) {
+    MYSYA_ERROR("[AI] Auto::GetTargetDistance() failed.");
+    return false;
+  }
+
+  // TODO: if target_distance > search_range giveup target, and goto search status.
+  return target_distance <= warrior_description->attack_range();
+}
+
 void AutoStatusChase::OnTimerRefindPath(int64_t timer_id) {
   this->timer_id_refind_path_ = -1;
   this->refind_path_ = false;
+
+  if (this->CheckTargetAttackReachable() == true) {
+    this->GotoStatus(AutoStatus::ATTACK);
+    return;
+  }
+
   if (this->host_->MoveTarget() == false) {
-    this->SetRefindPathTimer();
+    this->GotoStatus(AutoStatus::SEARCH);
+    return;
   }
 }
 
@@ -81,26 +111,12 @@ void AutoStatusChase::OnEventSceneMoveStep(const ProtoMessage *data) {
     return;
   }
 
-  const ::protocol::WarriorDescription *warrior_description =
-    this->host_->GetHost()->GetDescription();
-  if (warrior_description == NULL) {
-    MYSYA_ERROR("[AI] CombatWarriorField::GetDescription() failed.");
-    return;
-  }
-
-  int target_distance = this->host_->GetTargetDistance();
-  if (target_distance < 0) {
-    MYSYA_ERROR("[AI] Auto::GetTargetDistance() failed.");
-    return;
-  }
-
-  // TODO: if target_distance > search_range giveup target, and goto search status.
-  if (target_distance <= warrior_description->attack_range()) {
+  if (this->CheckTargetAttackReachable() == true) {
     this->GotoStatus(AutoStatus::ATTACK);
     return;
   }
 
-  if (this->refind_path_ == false) {
+  if (target.id() == event->warrior_id() && this->refind_path_ == false) {
     this->SetRefindPathTimer();
   }
 }

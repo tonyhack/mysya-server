@@ -26,11 +26,18 @@ MoveAction::~MoveAction() {
   this->Reset();
 }
 
-void MoveAction::SetHost(Warrior *warrior) {
-  this->host_ = warrior;
-  if (this->host_ != NULL) {
-    this->move_ms_ = warrior->GetMoveSpeed();
-  }
+bool MoveAction::Initialize(Warrior *host) {
+  this->path_index_ = 0;
+  this->timer_move_token_ = -1;
+  this->host_ = host;
+  this->move_ms_ = this->host_->GetMoveSpeed();
+
+  return true;
+}
+
+void MoveAction::Finalize() {
+  this->Reset();
+  this->host_ = NULL;
 }
 
 void MoveAction::Start(const ::protocol::Position &dest_pos) {
@@ -67,7 +74,7 @@ void MoveAction::Start(const ::protocol::Position &dest_pos) {
       this->move_ms_, std::bind(&MoveAction::OnMoveTimer, this,
         std::placeholders::_1));
 
-  this->MoveStep();
+  // this->MoveStep();
   this->host_->DispatchMoveActionEvent(dest_pos, this->move_paths_);
 }
 
