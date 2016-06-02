@@ -163,10 +163,9 @@ int TimingWheel::Wheel::OnExpired(const ::mysya::util::Timestamp &now_timestamp)
   size_t bucket = this->GetCurrentBucket();
   this->SetCurrentBucket((bucket + 1) % this->GetBucketNum());
 
-  for (TimerList::iterator iter = this->buckets_[bucket].begin();
-      iter != this->buckets_[bucket].end();) {
-    Timer *timer = *iter;
-    iter = this->buckets_[bucket].erase(iter);
+  while (this->buckets_[bucket].empty() == false) {
+    Timer *timer = this->buckets_[bucket].front();
+    this->buckets_[bucket].pop_front();
 
     // Undo tick count.
     if (timer->GetUndoTickCounts() > 0) {

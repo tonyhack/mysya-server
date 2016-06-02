@@ -1,10 +1,10 @@
 src/tags
 
 build/
-src/tutorial/orcas/combat/protocol/cc
-src/tutorial/orcas/protocol/cc
-src/tutorial/orcas/combat/server/event/cc
-src/tutorial/orcas/combat/server/require/cc
-src/tutorial/orcas/combat/server/vote/cc
+src/tutorial/orcas/combat/protocol/cc/*
+src/tutorial/orcas/protocol/cc/*
+src/tutorial/orcas/combat/server/event/cc/*
+src/tutorial/orcas/combat/server/require/cc/*
+src/tutorial/orcas/combat/server/vote/cc/*
 src/tutorial/orcas/protocol/lua
 src/tutorial/tools/protoc-gen-lua/plugin_pb2.pyc

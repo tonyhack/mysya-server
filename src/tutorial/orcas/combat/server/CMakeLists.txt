@@ -97,4 +97,4 @@ set(COMBAT_SERVER_APPS_SOURCES
 add_executable(combat_server ${UTIL_SOURCES} ${COMBAT_SOURCES} ${ORCAS_PROTOCOL_SOURCES}
     ${COMBAT_PROTOCOL_SOURCES} ${VOTE_SOURCES} ${EVENT_SOURCES} ${REQUIRE_SOURCES}
     ${COMBAT_SERVER_SOURCES} ${COMBAT_SERVER_APPS_SOURCES} ${COMBAT_SERVER_MAIN_SOURCES})
-target_link_libraries(combat_server mysya-ioevent mysya-codec mysya-orcas-deps protobuf pthread rt dl)
+target_link_libraries(combat_server mysya-ioevent mysya-codec mysya-orcas-deps protobuf pthread z rt dl)
