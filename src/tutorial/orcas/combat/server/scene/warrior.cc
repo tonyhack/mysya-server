@@ -73,14 +73,10 @@ void Warrior::DispatchMoveActionEvent(const ::protocol::Position &dest_pos,
   event::EventCombatMoveAction event;
   event.set_combat_id(this->scene_->GetId());
 
-  const ::mysya::util::Timestamp &begin_timestamp =
-    this->GetHost()->GetRoleField()->GetCombatField()->GetBeginTimestamp();
-  const ::mysya::util::Timestamp &now_timestamp =
-    SceneApp::GetInstance()->GetHost()->GetTimestamp();
-
   ::protocol::CombatAction *action = event.mutable_action();
   action->set_type(::protocol::COMBAT_ACTION_TYPE_MOVE);
-  action->set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
+  action->set_timestamp(
+      this->GetHost()->GetRoleField()->GetCombatField()->GetTimestampMsec());
 
   ::protocol::CombatMoveAction *move_action = action->mutable_move_action();
   move_action->add_warrior_id(this->GetId());

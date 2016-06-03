@@ -42,6 +42,10 @@ void CombatMessageHandler::SetMessageHandlers() {
       protocol::MessageCombatArgentSync().GetTypeName(), std::bind(
         &CombatMessageHandler::OnMessageCombatArgentSync, this,
         std::placeholders::_1, std::placeholders::_2));
+  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCallback(
+      protocol::MessageCombatSettlementSync().GetTypeName(), std::bind(
+        &CombatMessageHandler::OnMessageCombatSettlementSync, this,
+        std::placeholders::_1, std::placeholders::_2));
 }
 
 void CombatMessageHandler::ResetMessageHandlers() {
@@ -53,6 +57,8 @@ void CombatMessageHandler::ResetMessageHandlers() {
       protocol::MessageCombatBeginResponse().GetTypeName());
   this->host_->GetCombatClients().GetMessageDispatcher()->ResetMessageCallback(
       protocol::MessageCombatArgentSync().GetTypeName());
+  this->host_->GetCombatClients().GetMessageDispatcher()->ResetMessageCallback(
+      protocol::MessageCombatSettlementSync().GetTypeName());
 }
 
 void CombatMessageHandler::OnMessageCombatDeployResponse(
@@ -200,8 +206,10 @@ void CombatMessageHandler::OnMessageCombatBeginResponse(
     CombatManager::GetInstance()->Deallocate(combat);
   } else {
     response.set_result(true);
-    response.set_map_id(combat->GetMapId());
+    // response.set_map_id(combat->GetMapId());
     *response.mutable_status_image() = message->status_image();
+    response.mutable_combat_description()->set_map_id(combat->GetMapId());
+    response.mutable_combat_description()->set_max_time(combat->GetMaxTime());
 
     response.set_host_id(left_combat_actor->GetCombatArgentId());
     response.set_camp_id(left_combat_actor->GetCampId());
@@ -270,6 +278,26 @@ void CombatMessageHandler::OnMessageCombatArgentSync(TransportChannel *channel,
 
     MYSYA_DEBUG("Actor(%p) send message(%d)", combat_actor->GetActor(), message->type());
   }
+}
+
+void CombatMessageHandler::OnMessageCombatSettlementSync(TransportChannel *channel,
+    const ProtoMessage *data) {
+  client::CombatSession *session = (client::CombatSession *)channel;
+  protocol::MessageCombatSettlementSync *message =
+    (protocol::MessageCombatSettlementSync *)data;
+
+  Combat *combat = CombatManager::GetInstance()->RemoveCombat(
+      session->GetServerId(), message->combat_id());
+  if (combat == NULL) {
+    MYSYA_ERROR("CombatManager::ReomveCombat(%d) failed.", message->combat_id());
+    return;
+  }
+
+  ::protocol::MessageCombatSettlementSync client_message;
+  *client_message.mutable_settlement() = message->settlement();
+  combat->BroadcastMessage(::protocol::MESSAGE_COMBAT_SETTLEMENT_SYNC, client_message);
+
+  CombatManager::GetInstance()->Deallocate(combat);
 }
 
 }  // namespace server

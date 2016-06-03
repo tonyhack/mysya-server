@@ -4,6 +4,7 @@
 #include <mysya/ioevent/logger.h>
 
 #include "tutorial/orcas/combat/protocol/cc/combat_message.pb.h"
+#include "tutorial/orcas/combat/server/app_server.h"
 #include "tutorial/orcas/combat/server/app_session.h"
 #include "tutorial/orcas/combat/server/combat_building_field.h"
 #include "tutorial/orcas/combat/server/combat_building_field_pool.h"
@@ -11,6 +12,8 @@
 #include "tutorial/orcas/combat/server/combat_role_field_manager.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
+#include "tutorial/orcas/combat/server/require/cc/require.pb.h"
+#include "tutorial/orcas/combat/server/require/cc/require_combat.pb.h"
 
 namespace tutorial {
 namespace orcas {
@@ -19,21 +22,28 @@ namespace server {
 
 CombatField::CombatField()
   : id_(0), map_id_(0), id_alloctor_(0),
+    max_time_(0), timer_id_over_(-1),
     app_session_(NULL) {}
 
 CombatField::~CombatField() {}
 
-bool CombatField::Initialize(int32_t map_id, AppServer *app_server, AppSession *session) {
+bool CombatField::Initialize(int32_t map_id, int32_t max_time,
+    AppServer *app_server, AppSession *session) {
+  this->max_time_ = 0;
   this->app_server_ = app_server;
   this->app_session_ = session;
   this->app_session_->Add(this);
   this->id_alloctor_ = 0;
   this->map_id_ = map_id;
+  this->max_time_ = max_time;
+  this->timer_id_over_ = -1;
 
   return true;
 }
 
 void CombatField::Finalize() {
+  this->ResetOverTimer();
+
   if (this->app_session_ != NULL) {
     this->app_session_->Remove(this);
   }
@@ -71,6 +81,18 @@ void CombatField::Finalize() {
   this->app_server_ = NULL;
 }
 
+void CombatField::SetOverTimer() {
+  this->timer_id_over_ = this->app_server_->StartTimer(this->max_time_ * 1000,
+      std::bind(&CombatField::OnTimerOver, this, std::placeholders::_1), 1);
+}
+
+void CombatField::ResetOverTimer() {
+  if (this->timer_id_over_ != -1) {
+    this->app_server_->StopTimer(this->timer_id_over_);
+    this->timer_id_over_ = -1;
+  }
+}
+
 int32_t CombatField::GetId() const {
   return this->id_;
 }
@@ -87,12 +109,30 @@ int32_t CombatField::AllocateId() {
   return ++this->id_alloctor_;
 }
 
+int32_t CombatField::GetMaxTime() const {
+  return this->max_time_;
+}
+
+void CombatField::SetMaxTime(int32_t value) {
+  this->max_time_ = value;
+}
+
 const ::mysya::util::Timestamp &CombatField::GetBeginTimestamp() const {
   return this->begin_timestamp_;
 }
 
 void CombatField::SetBeginTimestamp(const ::mysya::util::Timestamp &value) {
   this->begin_timestamp_ = value;
+}
+
+int64_t CombatField::GetTimestampSec() const {
+  return this->begin_timestamp_.DistanceSecond(
+      this->app_server_->GetTimestamp());
+}
+
+int64_t CombatField::GetTimestampMsec() const {
+  return this->begin_timestamp_.DistanceMillisecond(
+      this->app_server_->GetTimestamp());
 }
 
 void CombatField::AddRole(uint64_t role_argent_id) {
@@ -248,6 +288,17 @@ void CombatField::ExportStatusImage(::protocol::CombatStatusImage &image) const 
     role_fields->set_id(combat_role_field->GetArgentId());
     role_fields->set_name(combat_role_field->GetName());
     role_fields->set_camp_id(combat_role_field->GetCampId());
+  }
+}
+
+void CombatField::OnTimerOver(int32_t id) {
+  require::RequireCombatSettle message;
+  message.set_combat_id(this->GetId());
+  if (this->app_server_->GetRequireDispatcher()->Dispatch(
+        require::REQUIRE_COMBAT_SETTLE, &message) == -1) {
+    MYSYA_ERROR("REQUIRE_COMBAT_SETTLE combat_id(%d) failed.",
+        this->GetId());
+    return;
   }
 }
 

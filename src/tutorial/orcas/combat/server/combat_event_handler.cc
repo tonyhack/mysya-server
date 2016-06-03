@@ -6,6 +6,8 @@
 #include "tutorial/orcas/combat/server/app_server.h"
 #include "tutorial/orcas/combat/server/combat_field.h"
 #include "tutorial/orcas/combat/server/combat_field_manager.h"
+#include "tutorial/orcas/combat/server/combat_role_field.h"
+#include "tutorial/orcas/combat/server/combat_role_field_manager.h"
 #include "tutorial/orcas/combat/server/event/cc/event.pb.h"
 #include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
 #include "tutorial/orcas/protocol/cc/message.pb.h"
@@ -96,12 +98,9 @@ void CombatEventHandler::OnEventCombatDeath(const ProtoMessage *data) {
     return;
   }
 
-  const ::mysya::util::Timestamp &begin_timestamp = combat_field->GetBeginTimestamp();
-  const ::mysya::util::Timestamp &now_timestamp = this->host_->GetTimestamp();
-
   ::protocol::CombatAction action;
   action.set_type(::protocol::COMBAT_ACTION_TYPE_DEATH);
-  action.set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
+  action.set_timestamp(combat_field->GetTimestampMsec());
 
   ::protocol::CombatDeathAction *death_action = action.mutable_death_action();
   *death_action->mutable_host() = event->target();
@@ -123,12 +122,9 @@ void CombatEventHandler::OnEventCombatLockTarget(const ProtoMessage *data) {
     return;
   }
 
-  const ::mysya::util::Timestamp &begin_timestamp = combat_field->GetBeginTimestamp();
-  const ::mysya::util::Timestamp &now_timestamp = this->host_->GetTimestamp();
-
   ::protocol::CombatAction action;
   action.set_type(::protocol::COMBAT_ACTION_TYPE_LOCK_TARGET);
-  action.set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
+  action.set_timestamp(combat_field->GetTimestampMsec());
 
   ::protocol::CombatLockTargetAction *lock_target_action =
     action.mutable_lock_target_action();
@@ -152,12 +148,25 @@ void CombatEventHandler::OnEventCombatConvertCamp(const ProtoMessage *data) {
     return;
   }
 
-  const ::mysya::util::Timestamp &begin_timestamp = combat_field->GetBeginTimestamp();
-  const ::mysya::util::Timestamp &now_timestamp = this->host_->GetTimestamp();
+  CombatRoleField *combat_role_field =
+    CombatRoleFieldManager::GetInstance()->Get(event->host_id());
+  if (combat_role_field == NULL) {
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->host_id());
+    return;
+  }
+  combat_role_field->SetBuildingNum(combat_role_field->GetBuildingNum() - 1);
+
+  CombatRoleField *original_combat_role_field =
+    CombatRoleFieldManager::GetInstance()->Get(event->original_host_id());
+  if (original_combat_role_field == NULL) {
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->original_host_id());
+    return;
+  }
+  original_combat_role_field->SetBuildingNum(original_combat_role_field->GetBuildingNum() + 1);
 
   ::protocol::CombatAction action;
   action.set_type(::protocol::COMBAT_ACTION_TYPE_CONVERT_CAMP);
-  action.set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
+  action.set_timestamp(combat_field->GetTimestampMsec());
 
   ::protocol::CombatConvertCampAction *convert_camp_action =
     action.mutable_convert_camp_action();

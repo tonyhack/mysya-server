@@ -47,7 +47,9 @@ class Combat {
   void SetRight(CombatActor *actor);
   CombatActor *GetRight();
   int32_t GetConnectedNum() const;
-  void SetConnectedNum(int value);
+  void SetConnectedNum(int32_t value);
+  int32_t GetMaxTime() const;
+  void SetMaxTime(int32_t value);
 
   CombatActor *GetActorByArgentId(uint64_t role_argent_id);
 
@@ -67,6 +69,7 @@ class Combat {
   CombatActor *ar_;
   int32_t map_id_;
   int32_t connected_num_;
+  int32_t max_time_;
 };
 
 class CombatManager {
@@ -102,6 +105,8 @@ class CombatManager {
  private:
   void AddPendingCombatActor(CombatActor *actor);
   void RemovePendingCombatActor(CombatActor *actor);
+
+  static const int32_t kCombatMaxTime_ = 30;
 
   int32_t id_allocator_;
   PendingCombatActorSet pending_combat_actors_;

@@ -56,12 +56,15 @@ void RequireHandler::SendEventCombatDeath(int32_t combat_id,
 }
 
 void RequireHandler::SendEventCombatConvertCamp(int32_t combat_id,
-    int32_t camp_id, int32_t host_id, const ::protocol::CombatEntity &host) {
+    int32_t original_camp_id, int32_t original_host_id, int32_t camp_id,
+    int32_t host_id, const ::protocol::CombatEntity &host) {
   event::EventCombatConvertCamp event;
   event.set_combat_id(combat_id);
   *event.mutable_host() = host;
   event.set_camp_id(camp_id);
   event.set_host_id(host_id);
+  event.set_original_camp_id(camp_id);
+  event.set_original_host_id(host_id);
   FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_CONVERT_CAMP, &event);
 }
 
@@ -189,15 +192,22 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
         message->target(), damage);
 
     if (target_combat_building_field->GetFields().hp() <= 0) {
+      // original id.
+      int32_t original_camp_id = target_combat_building_field->GetFields().camp_id();
+      int32_t original_host_id = target_combat_building_field->GetFields().host_id();
+
       // convert building's camp_id.
       target_combat_building_field->GetFields().set_camp_id(
           combat_warrior_field->GetFields().camp_id());
       target_combat_building_field->GetFields().set_host_id(
           combat_warrior_field->GetFields().host_id());
+
       // send event.
-      this->SendEventCombatConvertCamp(message->combat_id(),
-          target_combat_building_field->GetFields().camp_id(),
+      this->SendEventCombatConvertCamp(message->combat_id(), original_camp_id,
+          original_host_id, target_combat_building_field->GetFields().camp_id(),
           combat_warrior_field->GetFields().host_id(), message->target());
+
+      // TODO: check if can settlement?
     }
 
     return 0;

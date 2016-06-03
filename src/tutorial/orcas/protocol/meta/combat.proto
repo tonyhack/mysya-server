@@ -17,6 +17,23 @@ message CombatEntity {
   required int32 id = 2;                                        // id
 }
 
+// 战斗描述
+message CombatDescription {
+  optional int32 map_id = 1;                                    // 地图id
+  optional int32 max_time = 2;                                  // 最大用时(秒)
+}
+
+// 战斗角色结算结果
+message CombatSettlementRole {
+  optional .protocol.CombatRoleFields role_fields = 1;          // 角色基本数据
+  optional int32 building_num = 2;                              // 建筑数量
+}
+
+// 战斗结算
+message CombatSettlement {
+  repeated CombatSettlementRole role = 1;                       // 角色结果列表
+}
+
 // 战斗动作类型
 enum CombatActionType {
   COMBAT_ACTION_TYPE_BUILD = 1;                                 // 建造
@@ -81,7 +98,7 @@ message CombatActionSequence {
 
 // 战斗状态镜像数据
 message CombatStatusImage {
-  repeated .protocol.CombatBuildingFields building = 1;         // 建筑
-  repeated .protocol.CombatWarriorFields warrior = 2;           // 士兵
-  repeated .protocol.CombatRoleFields role = 3;                 // 角色
+  repeated .protocol.CombatBuildingFields building = 2;         // 建筑
+  repeated .protocol.CombatWarriorFields warrior = 3;           // 士兵
+  repeated .protocol.CombatRoleFields role = 4;                 // 角色
 }

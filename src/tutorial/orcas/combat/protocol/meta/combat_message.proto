@@ -45,7 +45,8 @@ message CombatCampData {
 message CombatInitialData {
   required int32 map_id = 1;                                  // 地图id
   required int32 combat_type = 2;                             // 战斗类型(CombatType)
-  repeated CombatCampData camp = 3;                           // 阵营列表
+  required int32 max_time = 3;                                // 最大用时(秒)
+  repeated CombatCampData camp = 4;                           // 阵营列表
 }
 
 
@@ -92,6 +93,12 @@ message MessageCombatBeginResponse {
   required int32 ret_code = 1;                                // 返回码
   required int32 combat_id = 2;                               // 战斗id(战斗服务器分配的战斗id)
   optional .protocol.CombatStatusImage status_image = 3;      // 状态镜像
+}
+
+// 战斗结算
+message MessageCombatSettlementSync {
+  required int32 combat_id = 1;                               // 战斗id(战斗服务器分配的战斗id)
+  required .protocol.CombatSettlement settlement = 2;         // 结果数据
 }
 
 // 战斗代理请求

@@ -39,9 +39,12 @@ class CombatField {
   CombatField();
   ~CombatField();
 
-  bool Initialize(int32_t map_id, AppServer *app_server,
+  bool Initialize(int32_t map_id, int32_t max_time, AppServer *app_server,
       AppSession *session);
   void Finalize();
+
+  void SetOverTimer();
+  void ResetOverTimer();
 
   int32_t GetId() const;
   void SetId(int32_t value);
@@ -49,8 +52,13 @@ class CombatField {
   int32_t GetMapId() const;
   int32_t AllocateId();
 
+  int32_t GetMaxTime() const;
+  void SetMaxTime(int32_t value);
+
   const ::mysya::util::Timestamp &GetBeginTimestamp() const;
   void SetBeginTimestamp(const ::mysya::util::Timestamp &value);
+  int64_t GetTimestampSec() const;
+  int64_t GetTimestampMsec() const;
 
   void AddRole(uint64_t role_argent_id);
   void RemoveRole(uint64_t role_argent_id);
@@ -77,9 +85,14 @@ class CombatField {
   void ExportStatusImage(::protocol::CombatStatusImage &image) const;
 
  private:
+  void OnTimerOver(int32_t id);
+
   int32_t id_;
   int32_t map_id_;
   int32_t id_alloctor_;
+  int32_t max_time_;
+  int32_t timer_id_over_;
+
   ::mysya::util::Timestamp begin_timestamp_;
 
   CombatRoleFieldSet roles_;

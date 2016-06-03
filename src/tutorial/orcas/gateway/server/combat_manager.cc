@@ -22,7 +22,8 @@ Combat::Combat()
   : id_(0), combat_server_id_(0),
     combat_argent_id_(0), host_(NULL),
     al_(NULL), ar_(NULL),
-    map_id_(0), connected_num_(0) {}
+    map_id_(0), connected_num_(0),
+    max_time_(0) {}
 Combat::~Combat() {
   if (this->al_ != NULL) { this->al_->SetCombat(NULL); }
   if (this->ar_ != NULL) { this->ar_->SetCombat(NULL); }
@@ -88,6 +89,14 @@ int32_t Combat::GetConnectedNum() const {
 
 void Combat::SetConnectedNum(int value) {
   this->connected_num_ = value;
+}
+
+int32_t Combat::GetMaxTime() const {
+  return this->max_time_;
+}
+
+void Combat::SetMaxTime(int32_t value) {
+  this->max_time_ = value;
 }
 
 CombatActor *Combat::GetActorByArgentId(uint64_t role_argent_id) {
@@ -246,6 +255,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   combat->SetMapId(map_id);
   combat->SetLeft(left_actor);
   combat->SetRight(right_actor);
+  combat->SetMaxTime(CombatManager::kCombatMaxTime_);
 
   typedef CombatActor::WarriorDescriptionMap WarriorDescriptionMap;
   ::tutorial::orcas::combat::protocol::MessageCombatDeployRequest message;
@@ -259,6 +269,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   ::tutorial::orcas::combat::protocol::CombatInitialData *init_data =
     message.mutable_combat_initial_data();
   init_data->set_map_id(map_id);
+  init_data->set_max_time(CombatManager::kCombatMaxTime_);
   init_data->set_combat_type(::tutorial::orcas::combat::protocol::COMBAT_TYPE_PVP);
 
   // 左方阵营

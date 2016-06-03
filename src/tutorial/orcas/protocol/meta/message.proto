@@ -11,6 +11,7 @@ enum MessageType {
   MESSAGE_COMBAT_RESPONSE = 4;                                      // 战斗回应
 
   MESSAGE_COMBAT_BEGIN_SYNC = 5;                                    // 战斗开始同步
+  MESSAGE_COMBAT_SETTLEMENT_SYNC = 6;                               // 战斗结算同步
 
   MESSAGE_COMBAT_ACTION_REQUEST = 1001;                             // 行动请求
   MESSAGE_COMBAT_ACTION_RESPONSE = 1002;                            // 行动回应
@@ -37,20 +38,26 @@ message MessageCombatRequest {
 // MESSAGE_COMBAT_RESPONSE
 message MessageCombatResponse {
   required bool result = 1;                                         // 结果
-  optional int32 map_id = 2;                                        // 地图id
-  optional uint64 host_id = 3;                                      // 当前角色的代理id
-  optional int32 camp_id = 4;                                       // 阵营
+  optional uint64 host_id = 2;                                      // 当前角色的代理id
+  optional int32 camp_id = 3;                                       // 阵营
+  optional .protocol.CombatDescription combat_description = 4;      // 战斗的基本描述
   optional .protocol.CombatStatusImage status_image = 5;            // 状态镜像
   repeated int32 combat_warrior_id = 6;                             // 出战斗士兵列表
 }
 
 // MESSAGE_COMBAT_BEGIN_SYNC
 message MessageCombatBeginSync {
-  required int32 map_id = 1;                                        // 地图id
-  required uint64 host_id = 2;                                      // 当前角色的代理id
-  required int32 camp_id = 3;                                       // 阵营
+  required uint64 host_id = 1;                                      // 当前角色的代理id
+  required int32 camp_id = 2;                                       // 当前角色的阵营id
+  required .protocol.CombatDescription combat_description = 3;      // 战斗的基本描述
   required .protocol.CombatStatusImage init_status_image = 4;       // 战斗初始化数据
-  repeated int32 combat_warrior_id = 5;                             // 出战斗士兵列表
+  required int32 elapsed_msec = 5;                                  // 战斗已消耗的时间(毫秒)
+  repeated int32 combat_warrior_id = 6;                             // 出战斗士兵列表
+}
+
+// MESSAGE_COMBAT_SETTLEMENT_SYNC
+message MessageCombatSettlementSync {
+  required .protocol.CombatSettlement settlement = 1;               // 结算数据
 }
 
 // MESSAGE_COMBAT_ACTION_REQUEST

@@ -8,6 +8,7 @@
 #include "tutorial/orcas/combat/server/app_server.h"
 #include "tutorial/orcas/combat/server/combat_field.h"
 #include "tutorial/orcas/combat/server/combat_field_manager.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/event_dispatcher.h"
 #include "tutorial/orcas/combat/server/ai/ai_app.h"
 #include "tutorial/orcas/combat/server/ai/auto.h"
@@ -29,7 +30,8 @@ CombatEventHandler::CombatEventHandler()
   : event_token_build_action_(0),
     event_token_death_(0),
     event_token_convert_camp_(0),
-    event_token_combat_attacked_(0) {}
+    event_token_attacked_(0),
+    event_token_settle_(0) {}
 CombatEventHandler::~CombatEventHandler() {}
 
 #define EVENT_DISPATCHER \
@@ -45,9 +47,12 @@ bool CombatEventHandler::Initialize() {
   this->event_token_convert_camp_ =
     EVENT_DISPATCHER()->Attach(event::EVENT_COMBAT_CONVERT_CAMP, std::bind(
           &CombatEventHandler::OnEventCombatConvertCamp, this, std::placeholders::_1));
-  this->event_token_combat_attacked_ =
+  this->event_token_attacked_ =
     EVENT_DISPATCHER()->Attach(event::EVENT_COMBAT_ATTACKED, std::bind(
           &CombatEventHandler::OnEventCombatAttacked, this, std::placeholders::_1));
+  this->event_token_settle_ =
+    EVENT_DISPATCHER()->Attach(event::EVENT_COMBAT_SETTLE, std::bind(
+          &CombatEventHandler::OnEventCombatSettle, this, std::placeholders::_1));
 
   return true;
 
@@ -57,6 +62,7 @@ void CombatEventHandler::Finalize() {
   EVENT_DISPATCHER()->Detach(this->event_token_build_action_);
   EVENT_DISPATCHER()->Detach(this->event_token_death_);
   EVENT_DISPATCHER()->Detach(this->event_token_convert_camp_);
+  EVENT_DISPATCHER()->Detach(this->event_token_settle_);
 }
 
 #undef EVENT_DISPATCHER
@@ -131,6 +137,35 @@ void CombatEventHandler::OnEventCombatAttacked(const ProtoMessage *data) {
   if (event->host().type() == ::protocol::COMBAT_ENTITY_TYPE_WARRIOR) {
     EventObserver::GetInstance()->Dispatch(event->combat_id(), event->host().id(),
         event::EVENT_COMBAT_ATTACKED, event);
+  }
+}
+
+void CombatEventHandler::OnEventCombatSettle(const ProtoMessage *data) {
+  const event::EventCombatSettle *event = (const event::EventCombatSettle *)data;
+
+  CombatField *combat_field = CombatFieldManager::GetInstance()->Get(
+      event->combat_id());
+  if (combat_field == NULL) {
+    MYSYA_ERROR("[AI] CombatFieldManager::Get(%d) failed.", event->combat_id());
+    return;
+  }
+
+  typedef CombatField::WarriorFieldHashmap WarriorFieldHashmap;
+
+  const WarriorFieldHashmap &warriors = combat_field->GetWarriors();
+  for (WarriorFieldHashmap::const_iterator iter = warriors.begin();
+      iter != warriors.end(); ++iter) {
+    CombatWarriorField *combat_warrior_field = iter->second;
+
+    Auto *autoz = AutoManager::GetInstance()->Remove(event->combat_id(),
+        combat_warrior_field->GetId());
+    if (autoz == NULL) {
+      MYSYA_ERROR("[AI] AutoManager::Remove(%d, %d) failed.");
+      return;
+    }
+
+    autoz->Finalize();
+    AutoManager::GetInstance()->Deallocate(autoz);
   }
 }
 

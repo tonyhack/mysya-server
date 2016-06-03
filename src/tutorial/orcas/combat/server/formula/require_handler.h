@@ -38,8 +38,9 @@ class RequireHandler {
  private:
   void SendEventCombatDeath(int32_t combat_id, int32_t opponent_warrior_id,
       const ::protocol::CombatEntity &target);
-  void SendEventCombatConvertCamp(int32_t combat_id, int32_t camp_id,
-      int32_t host_id, const ::protocol::CombatEntity &host);
+  void SendEventCombatConvertCamp(int32_t combat_id, int32_t original_camp_id,
+      int32_t original_host_id, int32_t camp_id, int32_t host_id,
+      const ::protocol::CombatEntity &host);
   void SendEventCombatAttack(int32_t combat_id, int32_t warrior_id,
       const ::protocol::CombatEntity &target, int32_t damage);
 

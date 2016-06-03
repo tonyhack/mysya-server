@@ -134,12 +134,9 @@ void CombatWarriorField::DispatchBuildActionEvent(int32_t building_id) {
   event::EventCombatBuildAction event;
   event.set_combat_id(combat_field->GetId());
 
-  const ::mysya::util::Timestamp &begin_timestamp = combat_field->GetBeginTimestamp();
-  const ::mysya::util::Timestamp &now_timestamp = this->GetAppServer()->GetTimestamp();
-
   ::protocol::CombatAction *action = event.mutable_action();
   action->set_type(::protocol::COMBAT_ACTION_TYPE_BUILD);
-  action->set_timestamp(now_timestamp.DistanceSecond(begin_timestamp));
+  action->set_timestamp(combat_field->GetTimestampMsec());
 
   ::protocol::CombatBuildAction *build_action = action->mutable_build_action();
   build_action->set_building_id(building_id);

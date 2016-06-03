@@ -19,8 +19,8 @@ namespace server {
 
 CombatRoleField::CombatRoleField()
   : argent_id_(0), camp_id_(0),
-    combat_field_(NULL), app_session_(NULL),
-    app_server_(NULL) {}
+    building_num_(0), combat_field_(NULL),
+    app_session_(NULL), app_server_(NULL) {}
 
 CombatRoleField::~CombatRoleField() {}
 
@@ -30,6 +30,7 @@ bool CombatRoleField::Initialize(uint64_t argent_id, const std::string &name,
   this->name_ = name;
   this->app_server_ = app_server;
   this->app_session_ = NULL;
+  this->building_num_ = 0;
 
   return true;
 }
@@ -64,6 +65,14 @@ int32_t CombatRoleField::GetCampId() const {
 
 void CombatRoleField::SetCampId(int32_t value) {
   this->camp_id_ = value;
+}
+
+int32_t CombatRoleField::GetBuildingNum() const {
+  return this->building_num_;
+}
+
+void CombatRoleField::SetBuildingNum(int32_t value) {
+  this->building_num_ = value;
 }
 
 const std::string &CombatRoleField::GetName() const {

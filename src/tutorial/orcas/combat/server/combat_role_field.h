@@ -46,6 +46,9 @@ class CombatRoleField {
   int32_t GetCampId() const;
   void SetCampId(int32_t value);
 
+  int32_t GetBuildingNum() const;
+  void SetBuildingNum(int32_t value);
+
   const std::string &GetName() const;
 
   CombatField *GetCombatField();
@@ -67,6 +70,7 @@ class CombatRoleField {
 
   uint64_t argent_id_;
   int32_t camp_id_;
+  int32_t building_num_;
   std::string name_;
   CombatField *combat_field_;
   WarriorDescriptionMap warrior_descriptions_;

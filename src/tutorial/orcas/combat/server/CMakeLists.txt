@@ -23,6 +23,7 @@ set(EVENT_SOURCES
 
 set(REQUIRE_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require/cc/require.pb.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require/cc/require_combat.pb.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require/cc/require_formula.pb.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require/cc/require_scene.pb.cc
     )
@@ -77,6 +78,7 @@ set(COMBAT_SERVER_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/event_dispatcher.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/math.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require_dispatcher.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/require_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/vote_dispatcher.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/user_combat_message_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/user_message_dispatcher.cc

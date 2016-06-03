@@ -1,7 +1,8 @@
 set(PROTO_SOURCES
   ${COMBAT_SOURCE_DIR}/server/require/meta/require.proto
-  ${COMBAT_SOURCE_DIR}/server/require/meta/require_scene.proto
+  ${COMBAT_SOURCE_DIR}/server/require/meta/require_combat.proto
   ${COMBAT_SOURCE_DIR}/server/require/meta/require_formula.proto
+  ${COMBAT_SOURCE_DIR}/server/require/meta/require_scene.proto
   )
 
 foreach (script ${PROTO_SOURCES})

@@ -13,6 +13,7 @@
 #include "tutorial/orcas/combat/server/combat_message_handler.h"
 #include "tutorial/orcas/combat/server/event_dispatcher.h"
 #include "tutorial/orcas/combat/server/require_dispatcher.h"
+#include "tutorial/orcas/combat/server/require_handler.h"
 #include "tutorial/orcas/combat/server/vote_dispatcher.h"
 #include "tutorial/orcas/combat/server/user_combat_message_handler.h"
 #include "tutorial/orcas/combat/server/user_message_dispatcher.h"
@@ -106,6 +107,7 @@ class AppServer {
   CombatMessageHandler combat_message_handler_;
   UserCombatMessageHandler user_combat_message_handler_;
   CombatEventHandler combat_event_handler_;
+  RequireHandler require_handler_;
 
   Apps apps_;
 

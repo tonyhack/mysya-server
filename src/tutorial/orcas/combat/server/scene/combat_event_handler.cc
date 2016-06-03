@@ -25,7 +25,8 @@ namespace scene {
 CombatEventHandler::CombatEventHandler()
   : event_token_begin_(0),
     event_token_death_(0),
-    event_token_lock_target_(0) {}
+    event_token_lock_target_(0),
+    event_token_settle_(0) {}
 
 CombatEventHandler::~CombatEventHandler() {}
 
@@ -42,6 +43,9 @@ bool CombatEventHandler::Initialize() {
   this->event_token_lock_target_ = SCENE_APP()->GetEventDispatcher()->Attach(
       event::EVENT_COMBAT_LOCK_TARGET, std::bind(&CombatEventHandler::OnEventCombatLockTarget,
         this, std::placeholders::_1));
+  this->event_token_settle_ = SCENE_APP()->GetEventDispatcher()->Attach(
+      event::EVENT_COMBAT_SETTLE, std::bind(&CombatEventHandler::OnEventCombatSettle,
+        this, std::placeholders::_1));
 
   return true;
 }
@@ -50,6 +54,7 @@ void CombatEventHandler::Finalize() {
   SCENE_APP()->GetEventDispatcher()->Detach(this->event_token_begin_);
   SCENE_APP()->GetEventDispatcher()->Detach(this->event_token_death_);
   SCENE_APP()->GetEventDispatcher()->Detach(this->event_token_lock_target_);
+  SCENE_APP()->GetEventDispatcher()->Detach(this->event_token_settle_);
 }
 
 void CombatEventHandler::OnEventCombatBegin(const ProtoMessage *data) {
@@ -154,12 +159,27 @@ void CombatEventHandler::OnEventCombatLockTarget(const ProtoMessage *data) {
 
   Warrior *warrior = scene->GetWarrior(event->warrior_id());
   if (warrior == NULL) {
-    MYSYA_ERROR("[SCENE] Scene::GetWarrior(%d) failed.", event->warrior_id());
+    MYSYA_ERROR("[SCENE] Scene::GetWarrior(%d) failed.",
+        event->warrior_id());
     return;
   }
 
   MoveAction *move_action = warrior->GetMoveAction();
   move_action->Finish(false);
+}
+
+void CombatEventHandler::OnEventCombatSettle(const ProtoMessage *data) {
+  const event::EventCombatSettle *event = (const event::EventCombatSettle *)data;
+
+  Scene *scene = SceneManager::GetInstance()->Remove(event->combat_id());
+  if (scene == NULL) {
+    MYSYA_ERROR("[SCENE] SceneManager::Remove(%d) failed.",
+        event->combat_id());
+    return;
+  }
+
+  scene->Finalize();
+  SceneManager::GetInstance()->Deallocate(scene);
 }
 
 #undef SCENE_APP

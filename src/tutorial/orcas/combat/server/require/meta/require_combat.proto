@@ -1,0 +1,6 @@
+package tutorial.orcas.combat.server.require;
+
+// REQUIRE_COMBAT_SETTLE
+message RequireCombatSettle {
+  required int32 combat_id = 1;                               // 战斗id       [IN]
+}

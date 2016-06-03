@@ -23,10 +23,12 @@ AppServer::AppServer(::mysya::ioevent::EventLoop *event_loop,
     combat_message_handler_(this),
     user_combat_message_handler_(this),
     combat_event_handler_(this),
+    require_handler_(this),
     apps_(this) {
   this->combat_message_handler_.SetMessageHandlers();
   this->user_combat_message_handler_.SetMessageHandlers();
   this->combat_event_handler_.SetHandlers();
+  this->require_handler_.SetHandlers();
 
   this->tcp_socket_app_.SetConnectionCallback(
       std::bind(&AppServer::OnConnected, this, std::placeholders::_1,
@@ -65,6 +67,7 @@ AppServer::~AppServer() {
   this->tcp_socket_app_.ResetCloseCallback();
   this->tcp_socket_app_.ResetErrorCallback();
 
+  this->require_handler_.ResetHandlers();
   this->combat_event_handler_.ResetHandlers();
   this->user_combat_message_handler_.ResetMessageHandlers();
   this->combat_message_handler_.ResetMessageHandlers();

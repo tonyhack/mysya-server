@@ -83,7 +83,8 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
 
   const CombatInitialData &initial_data = message->combat_initial_data();
 
-  if (combat_field->Initialize(initial_data.map_id(), this->app_server_, session) == false) {
+  if (combat_field->Initialize(initial_data.map_id(), initial_data.max_time(),
+        this->app_server_, session) == false) {
     MYSYA_ERROR("CombatField::Initialize() failed.");
     CombatFieldManager::GetInstance()->Deallocate(combat_field);
     SendMessageCombatDeployResponse(session, message->host_id(),
@@ -118,8 +119,6 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
         return;
       }
 
-      role_field->SetCampId(camp_data.id());
-
       if (role_field->Initialize(role_data.argent_id(), role_data.name(),
             this->app_server_) == false) {
         MYSYA_ERROR("CombatRoleField::Initialize() failed.");
@@ -131,6 +130,8 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
             COMBAT_DEPLOY_RESULT_TYPE_FAILURE);
         return;
       }
+
+      role_field->SetCampId(camp_data.id());
 
       if (CombatRoleFieldManager::GetInstance()->Add(role_field) == false) {
         MYSYA_ERROR("CombatRoleFieldManager::Add() failed.");
@@ -182,6 +183,7 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
         }
 
         combat_field->AddBuilding(building);
+        role_field->SetBuildingNum(role_field->GetBuildingNum() + 1);
       }
 
       combat_field->AddRole(role_field->GetArgentId());
@@ -274,6 +276,7 @@ void CombatMessageHandler::OnMessageCombatBeginRequest(
     return;
   }
 
+  combat_field->SetOverTimer();
   combat_field->SetBeginTimestamp(this->app_server_->GetTimestamp());
 
   event::EventCombatBegin combat_event;
