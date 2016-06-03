@@ -568,7 +568,8 @@ void Scene::PrintStatusImage() {
           camp_iter = camp_colors.insert(std::make_pair(fields.camp_id(), kCampColors[camp_colors_pos++])).first;
         }
         ::printf("%s", camp_iter->second.data());
-        ::printf("%c", warrior_iter->second);
+        // ::printf("%c", warrior_iter->second);
+        ::printf("%d", warrior->GetId());
         ::printf("\033[0m");
       } else if (grid->GetWalkable() == false) {
         ::printf("%c", kBlockSymbol);

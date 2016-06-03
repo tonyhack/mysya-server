@@ -44,18 +44,11 @@ void AutoStatusAttack::Start() {
   event.set_warrior_id(this->host_->GetId());
   *event.mutable_target() = this->host_->GetTarget();
   AiApp::GetInstance()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_LOCK_TARGET, &event);
-
-/*
-  if (this->host_->AttackTarget() == false) {
-    MYSYA_ERROR("[AI] Auto::AttackTarget() failed.");
-    this->GotoStatus(AutoStatus::SEARCH);
-    return;
-  }
-  */
 }
 
 void AutoStatusAttack::Stop() {
   this->ResetAttackTimer();
+  this->host_->ResetTarget();
 }
 
 AutoStatus::type AutoStatusAttack::GetType() const {

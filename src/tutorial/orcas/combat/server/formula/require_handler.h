@@ -43,8 +43,8 @@ class RequireHandler {
   void SendEventCombatAttack(int32_t combat_id, int32_t warrior_id,
       const ::protocol::CombatEntity &target, int32_t damage);
 
-  int FormulaDamage(CombatWarriorField *active, CombatWarriorField *passive);
-  int FormulaDamage(CombatWarriorField *active, CombatBuildingField *passive);
+  int FormulaWarriorDamage(CombatWarriorField *active, CombatWarriorField *passive);
+  int FormulaBuildingDamage(CombatWarriorField *active, CombatBuildingField *passive);
 
   int OnRequireFormulaAttack(ProtoMessage *data);
 

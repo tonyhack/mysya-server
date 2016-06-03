@@ -40,7 +40,7 @@ bool Auto::Initialize(CombatWarriorField *host) {
 }
 
 void Auto::Finalize() {
-  this->present_status_->Stop();
+  this->StopPresentStatus();
   this->present_status_ = NULL;
 
   this->ResetTarget();
@@ -153,15 +153,11 @@ bool Auto::GotoStatus(int status) {
         this->GetCombatId(), this->present_status_->GetType(),
         goto_status->GetType());
 
-    this->present_status_->Stop();
-    EventObserver::GetInstance()->Add(this->GetCombatId(),
-        this->GetId(), this->GetId());
+    this->StopPresentStatus();
   }
 
   this->present_status_ = goto_status;
-  this->present_status_->Start();
-  EventObserver::GetInstance()->Add(this->GetCombatId(),
-      this->GetId(), this->GetId());
+  this->StartPresentStatus();
 
   return true;
 }
@@ -291,6 +287,10 @@ bool Auto::AttackTarget() {
     return false;
   }
 
+  MYSYA_DEBUG("[AI] Attack {warrior[camp(%d),id(%d)]} => {target[type(%d),id(%d)]}.",
+      this->host_->GetFields().camp_id(), this->GetId(),
+      this->target_.type(), this->target_.id());
+
   require::RequireFormulaAttack require_message;
   require_message.set_combat_id(combat_field->GetId());
   require_message.set_warrior_id(this->GetId());
@@ -301,11 +301,19 @@ bool Auto::AttackTarget() {
     return false;
   }
 
-  MYSYA_DEBUG("[AI] Attack {warrior[camp(%d),id(%d)]} => {target[type(%d),id(%d)]}.",
-      this->host_->GetFields().camp_id(), this->GetId(),
-      this->target_.type(), this->target_.id());
-
   return true;
+}
+
+void Auto::StartPresentStatus() {
+  EventObserver::GetInstance()->Add(this->GetCombatId(),
+      this->GetId(), this->GetId());
+  this->present_status_->Start();
+}
+
+void Auto::StopPresentStatus() {
+  this->present_status_->Stop();
+  EventObserver::GetInstance()->Remove(this->GetCombatId(),
+      this->GetId(), this->GetId());
 }
 
 }  // namespace ai

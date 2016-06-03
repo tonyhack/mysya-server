@@ -23,7 +23,7 @@ namespace ai {
 
 AutoStatusChase::AutoStatusChase(Auto *host)
   : AutoStatus(host), refind_path_(false),
-    timer_id_refind_path_(-1) {
+  timer_id_refind_path_(-1) {
   this->AttachEvent(event::EVENT_SCENE_MOVE_STEP, std::bind(
         &AutoStatusChase::OnEventSceneMoveStep, this, std::placeholders::_1));
   this->AttachEvent(event::EVENT_COMBAT_DEATH, std::bind(

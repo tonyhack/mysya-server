@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <unordered_map>
+#include <vector>
 
 #include <mysya/util/class_util.h>
 
@@ -46,6 +47,9 @@ class EventObserver {
   typedef std::set<int32_t> AutoSet;
   typedef std::unordered_map<ObserverKey, AutoSet, ObserverKeyHash>
           ObserverHashmap;
+  typedef std::pair<ObserverKey, int32_t> PendingRemoveAuto;
+  typedef std::vector<PendingRemoveAuto> PendingRemoveAutoVector;
+
 
   void Add(int32_t combat_id, int32_t entity_id, int32_t auto_id);
   void Remove(int32_t combat_id, int32_t entity_id, int32_t auto_id);
@@ -53,7 +57,12 @@ class EventObserver {
       const ProtoMessage *data);
 
  private:
+  void PendingRemove(int32_t combat_id, int32_t entity_id, int32_t auto_id);
+
+  bool dispatching_;
+
   ObserverHashmap observers_;
+  PendingRemoveAutoVector pending_removes_;
 
   MYSYA_SINGLETON(EventObserver);
 };

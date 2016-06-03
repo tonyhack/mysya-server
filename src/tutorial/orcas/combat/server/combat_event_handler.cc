@@ -89,8 +89,8 @@ void CombatEventHandler::OnEventCombatMoveAction(const ProtoMessage *data) {
 void CombatEventHandler::OnEventCombatDeath(const ProtoMessage *data) {
   const event::EventCombatDeath *event = (const event::EventCombatDeath *)data;
 
-  CombatField *combat_field =
-    CombatFieldManager::GetInstance()->Get(event->combat_id());
+  CombatField *combat_field = CombatFieldManager::GetInstance()->Get(
+      event->combat_id());
   if (combat_field == NULL) {
     MYSYA_ERROR("CombatFieldManager::Get(%d) failed.", event->combat_id());
     return;

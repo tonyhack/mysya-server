@@ -8,6 +8,7 @@
 #include "tutorial/orcas/combat/server/combat_field.h"
 #include "tutorial/orcas/combat/server/combat_field_manager.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
 #include "tutorial/orcas/combat/server/event_dispatcher.h"
 #include "tutorial/orcas/combat/server/event/cc/event.pb.h"
 #include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
@@ -81,13 +82,13 @@ void RequireHandler::SendEventCombatAttack(int32_t combat_id, int32_t warrior_id
   FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_ATTACKED, &event2);
 }
 
-int RequireHandler::FormulaDamage(CombatWarriorField *active,
+int RequireHandler::FormulaWarriorDamage(CombatWarriorField *active,
     CombatWarriorField *passive) {
   ::protocol::CombatWarriorFields &active_fields = active->GetFields();
   ::protocol::CombatWarriorFields &passive_fields = passive->GetFields();
 
   int damage = active_fields.attack() - passive_fields.defence();
-  if (damage <= 0) {
+  if (damage < 1) {
     damage = 1;
   }
 
@@ -100,13 +101,13 @@ int RequireHandler::FormulaDamage(CombatWarriorField *active,
   return passive_fields.hp();
 }
 
-int RequireHandler::FormulaDamage(CombatWarriorField *active,
+int RequireHandler::FormulaBuildingDamage(CombatWarriorField *active,
     CombatBuildingField *passive) {
   ::protocol::CombatWarriorFields &active_fields = active->GetFields();
   ::protocol::CombatBuildingFields &passive_fields = passive->GetFields();
 
   int damage = active_fields.attack();
-  if (damage <= 0) {
+  if (damage < 1) {
     damage = 1;
   }
 
@@ -149,9 +150,9 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
       return -1;
     }
 
-    damage = this->FormulaDamage(combat_warrior_field, target_combat_warrior_field);
+    damage = this->FormulaWarriorDamage(combat_warrior_field, target_combat_warrior_field);
     if (damage < 0) {
-      MYSYA_DEBUG("[FORMULA] FormulaDamage() failed.");
+      MYSYA_DEBUG("[FORMULA] FormulaWarriorDamage() failed.");
       return -1;
     }
 
@@ -162,6 +163,10 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
       MYSYA_DEBUG("[FORMULA] warrior(%d) dead.", target_combat_warrior_field->GetId());
       this->SendEventCombatDeath(message->combat_id(), message->warrior_id(),
           message->target());
+
+      combat_field->RemoveWarrior( message->target().id());
+      target_combat_warrior_field->Finalize();
+      CombatWarriorFieldPool::GetInstance()->Deallocate(target_combat_warrior_field);
     }
 
     return 0;
@@ -174,9 +179,9 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
       return -1;
     }
 
-    damage = this->FormulaDamage(combat_warrior_field, target_combat_building_field);
+    damage = this->FormulaBuildingDamage(combat_warrior_field, target_combat_building_field);
     if (damage < 0) {
-      MYSYA_DEBUG("[FORMULA] FormulaDamage() failed.");
+      MYSYA_DEBUG("[FORMULA] FormulaBuildingDamage() failed.");
       return -1;
     }
 

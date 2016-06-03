@@ -29,10 +29,6 @@ void AutoStatusSearch::Start() {
   this->timer_id_search_ =
     AiApp::GetInstance()->GetHost()->StartTimer(kSearchExpireMsec_,
       std::bind(&AutoStatusSearch::OnTimerSearch, this, std::placeholders::_1));
-
-  if (this->host_->SearchTarget() == true) {
-    this->GotoStatus(AutoStatus::CHASE);
-  }
 }
 
 void AutoStatusSearch::Stop() {
