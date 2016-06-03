@@ -162,6 +162,8 @@ void CombatEventHandler::OnEventCombatConvertCamp(const ProtoMessage *data) {
   ::protocol::CombatConvertCampAction *convert_camp_action =
     action.mutable_convert_camp_action();
   *convert_camp_action->mutable_host() = event->host();
+  convert_camp_action->set_camp_id(event->camp_id());
+  convert_camp_action->set_host_id(event->host_id());
 
   combat_field->PushAction(action);
 

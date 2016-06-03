@@ -55,12 +55,30 @@ void RequireHandler::SendEventCombatDeath(int32_t combat_id,
 }
 
 void RequireHandler::SendEventCombatConvertCamp(int32_t combat_id,
-    int32_t camp_id, const ::protocol::CombatEntity &host) {
-    event::EventCombatConvertCamp event;
-    event.set_combat_id(combat_id);
-    *event.mutable_host() = host;
-    event.set_camp_id(camp_id);
-    FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_CONVERT_CAMP, &event);
+    int32_t camp_id, int32_t host_id, const ::protocol::CombatEntity &host) {
+  event::EventCombatConvertCamp event;
+  event.set_combat_id(combat_id);
+  *event.mutable_host() = host;
+  event.set_camp_id(camp_id);
+  event.set_host_id(host_id);
+  FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_CONVERT_CAMP, &event);
+}
+
+void RequireHandler::SendEventCombatAttack(int32_t combat_id, int32_t warrior_id,
+    const ::protocol::CombatEntity &target, int32_t damage) {
+  event::EventCombatAttack event1;
+  event1.set_combat_id(combat_id);
+  event1.set_warrior_id(warrior_id);
+  *event1.mutable_target() = target;
+  event1.set_damage(damage);
+  FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_ATTACK, &event1);
+
+  event::EventCombatAttacked event2;
+  event2.set_combat_id(combat_id);
+  event2.set_warrior_id(warrior_id);
+  *event2.mutable_host() = target;
+  event2.set_damage(damage);
+  FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_ATTACKED, &event2);
 }
 
 int RequireHandler::FormulaDamage(CombatWarriorField *active,
@@ -120,6 +138,8 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
     return -1;
   }
 
+  int damage = 0;
+
   if (message->target().type() == ::protocol::COMBAT_ENTITY_TYPE_WARRIOR) {
     CombatWarriorField *target_combat_warrior_field = combat_field->GetWarrior(
         message->target().id());
@@ -129,7 +149,14 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
       return -1;
     }
 
-    this->FormulaDamage(combat_warrior_field, target_combat_warrior_field);
+    damage = this->FormulaDamage(combat_warrior_field, target_combat_warrior_field);
+    if (damage < 0) {
+      MYSYA_DEBUG("[FORMULA] FormulaDamage() failed.");
+      return -1;
+    }
+
+    this->SendEventCombatAttack(message->combat_id(), message->warrior_id(),
+        message->target(), damage);
 
     if (target_combat_warrior_field->GetFields().hp() <= 0) {
       MYSYA_DEBUG("[FORMULA] warrior(%d) dead.", target_combat_warrior_field->GetId());
@@ -147,15 +174,25 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
       return -1;
     }
 
-    this->FormulaDamage(combat_warrior_field, target_combat_building_field);
+    damage = this->FormulaDamage(combat_warrior_field, target_combat_building_field);
+    if (damage < 0) {
+      MYSYA_DEBUG("[FORMULA] FormulaDamage() failed.");
+      return -1;
+    }
+
+    this->SendEventCombatAttack(message->combat_id(), message->warrior_id(),
+        message->target(), damage);
 
     if (target_combat_building_field->GetFields().hp() <= 0) {
       // convert building's camp_id.
       target_combat_building_field->GetFields().set_camp_id(
           combat_warrior_field->GetFields().camp_id());
+      target_combat_building_field->GetFields().set_host_id(
+          combat_warrior_field->GetFields().host_id());
       // send event.
       this->SendEventCombatConvertCamp(message->combat_id(),
-          target_combat_building_field->GetFields().camp_id(), message->target());
+          target_combat_building_field->GetFields().camp_id(),
+          combat_warrior_field->GetFields().host_id(), message->target());
     }
 
     return 0;

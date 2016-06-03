@@ -22,6 +22,7 @@ class AutoStatusSearch : public AutoStatus {
 
  private:
   void OnTimerSearch(int64_t timer_id);
+  void OnEventCombatAttacked(const ProtoMessage *data);
 
   static const int kSearchExpireMsec_ = 200;
 

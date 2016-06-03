@@ -154,10 +154,14 @@ bool Auto::GotoStatus(int status) {
         goto_status->GetType());
 
     this->present_status_->Stop();
+    EventObserver::GetInstance()->Add(this->GetCombatId(),
+        this->GetId(), this->GetId());
   }
 
   this->present_status_ = goto_status;
   this->present_status_->Start();
+  EventObserver::GetInstance()->Add(this->GetCombatId(),
+      this->GetId(), this->GetId());
 
   return true;
 }

@@ -60,6 +60,7 @@ message CombatDeathAction {
 message CombatConvertCampAction {
   required .protocol.CombatEntity host = 1;                     // 主体
   required int32 camp_id = 2;                                   // 阵营id
+  required int32 host_id = 3;                                   // 宿主id(战斗角色id)
 }
 
 // 行动指令

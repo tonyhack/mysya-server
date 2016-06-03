@@ -38,4 +38,21 @@ message EventCombatConvertCamp {
   required int32 combat_id = 1;                               // 战斗id
   required .protocol.CombatEntity host = 2;                   // 主体
   required int32 camp_id = 3;                                 // 当前阵营id
+  required int32 host_id = 4;                                 // 宿主id(战斗角色id)
+}
+
+// EVENT_COMBAT_ATTACK
+message EventCombatAttack {
+  required int32 combat_id = 1;                               // 战斗id
+  required int32 warrior_id = 2;                              // 士兵id
+  required .protocol.CombatEntity target = 3;                 // 目标
+  required int32 damage = 4;                                  // 伤害值
+}
+
+// EVENT_COMBAT_ATTACKED
+message EventCombatAttacked {
+  required int32 combat_id = 1;                               // 战斗id
+  required int32 warrior_id = 2;                              // 士兵id
+  required .protocol.CombatEntity host = 3;                   // 目标
+  required int32 damage = 4;                                  // 伤害值
 }

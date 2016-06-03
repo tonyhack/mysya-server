@@ -28,7 +28,8 @@ namespace ai {
 CombatEventHandler::CombatEventHandler()
   : event_token_build_action_(0),
     event_token_death_(0),
-    event_token_convert_camp_(0) {}
+    event_token_convert_camp_(0),
+    event_token_combat_attacked_(0) {}
 CombatEventHandler::~CombatEventHandler() {}
 
 #define EVENT_DISPATCHER \
@@ -44,6 +45,9 @@ bool CombatEventHandler::Initialize() {
   this->event_token_convert_camp_ =
     EVENT_DISPATCHER()->Attach(event::EVENT_COMBAT_CONVERT_CAMP, std::bind(
           &CombatEventHandler::OnEventCombatConvertCamp, this, std::placeholders::_1));
+  this->event_token_combat_attacked_ =
+    EVENT_DISPATCHER()->Attach(event::EVENT_COMBAT_ATTACKED, std::bind(
+          &CombatEventHandler::OnEventCombatAttacked, this, std::placeholders::_1));
 
   return true;
 
@@ -120,6 +124,14 @@ void CombatEventHandler::OnEventCombatConvertCamp(const ProtoMessage *data) {
   const event::EventCombatConvertCamp *event = (const event::EventCombatConvertCamp *)data;
   EventObserver::GetInstance()->Dispatch(event->combat_id(), event->host().id(),
       event::EVENT_COMBAT_CONVERT_CAMP, event);
+}
+
+void CombatEventHandler::OnEventCombatAttacked(const ProtoMessage *data) {
+  const event::EventCombatAttacked *event = (const event::EventCombatAttacked *)data;
+  if (event->host().type() == ::protocol::COMBAT_ENTITY_TYPE_WARRIOR) {
+    EventObserver::GetInstance()->Dispatch(event->combat_id(), event->host().id(),
+        event::EVENT_COMBAT_ATTACKED, event);
+  }
 }
 
 #undef AI_APP
