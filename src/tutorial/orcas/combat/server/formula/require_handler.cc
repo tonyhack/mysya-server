@@ -63,8 +63,8 @@ void RequireHandler::SendEventCombatConvertCamp(int32_t combat_id,
   *event.mutable_host() = host;
   event.set_camp_id(camp_id);
   event.set_host_id(host_id);
-  event.set_original_camp_id(camp_id);
-  event.set_original_host_id(host_id);
+  event.set_original_camp_id(original_camp_id);
+  event.set_original_host_id(original_host_id);
   FORMULA_APP()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_CONVERT_CAMP, &event);
 }
 
@@ -205,9 +205,20 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
       // send event.
       this->SendEventCombatConvertCamp(message->combat_id(), original_camp_id,
           original_host_id, target_combat_building_field->GetFields().camp_id(),
-          combat_warrior_field->GetFields().host_id(), message->target());
+          target_combat_building_field->GetFields().host_id(), message->target());
 
       // TODO: check if can settlement?
+      std::set<int32_t> building_camps;
+      typedef CombatField::BuildingFieldMap BuildingFieldMap;
+      const BuildingFieldMap &combat_buildings = combat_field->GetBuildings();
+      for (BuildingFieldMap::const_iterator iter = combat_buildings.begin();
+          iter != combat_buildings.end(); ++iter) {
+        CombatBuildingField *combat_building_field = iter->second;
+        building_camps.insert(combat_building_field->GetFields().camp_id());
+      }
+      if (building_camps.size() == 1) {
+        combat_field->RequireSettle();
+      }
     }
 
     return 0;

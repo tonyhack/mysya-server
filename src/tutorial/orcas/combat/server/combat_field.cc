@@ -42,7 +42,7 @@ bool CombatField::Initialize(int32_t map_id, int32_t max_time,
 }
 
 void CombatField::Finalize() {
-  this->ResetOverTimer();
+  this->ResetSettleTimer();
 
   if (this->app_session_ != NULL) {
     this->app_session_->Remove(this);
@@ -81,12 +81,12 @@ void CombatField::Finalize() {
   this->app_server_ = NULL;
 }
 
-void CombatField::SetOverTimer() {
+void CombatField::SetSettleTimer() {
   this->timer_id_over_ = this->app_server_->StartTimer(this->max_time_ * 1000,
-      std::bind(&CombatField::OnTimerOver, this, std::placeholders::_1), 1);
+      std::bind(&CombatField::OnTimerSettle, this, std::placeholders::_1), 1);
 }
 
-void CombatField::ResetOverTimer() {
+void CombatField::ResetSettleTimer() {
   if (this->timer_id_over_ != -1) {
     this->app_server_->StopTimer(this->timer_id_over_);
     this->timer_id_over_ = -1;
@@ -264,6 +264,19 @@ const ::protocol::CombatActionSequence &CombatField::GetActions() const {
   return this->actions_;
 }
 
+bool CombatField::RequireSettle() {
+  require::RequireCombatSettle message;
+  message.set_combat_id(this->GetId());
+  if (this->app_server_->GetRequireDispatcher()->Dispatch(
+        require::REQUIRE_COMBAT_SETTLE, &message) == -1) {
+    MYSYA_ERROR("REQUIRE_COMBAT_SETTLE combat_id(%d) failed.",
+        this->GetId());
+    return false;
+  }
+
+  return true;
+}
+
 void CombatField::ExportStatusImage(::protocol::CombatStatusImage &image) const {
   for (BuildingFieldMap::const_iterator iter = this->buildings_.begin();
       iter != this->buildings_.end(); ++iter) {
@@ -291,15 +304,8 @@ void CombatField::ExportStatusImage(::protocol::CombatStatusImage &image) const 
   }
 }
 
-void CombatField::OnTimerOver(int32_t id) {
-  require::RequireCombatSettle message;
-  message.set_combat_id(this->GetId());
-  if (this->app_server_->GetRequireDispatcher()->Dispatch(
-        require::REQUIRE_COMBAT_SETTLE, &message) == -1) {
-    MYSYA_ERROR("REQUIRE_COMBAT_SETTLE combat_id(%d) failed.",
-        this->GetId());
-    return;
-  }
+void CombatField::OnTimerSettle(int32_t id) {
+  this->RequireSettle();
 }
 
 }  // namespace server

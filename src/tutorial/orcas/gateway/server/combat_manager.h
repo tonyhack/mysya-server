@@ -106,7 +106,7 @@ class CombatManager {
   void AddPendingCombatActor(CombatActor *actor);
   void RemovePendingCombatActor(CombatActor *actor);
 
-  static const int32_t kCombatMaxTime_ = 30;
+  static const int32_t kCombatMaxTime_ = 240;
 
   int32_t id_allocator_;
   PendingCombatActorSet pending_combat_actors_;

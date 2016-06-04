@@ -276,7 +276,7 @@ void CombatMessageHandler::OnMessageCombatBeginRequest(
     return;
   }
 
-  combat_field->SetOverTimer();
+  combat_field->SetSettleTimer();
   combat_field->SetBeginTimestamp(this->app_server_->GetTimestamp());
 
   event::EventCombatBegin combat_event;

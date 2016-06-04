@@ -43,8 +43,8 @@ class CombatField {
       AppSession *session);
   void Finalize();
 
-  void SetOverTimer();
-  void ResetOverTimer();
+  void SetSettleTimer();
+  void ResetSettleTimer();
 
   int32_t GetId() const;
   void SetId(int32_t value);
@@ -82,10 +82,12 @@ class CombatField {
   void PushAction(const ::protocol::CombatAction &action);
   const ::protocol::CombatActionSequence &GetActions() const;
 
+  bool RequireSettle();
+
   void ExportStatusImage(::protocol::CombatStatusImage &image) const;
 
  private:
-  void OnTimerOver(int32_t id);
+  void OnTimerSettle(int32_t id);
 
   int32_t id_;
   int32_t map_id_;

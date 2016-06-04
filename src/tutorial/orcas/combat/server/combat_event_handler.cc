@@ -148,21 +148,23 @@ void CombatEventHandler::OnEventCombatConvertCamp(const ProtoMessage *data) {
     return;
   }
 
-  CombatRoleField *combat_role_field =
-    CombatRoleFieldManager::GetInstance()->Get(event->host_id());
-  if (combat_role_field == NULL) {
-    MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->host_id());
-    return;
-  }
-  combat_role_field->SetBuildingNum(combat_role_field->GetBuildingNum() - 1);
+  if (event->host().type() == ::protocol::COMBAT_ENTITY_TYPE_BUILDING) {
+    CombatRoleField *combat_role_field =
+      CombatRoleFieldManager::GetInstance()->Get(event->host_id());
+    if (combat_role_field == NULL) {
+      MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->host_id());
+      return;
+    }
+    combat_role_field->SetBuildingNum(combat_role_field->GetBuildingNum() + 1);
 
-  CombatRoleField *original_combat_role_field =
-    CombatRoleFieldManager::GetInstance()->Get(event->original_host_id());
-  if (original_combat_role_field == NULL) {
-    MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->original_host_id());
-    return;
+    CombatRoleField *original_combat_role_field =
+      CombatRoleFieldManager::GetInstance()->Get(event->original_host_id());
+    if (original_combat_role_field == NULL) {
+      MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->original_host_id());
+      return;
+    }
+    original_combat_role_field->SetBuildingNum(original_combat_role_field->GetBuildingNum() - 1);
   }
-  original_combat_role_field->SetBuildingNum(original_combat_role_field->GetBuildingNum() + 1);
 
   ::protocol::CombatAction action;
   action.set_type(::protocol::COMBAT_ACTION_TYPE_CONVERT_CAMP);
