@@ -218,6 +218,8 @@ int RequireHandler::OnRequireFormulaAttack(ProtoMessage *data) {
       }
       if (building_camps.size() == 1) {
         combat_field->RequireSettle();
+      } else {
+        MYSYA_DEBUG("[FORMULA] building_camps.size(%d).", building_camps.size());
       }
     }
 

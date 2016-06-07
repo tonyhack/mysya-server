@@ -130,20 +130,28 @@ void Combat::SendMessage(const ::google::protobuf::Message &message) {
 void Combat::BroadcastMessage(int type, const std::string &data) {
   if (this->al_ != NULL && this->al_->GetActor() != NULL) {
     this->al_->GetActor()->SendMessage(type, data);
+  } else {
+    MYSYA_ERROR("al actor is null.");
   }
 
   if (this->ar_ != NULL && this->ar_->GetActor() != NULL) {
     this->ar_->GetActor()->SendMessage(type, data);
+  } else {
+    MYSYA_ERROR("ar actor is null.");
   }
 }
 
 void Combat::BroadcastMessage(int type, const ::google::protobuf::Message &message) {
   if (this->al_ != NULL && this->al_->GetActor() != NULL) {
     this->al_->GetActor()->SendMessage(type, message);
+  } else {
+    MYSYA_ERROR("al actor is null.");
   }
 
   if (this->ar_ != NULL && this->ar_->GetActor() != NULL) {
     this->ar_->GetActor()->SendMessage(type, message);
+  } else {
+    MYSYA_ERROR("ar actor is null.");
   }
 }
 

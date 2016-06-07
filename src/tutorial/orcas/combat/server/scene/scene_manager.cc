@@ -70,7 +70,7 @@ bool SceneManager::LoadConfig(const std::string &file) {
 
       attr = field_node->GetText();
       if (attr == NULL) {
-        MYSYA_ERROR("Config(%s) /return/row/field[text] null.",
+        MYSYA_ERROR("Config(%s) /resultset/row/field[text] null.",
             file.data());
         return false;
       }

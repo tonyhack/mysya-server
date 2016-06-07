@@ -282,6 +282,8 @@ void CombatMessageHandler::OnMessageCombatArgentSync(TransportChannel *channel,
 
 void CombatMessageHandler::OnMessageCombatSettlementSync(TransportChannel *channel,
     const ProtoMessage *data) {
+  MYSYA_DEBUG("CombatMessageHandler::OnMessageCombatSettlementSync.");
+
   client::CombatSession *session = (client::CombatSession *)channel;
   protocol::MessageCombatSettlementSync *message =
     (protocol::MessageCombatSettlementSync *)data;

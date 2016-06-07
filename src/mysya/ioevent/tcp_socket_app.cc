@@ -661,7 +661,7 @@ void TcpSocketApp::OnSocketWrite(EventChannel *event_channel) {
   DynamicBuffer *send_buffer = connection->GetSendBuffer();
 
   int send_bytes = send_buffer->ReadableBytes();
-  if (send_bytes < 0) {
+  if (send_bytes <= 0) {
     return;
   }
 
