@@ -88,6 +88,14 @@ void UserMessageHandler::OnMessageLoginRequest(Actor *actor,
   actor->SetCombatActor(combat_actor);
 
   SendMessageLoginResponse(actor, true);
+
+  Combat *combat = combat_actor->GetCombat();
+  if (combat != NULL) {
+    ::tutorial::orcas::combat::protocol::MessageCombatReconnectRequest reconnect_request;
+    reconnect_request.set_role_argent_id(combat_actor->GetCombatArgentId());
+    reconnect_request.set_combat_id(combat->GetCombatArgentId());
+    combat->SendMessage(reconnect_request);
+  }
 }
 
 static void SendMessageCombatResponse(Actor *actor, bool result) {

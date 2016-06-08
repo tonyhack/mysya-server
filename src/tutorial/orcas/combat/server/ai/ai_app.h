@@ -4,6 +4,7 @@
 #include <mysya/util/class_util.h>
 
 #include "tutorial/orcas/combat/server/ai/combat_event_handler.h"
+#include "tutorial/orcas/combat/server/ai/require_handler.h"
 #include "tutorial/orcas/combat/server/ai/scene_event_handler.h"
 #include "tutorial/orcas/combat/server/ai/vote_handler.h"
 
@@ -32,6 +33,7 @@ class AiApp {
  private:
   AppServer *host_;
   CombatEventHandler combat_event_handler_;
+  RequireHandler require_handler_;
   SceneEventHandler scene_event_handler_;
   VoteHandler vote_handler_;
 

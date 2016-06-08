@@ -9,6 +9,7 @@
 #include "tutorial/orcas/combat/server/combat_field_manager.h"
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/require/cc/require.pb.h"
+#include "tutorial/orcas/combat/server/require/cc/require_combat.pb.h"
 #include "tutorial/orcas/combat/server/require/cc/require_scene.pb.h"
 #include "tutorial/orcas/combat/server/scene/building.h"
 #include "tutorial/orcas/combat/server/scene/entity_builder.h"
@@ -43,6 +44,8 @@ bool RequireHandler::Initialize() {
         &RequireHandler::OnRequireSceneMove, this, std::placeholders::_1));
   REQUIRE_DISPATCHER()->Attach(require::REQUIRE_SCENE_FETCH, std::bind(
         &RequireHandler::OnRequireSceneFetch, this, std::placeholders::_1));
+  REQUIRE_DISPATCHER()->Attach(require::REQUIRE_COMBAT_MOVE_PATHS, std::bind(
+        &RequireHandler::OnRequireCombatMovePaths, this, std::placeholders::_1));
 
   return true;
 }
@@ -51,6 +54,7 @@ void RequireHandler::Finalize() {
   REQUIRE_DISPATCHER()->Detach(require::REQUIRE_SCENE_BUILD);
   REQUIRE_DISPATCHER()->Detach(require::REQUIRE_SCENE_MOVE);
   REQUIRE_DISPATCHER()->Detach(require::REQUIRE_SCENE_FETCH);
+  REQUIRE_DISPATCHER()->Detach(require::REQUIRE_COMBAT_MOVE_PATHS);
 }
 
 #undef REQUIRE_DISPATCHER
@@ -167,8 +171,7 @@ int RequireHandler::OnRequireSceneFetch(ProtoMessage *data) {
 
   Scene *scene = SceneManager::GetInstance()->Get(message->combat_id());
   if (scene == NULL) {
-    MYSYA_ERROR("[SCENE] SceneManager::GetInstance()->Get(%d) failed.",
-        message->combat_id());
+    MYSYA_ERROR("[SCENE] SceneManager::Get(%d) failed.", message->combat_id());
     return -1;
   }
 
@@ -204,6 +207,50 @@ int RequireHandler::OnRequireSceneFetch(ProtoMessage *data) {
 
     message->add_warrior(warrior->GetId());
   }
+
+  return 0;
+}
+
+int RequireHandler::OnRequireCombatMovePaths(ProtoMessage *data) {
+  require::RequireCombatMovePaths *message = (require::RequireCombatMovePaths *)data;
+
+  Scene *scene = SceneManager::GetInstance()->Get(message->combat_id());
+  if (scene == NULL) {
+    MYSYA_ERROR("[SCENE] SceneManager::Get(%d) failed.", message->combat_id());
+    return -1;
+  }
+
+  Warrior *warrior = scene->GetWarrior(message->warrior_id());
+  if (warrior == NULL) {
+    MYSYA_ERROR("[SCENE] Scene::GetWarrior(%d) failed.", message->warrior_id());
+    return -1;
+  }
+
+  MoveAction *move_action = warrior->GetMoveAction();
+  if (move_action == NULL) {
+    MYSYA_ERROR("[SCENE] Warrior::GetMoveAction() failed.");
+    return -1;
+  }
+
+  if (move_action->GetMoveStatus() == false) {
+    message->set_move_status(false);
+    return 0;
+  }
+
+  int path_index = move_action->GetPathIndex();
+
+  typedef MoveAction::PositionVector PositionVector;
+  const PositionVector &paths = move_action->GetPaths();
+  if (paths.size() <= (size_t)path_index) {
+    MYSYA_ERROR("[SCENE] MoveAction::GetPaths() error.");
+    return -1;
+  }
+
+  for (size_t i = path_index; i < paths.size(); ++i) {
+    *message->add_path() = paths[i];
+  }
+
+  message->set_move_status(true);
 
   return 0;
 }

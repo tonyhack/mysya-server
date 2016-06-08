@@ -1,6 +1,25 @@
+import "combat.proto";
+import "position.proto";
+
 package tutorial.orcas.combat.server.require;
 
 // REQUIRE_COMBAT_SETTLE
 message RequireCombatSettle {
   required int32 combat_id = 1;                               // 战斗id       [IN]
+}
+
+// REQUIRE_COMBAT_MOVE_PATHS
+message RequireCombatMovePaths {
+  required int32 combat_id = 1;                               // 战斗id       [IN]
+  required int32 warrior_id = 2;                              // 士兵id       [IN]
+  required bool move_status = 3;                              // 移动状态     [OUT]
+  repeated .protocol.Position path = 4;                       // 路径         [OUT]
+}
+
+// REQUIRE_COMBAT_ATTACKING_TARGET
+message RequireCombatAttackingTarget {
+  required int32 combat_id = 1;                               // 战斗id       [IN]
+  required int32 warrior_id = 2;                              // 士兵id       [IN]
+  required bool attack_status = 3;                            // 攻击状态     [OUT]
+  optional .protocol.CombatEntity target = 4;                 // 目标         [OUT]
 }

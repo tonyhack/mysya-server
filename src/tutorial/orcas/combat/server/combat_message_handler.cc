@@ -37,6 +37,10 @@ void CombatMessageHandler::SetMessageHandlers() {
       std::bind(&CombatMessageHandler::OnMessageCombatConnectArgentRequest,
         this, std::placeholders::_1, std::placeholders::_2));
   this->app_server_->GetMessageDispatcher()->SetMessageCallback(
+      MessageCombatReconnectRequest().GetTypeName(),
+      std::bind(&CombatMessageHandler::OnMessageCombatReconnectRequest,
+        this, std::placeholders::_1, std::placeholders::_2));
+  this->app_server_->GetMessageDispatcher()->SetMessageCallback(
       MessageCombatBeginRequest().GetTypeName(),
       std::bind(&CombatMessageHandler::OnMessageCombatBeginRequest,
         this, std::placeholders::_1, std::placeholders::_2));
@@ -51,6 +55,8 @@ void CombatMessageHandler::ResetMessageHandlers() {
       MessageCombatDeployRequest().GetTypeName());
   this->app_server_->GetMessageDispatcher()->ResetMessageCallback(
       MessageCombatConnectArgentRequest().GetTypeName());
+  this->app_server_->GetMessageDispatcher()->ResetMessageCallback(
+      MessageCombatReconnectRequest().GetTypeName());
   this->app_server_->GetMessageDispatcher()->ResetMessageCallback(
       MessageCombatBeginRequest().GetTypeName());
   this->app_server_->GetMessageDispatcher()->ResetMessageCallback(
@@ -251,6 +257,39 @@ void CombatMessageHandler::OnMessageCombatConnectArgentRequest(
   role_field->SetAppSession(session);
 
   response_message.set_ret_code(MessageCombatConnectArgentResponse::ERROR_CODE_COMPLETE);
+  session->SendMessage(response_message);
+}
+
+void CombatMessageHandler::OnMessageCombatReconnectRequest(
+    ::tutorial::orcas::combat::TransportChannel *channel,
+    const ::google::protobuf::Message *message_pb) {
+  AppSession *session = (AppSession *)channel;
+  const MessageCombatReconnectRequest *message =
+    (const MessageCombatReconnectRequest *)message_pb;
+
+  MessageCombatReconnectResponse response_message;
+  response_message.set_role_argent_id(message->role_argent_id());
+  response_message.set_combat_id(message->combat_id());
+
+  CombatRoleField *role_field = 
+    CombatRoleFieldManager::GetInstance()->Get(message->role_argent_id());
+  if (role_field == NULL) {
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", message->role_argent_id());
+    response_message.set_ret_code(MessageCombatReconnectResponse::ERROR_CODE_FAILURE);
+    return;
+  }
+
+  CombatField *combat_field = CombatFieldManager::GetInstance()->Get(message->combat_id());
+  if (combat_field == NULL) {
+    MYSYA_ERROR("CombatFieldManager::Get(%d) failed.", message->combat_id());
+    response_message.set_ret_code(MessageCombatReconnectResponse::ERROR_CODE_FAILURE);
+    return;
+  }
+
+  role_field->SetAppSession(session);
+
+  response_message.set_ret_code(MessageCombatReconnectResponse::ERROR_CODE_COMPLETE);
+  combat_field->ExportStatusImage(*response_message.mutable_status_image());
   session->SendMessage(response_message);
 }
 

@@ -16,7 +16,8 @@ class Combat;
 
 class CombatActor {
  public:
-  typedef std::map<int32_t, ::protocol::WarriorDescription> WarriorDescriptionMap;
+  typedef std::map<int32_t, ::protocol::WarriorDescription>
+    WarriorDescriptionMap;
 
   explicit CombatActor(const std::string name);
   ~CombatActor();

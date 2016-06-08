@@ -38,6 +38,7 @@ set(COMBAT_SERVER_AI_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/auto_status_search.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/combat_event_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/event_observer.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/require_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/scene_event_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/vote_handler.cc
     )

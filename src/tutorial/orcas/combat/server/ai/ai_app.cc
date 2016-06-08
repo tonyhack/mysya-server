@@ -27,6 +27,11 @@ bool AiApp::Initialize(AppServer *host) {
     return false;
   }
 
+  if (this->require_handler_.Initialize() == false) {
+    MYSYA_ERROR("[AI] RequireHandler::Initialize failed.");
+    return false;
+  }
+
   if (this->scene_event_handler_.Initialize() == false) {
     MYSYA_ERROR("[AI] SceneEventHandler::Initialize failed.");
     return false;
@@ -42,6 +47,7 @@ bool AiApp::Initialize(AppServer *host) {
 
 void AiApp::Finalize() {
   this->combat_event_handler_.Finalize();
+  this->require_handler_.Finalize();
   this->scene_event_handler_.Finalize();
   this->vote_handler_.Finalize();
 

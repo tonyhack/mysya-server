@@ -96,6 +96,18 @@ void MoveAction::Finish(bool success) {
   }
 }
 
+bool MoveAction::GetMoveStatus() const {
+  return this->timer_move_token_ != -1;
+}
+
+int MoveAction::GetPathIndex() const {
+  return this->path_index_;
+}
+
+const MoveAction::PositionVector &MoveAction::GetPaths() const {
+  return this->move_paths_;
+}
+
 void MoveAction::OnMoveTimer(int64_t timer_id) {
   this->MoveStep();
 }

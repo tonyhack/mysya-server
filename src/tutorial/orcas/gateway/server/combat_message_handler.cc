@@ -35,6 +35,10 @@ void CombatMessageHandler::SetMessageHandlers() {
         &CombatMessageHandler::OnMessageCombatConnectArgentResponse, this,
         std::placeholders::_1, std::placeholders::_2));
   this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCallback(
+      protocol::MessageCombatReconnectResponse().GetTypeName(), std::bind(
+        &CombatMessageHandler::OnMessageCombatReconnectResponse, this,
+        std::placeholders::_1, std::placeholders::_2));
+  this->host_->GetCombatClients().GetMessageDispatcher()->SetMessageCallback(
       protocol::MessageCombatBeginResponse().GetTypeName(), std::bind(
         &CombatMessageHandler::OnMessageCombatBeginResponse, this,
         std::placeholders::_1, std::placeholders::_2));
@@ -53,6 +57,8 @@ void CombatMessageHandler::ResetMessageHandlers() {
       protocol::MessageCombatDeployResponse().GetTypeName());
   this->host_->GetCombatClients().GetMessageDispatcher()->ResetMessageCallback(
       protocol::MessageCombatConnectArgentResponse().GetTypeName());
+  this->host_->GetCombatClients().GetMessageDispatcher()->ResetMessageCallback(
+      protocol::MessageCombatReconnectResponse().GetTypeName());
   this->host_->GetCombatClients().GetMessageDispatcher()->ResetMessageCallback(
       protocol::MessageCombatBeginResponse().GetTypeName());
   this->host_->GetCombatClients().GetMessageDispatcher()->ResetMessageCallback(
@@ -241,6 +247,54 @@ void CombatMessageHandler::OnMessageCombatBeginResponse(
       right_combat_actor->GetActor()->SendMessage(
           ::protocol::MESSAGE_COMBAT_RESPONSE, response);
     }
+  }
+}
+
+void CombatMessageHandler::OnMessageCombatReconnectResponse(TransportChannel *channel,
+    const ProtoMessage *data) {
+  client::CombatSession *session = (client::CombatSession *)channel;
+  protocol::MessageCombatReconnectResponse *message =
+    (protocol::MessageCombatReconnectResponse *)data;
+
+  Combat *combat = CombatManager::GetInstance()->GetCombat(
+      session->GetServerId(), message->combat_id());
+  if (combat == NULL) {
+    MYSYA_ERROR("CombatManager::GetCombat(%d, %d) failed.",
+        session->GetServerId(), message->combat_id());
+    return;
+  }
+
+  CombatActor *combat_actor = combat->GetActorByArgentId(message->role_argent_id());
+  if (combat_actor == NULL) {
+    MYSYA_ERROR("Combat::GetActorByArgentId(%ld) failed.",
+        message->role_argent_id());
+    return;
+  }
+
+  if (message->ret_code() != protocol::MessageCombatReconnectResponse::ERROR_CODE_COMPLETE) {
+    MYSYA_ERROR("CombatActor(%ld) MessageCombatReconnectResponse.rede_code(%d).",
+        message->ret_code());
+    return;
+  }
+
+  ::protocol::MessageCombatBeginSync message_sync;
+  *message_sync.mutable_init_status_image() = message->status_image();
+  message_sync.mutable_combat_description()->set_map_id(combat->GetMapId());
+  message_sync.mutable_combat_description()->set_max_time(combat->GetMaxTime());
+
+  message_sync.set_host_id(combat_actor->GetCombatArgentId());
+  message_sync.set_camp_id(combat_actor->GetCampId());
+
+  typedef CombatActor::WarriorDescriptionMap WarriorDescriptionMap;
+
+  const WarriorDescriptionMap &combat_warriors = combat_actor->GetWarriors();
+  for (WarriorDescriptionMap::const_iterator iter = combat_warriors.begin();
+      iter != combat_warriors.end(); ++iter) {
+    message_sync.add_combat_warrior_id(iter->second.id());
+  }
+
+  if (combat_actor->GetActor() != NULL) {
+    combat_actor->GetActor()->SendMessage(::protocol::MESSAGE_COMBAT_BEGIN_SYNC, message_sync);
   }
 }
 

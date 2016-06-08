@@ -278,6 +278,8 @@ bool CombatField::RequireSettle() {
 }
 
 void CombatField::ExportStatusImage(::protocol::CombatStatusImage &image) const {
+  image.set_elapsed_msec(this->GetTimestampMsec());
+
   for (BuildingFieldMap::const_iterator iter = this->buildings_.begin();
       iter != this->buildings_.end(); ++iter) {
     *image.add_building() = iter->second->GetFields();
@@ -286,6 +288,43 @@ void CombatField::ExportStatusImage(::protocol::CombatStatusImage &image) const 
   for (WarriorFieldHashmap::const_iterator iter = this->warriors_.begin();
       iter != this->warriors_.end(); ++iter) {
     *image.add_warrior() = iter->second->GetFields();
+
+    // move action.
+    require::RequireCombatMovePaths require_move_paths;
+    require_move_paths.set_combat_id(this->GetId());
+    require_move_paths.set_warrior_id(iter->second->GetId());
+
+    if (this->app_server_->GetRequireDispatcher()->Dispatch(
+          require::REQUIRE_COMBAT_MOVE_PATHS, &require_move_paths) != -1 &&
+        require_move_paths.move_status() == true) {
+      ::protocol::CombatAction *action = image.add_action();
+      action->set_type(::protocol::COMBAT_ACTION_TYPE_MOVE);
+      action->set_timestamp(this->GetTimestampMsec());
+
+      ::protocol::CombatMoveAction *move_action = action->mutable_move_action();
+      move_action->add_warrior_id(iter->second->GetId());
+
+      for (int i = 0; i < require_move_paths.path_size(); ++i) {
+        *move_action->add_paths() = require_move_paths.path(i);
+        *move_action->mutable_pos() = require_move_paths.path(i);
+      }
+    }
+
+    // lock target action.
+    require::RequireCombatAttackingTarget require_attacking_target;
+    require_attacking_target.set_combat_id(this->GetId());
+    require_attacking_target.set_warrior_id(iter->second->GetId());
+    if (this->app_server_->GetRequireDispatcher()->Dispatch(
+          require::REQUIRE_COMBAT_ATTACKING_TARGET, &require_attacking_target) != -1 &&
+        require_attacking_target.attack_status() == true) {
+      ::protocol::CombatAction *action = image.add_action();
+      action->set_type(::protocol::COMBAT_ACTION_TYPE_MOVE);
+      action->set_timestamp(this->GetTimestampMsec());
+
+      ::protocol::CombatLockTargetAction *lock_target_action = action->mutable_lock_target_action();
+      lock_target_action->set_warrior_id(iter->second->GetId());
+      *lock_target_action->mutable_target() = require_attacking_target.target();
+    }
   }
 
   for (CombatRoleFieldSet::const_iterator iter = this->roles_.begin();

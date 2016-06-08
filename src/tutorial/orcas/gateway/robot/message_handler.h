@@ -21,6 +21,7 @@ class MessageHandler {
  private:
   void OnMessageLoginResponse(Actor *actor, const char *data, int size);
   void OnMessageCombatResponse(Actor *actor, const char *data, int size);
+  void OnMessageCombatBeginSync(Actor *actor, const char *data, int size);
   void OnMessageCombatActionResponse(Actor *actor, const char *data, int size);
   void OnMessageCombatActionSync(Actor *actor, const char *data, int size);
   void OnMessageCombatSettlementSync(Actor *actor, const char *data, int size);

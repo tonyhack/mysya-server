@@ -51,8 +51,7 @@ message MessageCombatBeginSync {
   required int32 camp_id = 2;                                       // 当前角色的阵营id
   required .protocol.CombatDescription combat_description = 3;      // 战斗的基本描述
   required .protocol.CombatStatusImage init_status_image = 4;       // 战斗初始化数据
-  required int32 elapsed_msec = 5;                                  // 战斗已消耗的时间(毫秒)
-  repeated int32 combat_warrior_id = 6;                             // 出战斗士兵列表
+  repeated int32 combat_warrior_id = 5;                             // 出战斗士兵列表
 }
 
 // MESSAGE_COMBAT_SETTLEMENT_SYNC

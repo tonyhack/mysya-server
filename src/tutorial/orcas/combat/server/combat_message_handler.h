@@ -38,6 +38,8 @@ class CombatMessageHandler {
       const ::google::protobuf::Message *message_pb);
   void OnMessageCombatConnectArgentRequest(::tutorial::orcas::combat::TransportChannel *channel,
       const ::google::protobuf::Message *message_pb);
+  void OnMessageCombatReconnectRequest(::tutorial::orcas::combat::TransportChannel *channel,
+      const ::google::protobuf::Message *message_pb);
 
   AppServer *app_server_;
 

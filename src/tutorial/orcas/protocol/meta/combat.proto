@@ -98,7 +98,9 @@ message CombatActionSequence {
 
 // 战斗状态镜像数据
 message CombatStatusImage {
+  required int32 elapsed_msec = 1;                              // 战斗已消耗的时间(毫秒)
   repeated .protocol.CombatBuildingFields building = 2;         // 建筑
   repeated .protocol.CombatWarriorFields warrior = 3;           // 士兵
   repeated .protocol.CombatRoleFields role = 4;                 // 角色
+  repeated .protocol.CombatAction action = 5;                   // 正在进行指令
 }

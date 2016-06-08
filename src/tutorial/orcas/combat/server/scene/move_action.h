@@ -27,6 +27,10 @@ class MoveAction {
   void Reset();
   void Finish(bool success = true);
 
+  bool GetMoveStatus() const;
+  int GetPathIndex() const;
+  const PositionVector &GetPaths() const;
+
  private:
   void OnMoveTimer(int64_t timer_id);
   void MoveStep();
