@@ -31,8 +31,6 @@ class CombatWarriorField {
   const ::protocol::CombatWarriorFields &GetFields() const;
   ::protocol::CombatWarriorServerFields &GetServerFields();
 
-  const ::protocol::WarriorDescription *GetDescription() const;
-
   void GenerateFields();
   void DispatchBuildActionEvent(int32_t building_id);
 

@@ -23,6 +23,9 @@ message WarriorDescription {
   optional int32 move_speed = 6;                    // 移动速度
   optional int32 attack_speed = 7;                  // 攻击速度
   optional int32 attack_range = 8;                  // 攻击范围
+  optional int32 search_range = 9;                  // 搜索范围
+  optional int32 food_need = 10;                    // 招募的粮草需求
+  optional int32 supply_need = 11;                  // 招募的人口需求
 }
 
 // 士兵最终属性
@@ -43,6 +46,9 @@ message CombatWarriorFields {
   optional int32 origin_pos_y = 14;                 // 当前位置y
   optional int32 dest_pos_x = 15;                   // 终点位置x
   optional int32 dest_pos_y = 16;                   // 终点位置y
+  optional int32 search_range = 17;                 // 搜索范围
+  optional int32 food_need = 18;                    // 招募的粮草需求
+  optional int32 supply_need = 19;                  // 招募的人口需求
 }
 
 // 士兵高级属性

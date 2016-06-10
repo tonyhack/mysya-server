@@ -61,6 +61,8 @@ bool WarriorConfig::Load(const std::string &file) {
         conf.num_ = atoi(attr);
       } else if (attr_name_str == "food_need") {
         conf.food_need_ = atoi(attr);
+      } else if (attr_name_str == "supply_need") {
+        conf.supply_need_ = atoi(attr);
       } else if (attr_name_str == "hp") {
         conf.hp_ = atoi(attr);
       } else if (attr_name_str == "attack") {

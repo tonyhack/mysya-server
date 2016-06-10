@@ -4,4 +4,10 @@ message CombatRoleFields {
   optional uint64 id = 1;                             // 角色代理id
   optional string name = 2;                           // 角色名称
   optional int32 camp_id = 3;                         // 阵营id
+  optional int32 food = 4;                            // 粮草
+  optional int32 food_max = 5;                        // 粮草最大值
+  optional int32 supply = 6;                          // 当前人口
+  optional int32 supply_max = 7;                      // 最大人口
+  optional int32 elixir = 8;                          // 法力点
+  optional int32 elixir_max = 9;                      // 法力点最大值
 }

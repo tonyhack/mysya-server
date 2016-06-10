@@ -65,13 +65,6 @@ void AutoStatusAttack::SetAttackTimer() {
   const ::protocol::CombatWarriorFields &fields = combat_warrior_field->GetFields();
   int attack_interval_ms = fields.attack_speed();
 
-  const ::protocol::WarriorDescription *warrior_description =
-    combat_warrior_field->GetDescription();
-  if (warrior_description == NULL) {
-    MYSYA_ERROR("[AI] CombatWarriorField::GetDescription() failed.");
-    return;
-  }
-
   this->timer_id_attack_ = AiApp::GetInstance()->GetHost()->StartTimer(
       attack_interval_ms, std::bind(&AutoStatusAttack::OnTimerAttack,
         this, std::placeholders::_1));
@@ -97,12 +90,8 @@ void AutoStatusAttack::OnEventSceneMoveStep(const ProtoMessage *data) {
     return;
   }
 
-  const ::protocol::WarriorDescription *warrior_description =
-    this->host_->GetHost()->GetDescription();
-  if (warrior_description == NULL) {
-    MYSYA_ERROR("[AI] CombatWarriorField::GetDescription() failed.");
-    return;
-  }
+  const ::protocol::CombatWarriorFields &warrior_fields =
+    this->host_->GetHost()->GetFields();
 
   int target_distance = this->host_->GetTargetDistance();
   if (target_distance < 0) {
@@ -111,7 +100,7 @@ void AutoStatusAttack::OnEventSceneMoveStep(const ProtoMessage *data) {
   }
 
   // TODO: if target_distance > search_range giveup target, and goto search status.
-  if (target_distance > warrior_description->attack_range()) {
+  if (target_distance > warrior_fields.attack_range()) {
     this->GotoStatus(AutoStatus::CHASE);
     return;
   }

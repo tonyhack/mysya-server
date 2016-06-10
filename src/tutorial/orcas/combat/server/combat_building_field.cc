@@ -26,6 +26,9 @@ bool CombatBuildingField::Initialize(int32_t id, CombatField *host_combat,
   this->fields_.set_max_hp(description.hp());
   this->fields_.set_pos_x(description.pos_x());
   this->fields_.set_pos_y(description.pos_y());
+  this->fields_.set_food_add(description.food_add());
+  this->fields_.set_supply(description.supply());
+  this->fields_.set_elixir_add(description.elixir_add());
 
   return true;
 }
@@ -38,6 +41,42 @@ void CombatBuildingField::Finalize() {
 
 int32_t CombatBuildingField::GetId() const {
   return this->fields_.id();
+}
+
+int32_t CombatBuildingField::GetFoodAdd() const {
+  return this->fields_.food_add();
+}
+
+void CombatBuildingField::SetFoodAdd(int32_t value) {
+  this->fields_.set_food_add(value);
+}
+
+void CombatBuildingField::IncFoodAdd(int32_t increment) {
+  this->SetFoodAdd(this->GetFoodAdd() + increment);
+}
+
+int32_t CombatBuildingField::GetSupply() const {
+  return this->fields_.supply();
+}
+
+void CombatBuildingField::SetSupply(int32_t value) {
+  this->fields_.set_supply(value);
+}
+
+void CombatBuildingField::IncSupply(int32_t increment) {
+  this->SetSupply(this->GetSupply() + increment);
+}
+
+int32_t CombatBuildingField::GetElixirAdd() const {
+  return this->fields_.elixir_add();
+}
+
+void CombatBuildingField::SetElixirAdd(int32_t value) {
+  this->fields_.set_elixir_add(value);
+}
+
+void CombatBuildingField::IncElixirAdd(int32_t increment) {
+  this->SetElixirAdd(this->GetElixirAdd() + increment);
 }
 
 CombatField *CombatBuildingField::GetCombatField() {

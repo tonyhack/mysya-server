@@ -13,14 +13,24 @@ namespace orcas {
 namespace gateway {
 namespace server {
 
+struct BattleBuildingConf {
+  int type_;                // 类型
+  int food_add_;            // 单位时间的粮草供给
+  int supply_;              // 人口上限值
+  int elixir_add_;          // 单位时间的法力值供给
+};
+
 struct BuildingConf {
-  int id_;
-  int map_id_;
-  int camp_id_;
-  int type_;
-  int x_;
-  int y_;
-  int hp_;
+  int id_;                  // id
+  int map_id_;              // 地图id
+  int camp_id_;             // 阵营id
+  int type_;                // 类型
+  int x_;                   // 坐标x
+  int y_;                   // 坐标y
+  int hp_;                  // 生命值
+  int food_add_;            // 单位时间的粮草供给
+  int supply_;              // 人口上限值
+  int elixir_add_;          // 单位时间的法力值供给
 };
 
 struct MapConf {
@@ -34,17 +44,20 @@ struct MapConf {
 
 class MapConfig {
  public:
-  typedef std::unordered_map<int, MapConf> MapHashmap;
+  typedef std::unordered_map<int, BattleBuildingConf> BattleBuildingHashmap;
   typedef std::unordered_map<int, BuildingConf> BuildingHashmap;
+  typedef std::unordered_map<int, MapConf> MapHashmap;
 
+  bool LoadBattleBuilding(const std::string &file);
   bool LoadBuilding(const std::string &file);
   bool LoadMap(const std::string &file);
 
   const MapConf *GetMapConf(int id) const;
 
  private:
-  MapHashmap maps_;
+  BattleBuildingHashmap battle_buildings_;
   BuildingHashmap buildings_;
+  MapHashmap maps_;
 
   MYSYA_SINGLETON(MapConfig);
 };

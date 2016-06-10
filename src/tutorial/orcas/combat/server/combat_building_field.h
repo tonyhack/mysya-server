@@ -23,6 +23,18 @@ class CombatBuildingField {
 
   int32_t GetId() const;
 
+  int32_t GetFoodAdd() const;
+  void SetFoodAdd(int32_t value);
+  void IncFoodAdd(int32_t increment);
+
+  int32_t GetSupply() const;
+  void SetSupply(int32_t value);
+  void IncSupply(int32_t increment);
+
+  int32_t GetElixirAdd() const;
+  void SetElixirAdd(int32_t value);
+  void IncElixirAdd(int32_t increment);
+
   CombatField *GetCombatField();
   int32_t GetCombatRoleArgentId() const;
   ::protocol::CombatBuildingFields &GetFields();

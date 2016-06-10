@@ -14,6 +14,65 @@ MYSYA_SINGLETON_IMPL(MapConfig);
 MapConfig::MapConfig() {}
 MapConfig::~MapConfig() {}
 
+bool MapConfig::LoadBattleBuilding(const std::string &file) {
+  TiXmlDocument doc;
+  if (doc.LoadFile(file.data()) == false) {
+    MYSYA_ERROR("Load config(%s) failed.", file.data());
+    return false;
+  }
+
+  TiXmlElement *resultset_node = doc.FirstChildElement("resultset");
+  if (resultset_node == NULL) {
+    MYSYA_ERROR("Config(%s) /resultset not found.", file.data());
+    return false;
+  }
+
+  const char *attr = NULL;
+  const char *attr_name = NULL;
+
+  TiXmlElement *row_node = resultset_node->FirstChildElement("row");
+  while (row_node != NULL) {
+    BattleBuildingConf conf;
+
+    TiXmlElement *field_node = row_node->FirstChildElement("field");
+    while (field_node != NULL) {
+      attr_name = field_node->Attribute("name");
+      if (attr_name == NULL) {
+        MYSYA_ERROR("Config(%s) /resultset/row/field[name] not found.",
+            file.data());
+        return false;
+      }
+
+      attr = field_node->GetText();
+      if (attr == NULL) {
+        MYSYA_ERROR("Config(%s) /resultset/row/field[text] not found.",
+            file.data());
+        return false;
+      }
+      std::string attr_name_str = attr_name;
+
+      if (attr_name_str == "id") {
+        conf.type_ = atoi(attr);
+      } else if (attr_name_str == "food_recovery") {
+        conf.food_add_ = atoi(attr);
+      } else if (attr_name_str == "supply") {
+        conf.supply_ = atoi(attr);
+      } else if (attr_name_str == "mana_recovery") {
+        conf.elixir_add_ = atoi(attr);
+      } else {
+      }
+
+      field_node = field_node->NextSiblingElement("field");
+    }
+
+    this->battle_buildings_.insert(std::make_pair(conf.type_, conf));
+
+    row_node = row_node->NextSiblingElement("row");
+  }
+
+  return true;
+}
+
 bool MapConfig::LoadBuilding(const std::string &file) {
   TiXmlDocument doc;
   if (doc.LoadFile(file.data()) == false) {
@@ -70,6 +129,17 @@ bool MapConfig::LoadBuilding(const std::string &file) {
 
       field_node = field_node->NextSiblingElement("field");
     }
+
+    BattleBuildingHashmap::const_iterator battle_building_iter =
+      this->battle_buildings_.find(conf.type_);
+    if (battle_building_iter == this->battle_buildings_.end()) {
+      MYSYA_ERROR("Config(%s) error type_id(%d).", file.data(), conf.type_);
+      return false;
+    }
+
+    conf.food_add_ = battle_building_iter->second.food_add_;
+    conf.supply_ = battle_building_iter->second.supply_;
+    conf.elixir_add_ = battle_building_iter->second.elixir_add_;
 
     this->buildings_.insert(std::make_pair(conf.id_, conf));
 

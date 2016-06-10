@@ -130,10 +130,12 @@ bool Config::Load(const std::string &file) {
 
 bool Config::OnLoadConfig(const std::string &file) {
   std::string file_basename = ::basename(file.data());
-  if (file_basename == "map.xml") {
-    return MapConfig::GetInstance()->LoadMap(file);
+  if (file_basename == "battle_build.xml") {
+    return MapConfig::GetInstance()->LoadBattleBuilding(file);
   } else if (file_basename == "map_build.xml") {
     return MapConfig::GetInstance()->LoadBuilding(file);
+  } else if (file_basename == "map.xml") {
+    return MapConfig::GetInstance()->LoadMap(file);
   } else if (file_basename == "soldier.xml") {
     return WarriorConfig::GetInstance()->Load(file);
   } else {

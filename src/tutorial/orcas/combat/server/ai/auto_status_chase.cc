@@ -70,12 +70,8 @@ void AutoStatusChase::SetRefindPathTimer() {
 }
 
 bool AutoStatusChase::CheckTargetAttackReachable() {
-  const ::protocol::WarriorDescription *warrior_description =
-    this->host_->GetHost()->GetDescription();
-  if (warrior_description == NULL) {
-    MYSYA_ERROR("[AI] CombatWarriorField::GetDescription() failed.");
-    return false;
-  }
+  const ::protocol::CombatWarriorFields &warrior_fields =
+    this->host_->GetHost()->GetFields();
 
   int target_distance = this->host_->GetTargetDistance();
   if (target_distance < 0) {
@@ -84,7 +80,7 @@ bool AutoStatusChase::CheckTargetAttackReachable() {
   }
 
   // TODO: if target_distance > search_range giveup target, and goto search status.
-  return target_distance <= warrior_description->attack_range();
+  return target_distance <= warrior_fields.attack_range();
 }
 
 void AutoStatusChase::OnTimerRefindPath(int64_t timer_id) {

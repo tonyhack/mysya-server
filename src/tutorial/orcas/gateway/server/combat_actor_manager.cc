@@ -47,6 +47,9 @@ CombatActor *CombatActorManager::Allocate(const std::string &name) {
     warrior_description.set_move_speed(iter->second.move_speed_);
     warrior_description.set_attack_speed(iter->second.attack_speed_);
     warrior_description.set_attack_range(iter->second.attack_range_);
+    warrior_description.set_search_range(iter->second.sight_);
+    warrior_description.set_food_need(iter->second.food_need_);
+    warrior_description.set_supply_need(iter->second.supply_need_);
     combat_actor->AddWarrior(warrior_description);
   }
 

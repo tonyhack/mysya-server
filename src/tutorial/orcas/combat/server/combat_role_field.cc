@@ -18,8 +18,7 @@ namespace combat {
 namespace server {
 
 CombatRoleField::CombatRoleField()
-  : argent_id_(0), camp_id_(0),
-    building_num_(0), combat_field_(NULL),
+  : building_num_(0), combat_field_(NULL),
     app_session_(NULL), app_server_(NULL) {}
 
 CombatRoleField::~CombatRoleField() {}
@@ -45,6 +44,8 @@ void CombatRoleField::Finalize() {
   this->SetArgentId(0);
   this->SetCampId(0);
   this->SetCombatField(NULL);
+
+  this->fields_.Clear();
 }
 
 AppServer *CombatRoleField::GetAppServer() {
@@ -52,19 +53,27 @@ AppServer *CombatRoleField::GetAppServer() {
 }
 
 uint64_t CombatRoleField::GetArgentId() const {
-  return this->argent_id_;
+  return this->fields_.id();
 }
 
 void CombatRoleField::SetArgentId(uint64_t value) {
-  this->argent_id_ = value;
+  this->fields_.set_id(value);
 }
 
 int32_t CombatRoleField::GetCampId() const {
-  return this->camp_id_;
+  return this->fields_.camp_id();
 }
 
 void CombatRoleField::SetCampId(int32_t value) {
-  this->camp_id_ = value;
+  this->fields_.set_camp_id(value);
+}
+
+::protocol::CombatRoleFields &CombatRoleField::GetFields() {
+  return this->fields_;
+}
+
+const ::protocol::CombatRoleFields &CombatRoleField::GetFields() const {
+  return this->fields_;
 }
 
 int32_t CombatRoleField::GetBuildingNum() const {
@@ -79,6 +88,86 @@ const std::string &CombatRoleField::GetName() const {
   return this->name_;
 }
 
+int32_t CombatRoleField::GetFood() const {
+  return this->fields_.food();
+}
+
+void CombatRoleField::SetFood(int32_t value) {
+  if (value > this->GetFoodMax()) {
+    this->fields_.set_food(this->GetFoodMax());
+  } else {
+    this->fields_.set_food(value);
+  }
+}
+
+void CombatRoleField::IncFood(int32_t increment) {
+  this->SetFood(this->GetFood() + increment);
+}
+
+int32_t CombatRoleField::GetFoodMax() const {
+  return this->fields_.food_max();
+}
+
+void CombatRoleField::SetFoodMax(int32_t value) {
+  this->fields_.set_food_max(value);
+}
+
+void CombatRoleField::IncFoodMax(int32_t increment) {
+  this->SetFoodMax(this->GetFoodMax() + increment);
+}
+
+int32_t CombatRoleField::GetSupplyMax() const {
+  return this->fields_.supply_max();
+}
+
+void CombatRoleField::SetSupplyMax(int32_t value) {
+  this->fields_.set_supply_max(value);
+}
+
+void CombatRoleField::IncSupplyMax(int32_t increment) {
+  this->SetSupplyMax(this->GetSupplyMax() + increment);
+}
+
+int32_t CombatRoleField::GetSupply() const {
+  return this->fields_.supply();
+}
+
+void CombatRoleField::SetSupply(int32_t value) {
+  this->fields_.set_supply(value);
+}
+
+void CombatRoleField::IncSupply(int32_t increment) {
+  this->SetSupply(this->GetSupply() + increment);
+}
+
+int32_t CombatRoleField::GetElixir() const {
+  return this->fields_.elixir();
+}
+
+void CombatRoleField::SetElixir(int32_t value) {
+  if (value > this->GetElixirMax()) {
+    this->fields_.set_elixir(this->GetElixirMax());
+  } else {
+    this->fields_.set_elixir(value);
+  }
+}
+
+void CombatRoleField::IncElixir(int32_t increment) {
+  this->SetElixir(this->GetElixir() + increment);
+}
+
+int32_t CombatRoleField::GetElixirMax() const {
+  return this->fields_.elixir_max();
+}
+
+void CombatRoleField::SetElixirMax(int32_t value) {
+  this->fields_.set_elixir_max(value);
+}
+
+void CombatRoleField::IncElixirMax(int32_t increment) {
+  this->SetElixirMax(this->GetElixirMax() + increment);
+}
+
 CombatField *CombatRoleField::GetCombatField() {
   return this->combat_field_;
 }
@@ -87,10 +176,9 @@ void CombatRoleField::SetCombatField(CombatField *value) {
   this->combat_field_ = value;
 }
 
-
 void CombatRoleField::AddWarriorDescription(
-    const ::protocol::WarriorDescription &warrior) {
-  this->warrior_descriptions_.insert(std::make_pair(warrior.id(), warrior));
+    const ::protocol::WarriorDescription &description) {
+  this->warrior_descriptions_.insert(std::make_pair(description.id(), description));
 }
 
 const ::protocol::WarriorDescription *CombatRoleField::GetWarriorDescription(
@@ -160,6 +248,19 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
     return false;
   }
 
+  if (this->GetFood() < warrior_description->food_need()) {
+    MYSYA_ERROR("CombatRoleField::GetFood(%d) < WarriorDescription::food_need(%d).",
+        this->GetFood(), warrior_description->food_need());
+    return false;
+  }
+
+  int32_t available_supply = this->GetSupplyMax() - this->GetSupply();
+  if (available_supply < warrior_description->supply_need()) {
+    MYSYA_ERROR("CombatRoleField's available_supply(%d) < WarriorDescription::supply_need(%d).",
+        available_supply, warrior_description->supply_need());
+    return false;
+  }
+
   if (combat_building_field->GetFields().host_id() != this->GetArgentId()) {
     MYSYA_ERROR("CombatBuildingField.host_id(%ld) not matching(%ld).",
         combat_building_field->GetFields().host_id(), this->GetArgentId());
@@ -195,7 +296,12 @@ bool CombatRoleField::DoBuildAction(const ::protocol::CombatBuildAction &action)
     return false;
   }
 
+  this->IncSupply(warrior_description->supply_need());
+  this->IncFood(0 - warrior_description->food_need());
+
   combat_warrior_field->DispatchBuildActionEvent(action.building_id());
+
+  this->combat_field_->PrintRoleResources();
 
   return true;
 }

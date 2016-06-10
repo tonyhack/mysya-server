@@ -8,6 +8,7 @@
 #include "tutorial/orcas/combat/server/combat_field_manager.h"
 #include "tutorial/orcas/combat/server/combat_role_field.h"
 #include "tutorial/orcas/combat/server/combat_role_field_manager.h"
+#include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/event/cc/event.pb.h"
 #include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
 #include "tutorial/orcas/protocol/cc/message.pb.h"
@@ -110,6 +111,25 @@ void CombatEventHandler::OnEventCombatDeath(const ProtoMessage *data) {
   ::protocol::MessageCombatActionSync message;
   *message.mutable_action() = action;
   combat_field->BroadcastMessage(::protocol::MESSAGE_COMBAT_ACTION_SYNC, message);
+
+  if (event->target().type() == ::protocol::COMBAT_ENTITY_TYPE_WARRIOR) {
+    CombatWarriorField *combat_warrior_field = combat_field->GetWarrior(event->target().id());
+    if (combat_warrior_field == NULL) {
+      MYSYA_ERROR("CombatField::GetWarrior(%d) failed.",
+          event->target().id());
+      return;
+    }
+
+    CombatRoleField *combat_role_field = combat_warrior_field->GetRoleField();
+    if (combat_role_field == NULL) {
+      MYSYA_ERROR("CombatWarriorField::GetRoleField() failed.");
+      return;
+    }
+
+    combat_role_field->IncSupply(0 - combat_warrior_field->GetFields().supply_need());
+
+    combat_field->PrintRoleResources();
+  }
 }
 
 void CombatEventHandler::OnEventCombatLockTarget(const ProtoMessage *data) {
@@ -148,22 +168,41 @@ void CombatEventHandler::OnEventCombatConvertCamp(const ProtoMessage *data) {
     return;
   }
 
-  if (event->host().type() == ::protocol::COMBAT_ENTITY_TYPE_BUILDING) {
-    CombatRoleField *combat_role_field =
-      CombatRoleFieldManager::GetInstance()->Get(event->host_id());
-    if (combat_role_field == NULL) {
-      MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->host_id());
-      return;
-    }
-    combat_role_field->SetBuildingNum(combat_role_field->GetBuildingNum() + 1);
+  CombatRoleField *combat_role_field =
+    CombatRoleFieldManager::GetInstance()->Get(event->host_id());
+  if (combat_role_field == NULL) {
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->host_id());
+    return;
+  }
 
-    CombatRoleField *original_combat_role_field =
-      CombatRoleFieldManager::GetInstance()->Get(event->original_host_id());
-    if (original_combat_role_field == NULL) {
-      MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->original_host_id());
+  CombatRoleField *original_combat_role_field =
+    CombatRoleFieldManager::GetInstance()->Get(event->original_host_id());
+  if (original_combat_role_field == NULL) {
+    MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", event->original_host_id());
+    return;
+  }
+
+  if (event->host().type() == ::protocol::COMBAT_ENTITY_TYPE_BUILDING) {
+    combat_role_field->SetBuildingNum(combat_role_field->GetBuildingNum() + 1);
+    original_combat_role_field->SetBuildingNum(
+        original_combat_role_field->GetBuildingNum() - 1);
+
+    combat_field->AllocateBuildingSupply();
+  } else if (event->host().type() == ::protocol::COMBAT_ENTITY_TYPE_WARRIOR) {
+    CombatWarriorField *combat_warrior_field = combat_field->GetWarrior(event->host().id());
+    if (combat_warrior_field == NULL) {
+      MYSYA_ERROR("CombatField::GetWarrior(%d) failed.",
+          event->host().id());
       return;
     }
-    original_combat_role_field->SetBuildingNum(original_combat_role_field->GetBuildingNum() - 1);
+
+    combat_role_field->IncSupply(combat_warrior_field->GetFields().supply_need());
+    original_combat_role_field->IncSupply(0 - combat_warrior_field->GetFields().supply_need());
+
+    combat_field->PrintRoleResources();
+  } else {
+    MYSYA_ERROR("EventCombatConvertCamp::host's type(%d) invalid.", event->host().type());
+    return;
   }
 
   ::protocol::CombatAction action;

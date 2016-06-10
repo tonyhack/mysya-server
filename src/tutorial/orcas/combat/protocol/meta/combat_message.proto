@@ -37,8 +37,12 @@ message CombatRoleData {
 // 出战阵营数据
 message CombatCampData {
   required int32 id = 1;                                          // 阵营id
-  repeated CombatRoleData role = 2;                               // 角色列表
-  repeated .protocol.BuildingDescription building = 3;            // 建筑列表(初始属于阵营的非角色建筑)
+  required int32 init_food = 2;                                   // 初始粮草
+  required int32 max_food = 3;                                    // 最大粮草
+  required int32 init_elixir = 4;                                 // 初始法力
+  required int32 max_elixir = 5;                                  // 最大法力
+  repeated CombatRoleData role = 6;                               // 角色列表
+  repeated .protocol.BuildingDescription building = 7;            // 建筑列表(初始属于阵营的非角色建筑)
 }
 
 // 出战初始化数据

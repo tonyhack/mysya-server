@@ -22,8 +22,8 @@ namespace server {
 
 CombatField::CombatField()
   : id_(0), map_id_(0), id_alloctor_(0),
-    max_time_(0), timer_id_over_(-1),
-    app_session_(NULL) {}
+    max_time_(0), timer_id_settle_(-1),
+    timer_id_resource_recover_(-1), app_session_(NULL) {}
 
 CombatField::~CombatField() {}
 
@@ -36,13 +36,15 @@ bool CombatField::Initialize(int32_t map_id, int32_t max_time,
   this->id_alloctor_ = 0;
   this->map_id_ = map_id;
   this->max_time_ = max_time;
-  this->timer_id_over_ = -1;
+  this->timer_id_settle_ = -1;
+  this->timer_id_resource_recover_ = -1;
 
   return true;
 }
 
 void CombatField::Finalize() {
   this->ResetSettleTimer();
+  this->ResetResourceRecoverTimer();
 
   if (this->app_session_ != NULL) {
     this->app_session_->Remove(this);
@@ -82,14 +84,26 @@ void CombatField::Finalize() {
 }
 
 void CombatField::SetSettleTimer() {
-  this->timer_id_over_ = this->app_server_->StartTimer(this->max_time_ * 1000,
+  this->timer_id_settle_ = this->app_server_->StartTimer(this->max_time_ * 1000,
       std::bind(&CombatField::OnTimerSettle, this, std::placeholders::_1), 1);
 }
 
 void CombatField::ResetSettleTimer() {
-  if (this->timer_id_over_ != -1) {
-    this->app_server_->StopTimer(this->timer_id_over_);
-    this->timer_id_over_ = -1;
+  if (this->timer_id_settle_ != -1) {
+    this->app_server_->StopTimer(this->timer_id_settle_);
+    this->timer_id_settle_ = -1;
+  }
+}
+
+void CombatField::SetResourceRecoverTimer() {
+  this->timer_id_resource_recover_ = this->app_server_->StartTimer(1 * 1000,
+      std::bind(&CombatField::OnTimerResourceRecover, this, std::placeholders::_1));
+}
+
+void CombatField::ResetResourceRecoverTimer() {
+  if (this->timer_id_resource_recover_ != -1) {
+    this->app_server_->StopTimer(this->timer_id_resource_recover_);
+    this->timer_id_resource_recover_ = -1;
   }
 }
 
@@ -225,6 +239,42 @@ const CombatField::WarriorFieldHashmap &CombatField::GetWarriors() const {
   return this->warriors_;
 }
 
+void CombatField::AllocateBuildingSupply() {
+  typedef std::map<int32_t, int32_t> CampSupplyMap;
+  CampSupplyMap camp_supplies;
+
+  for (BuildingFieldMap::iterator building_iter = this->buildings_.begin();
+      building_iter != this->buildings_.end(); ++building_iter) {
+    CombatBuildingField *combat_building = building_iter->second;
+    int32_t camp_id = combat_building->GetFields().camp_id();
+
+    CampSupplyMap::iterator camp_supply_iter = camp_supplies.find(camp_id);
+    if (camp_supply_iter == camp_supplies.end()) {
+      camp_supply_iter = camp_supplies.insert(std::make_pair(camp_id, 0)).first;
+    }
+
+    camp_supply_iter->second += combat_building->GetSupply();
+  }
+
+  for (CombatRoleFieldSet::iterator role_iter = this->roles_.begin();
+      role_iter != this->roles_.end(); ++role_iter) {
+    CombatRoleField *combat_role = CombatRoleFieldManager::GetInstance()->Get(*role_iter);
+    if (combat_role == NULL) {
+      MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", *role_iter);
+      return;
+    }
+
+    CampSupplyMap::iterator camp_supply_iter = camp_supplies.find(
+        combat_role->GetCampId());
+    if (camp_supply_iter == camp_supplies.end()) {
+      MYSYA_ERROR("camp_id(%d) invalid.", combat_role->GetCampId());
+      return;
+    }
+
+    combat_role->SetSupplyMax(camp_supply_iter->second);
+  }
+}
+
 void CombatField::ResetAppSession() {
   this->app_session_ = NULL;
 }
@@ -336,15 +386,87 @@ void CombatField::ExportStatusImage(::protocol::CombatStatusImage &image) const 
       continue;
     }
 
-    ::protocol::CombatRoleFields *role_fields = image.add_role();
-    role_fields->set_id(combat_role_field->GetArgentId());
-    role_fields->set_name(combat_role_field->GetName());
-    role_fields->set_camp_id(combat_role_field->GetCampId());
+    *image.add_role() = combat_role_field->GetFields();
+    // ::protocol::CombatRoleFields *role_fields = image.add_role();
+    // role_fields->set_id(combat_role_field->GetArgentId());
+    // role_fields->set_name(combat_role_field->GetName());
+    // role_fields->set_camp_id(combat_role_field->GetCampId());
+  }
+}
+
+void CombatField::PrintRoleResources() const {
+  for (CombatRoleFieldSet::const_iterator iter = this->roles_.begin();
+      iter != this->roles_.end(); ++iter) {
+    CombatRoleField *combat_role_field =
+      CombatRoleFieldManager::GetInstance()->Get(*iter);
+    if (combat_role_field == NULL) {
+      MYSYA_ERROR("CombatRoleFieldManager::Get(%d) failed.", *iter);
+      continue;
+    }
+
+    MYSYA_DEBUG("[PRINT_ROLE_RESOURCES] role(%d) food(%d) supply_max(%d) supply(%d) elixir(%d)",
+        combat_role_field->GetArgentId(), combat_role_field->GetFood(), combat_role_field->GetSupplyMax(),
+        combat_role_field->GetSupply(), combat_role_field->GetElixir());
   }
 }
 
 void CombatField::OnTimerSettle(int32_t id) {
   this->RequireSettle();
+}
+
+void CombatField::OnTimerResourceRecover(int32_t id) {
+  typedef std::map<int32_t, int32_t> CampFoodMap;
+  typedef std::map<int32_t, int32_t> CampElixirMap;
+  CampFoodMap camp_foods;
+  CampElixirMap camp_elixirs;
+
+  for (BuildingFieldMap::iterator building_iter = this->buildings_.begin();
+      building_iter != this->buildings_.end(); ++building_iter) {
+    CombatBuildingField *combat_building_field = building_iter->second;
+    int32_t camp_id = combat_building_field->GetFields().camp_id();
+
+    CampFoodMap::iterator camp_food_iter = camp_foods.find(camp_id);
+    if (camp_food_iter == camp_foods.end()) {
+      camp_food_iter = camp_foods.insert(std::make_pair(camp_id, 0)).first;
+    }
+
+    camp_food_iter->second += combat_building_field->GetFields().food_add();
+
+    CampElixirMap::iterator camp_elixir_iter = camp_elixirs.find(camp_id);
+    if (camp_elixir_iter == camp_elixirs.end()) {
+      camp_elixir_iter = camp_elixirs.insert(std::make_pair(camp_id, 0)).first;
+    }
+
+    camp_elixir_iter->second += combat_building_field->GetFields().elixir_add();
+  }
+
+  for (CombatRoleFieldSet::iterator role_iter = this->roles_.begin();
+      role_iter != this->roles_.end(); ++role_iter) {
+    CombatRoleField *combat_role_field =
+      CombatRoleFieldManager::GetInstance()->Get(*role_iter);
+    if (combat_role_field == NULL) {
+      MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", *role_iter);
+      return;
+    }
+
+    CampFoodMap::iterator camp_food_iter = camp_foods.find(
+        combat_role_field->GetCampId());
+    if (camp_food_iter == camp_foods.end()) {
+      MYSYA_ERROR("camp_id(%d) invalid.", combat_role_field->GetCampId());
+      return;
+    }
+    combat_role_field->IncFood(camp_food_iter->second);
+
+    CampElixirMap::iterator camp_elixir_iter = camp_elixirs.find(
+        combat_role_field->GetCampId());
+    if (camp_elixir_iter == camp_elixirs.end()) {
+      MYSYA_ERROR("camp_id(%d) invalid.", combat_role_field->GetCampId());
+      return;
+    }
+    combat_role_field->IncElixir(camp_elixir_iter->second);
+  }
+
+  this->PrintRoleResources();
 }
 
 }  // namespace server

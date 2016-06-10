@@ -8,6 +8,7 @@
 
 #include "tutorial/orcas/protocol/cc/message.pb.h"
 #include "tutorial/orcas/protocol/cc/warrior.pb.h"
+#include "tutorial/orcas/protocol/cc/role.pb.h"
 
 namespace google {
 namespace protobuf {
@@ -46,10 +47,37 @@ class CombatRoleField {
   int32_t GetCampId() const;
   void SetCampId(int32_t value);
 
+  ::protocol::CombatRoleFields &GetFields();
+  const ::protocol::CombatRoleFields &GetFields() const;
+
   int32_t GetBuildingNum() const;
   void SetBuildingNum(int32_t value);
 
   const std::string &GetName() const;
+
+  int32_t GetFood() const;
+  void SetFood(int32_t value);
+  void IncFood(int32_t increment);
+
+  int32_t GetFoodMax() const;
+  void SetFoodMax(int32_t value);
+  void IncFoodMax(int32_t increment);
+
+  int32_t GetSupplyMax() const;
+  void SetSupplyMax(int32_t value);
+  void IncSupplyMax(int32_t increment);
+
+  int32_t GetSupply() const;
+  void SetSupply(int32_t value);
+  void IncSupply(int32_t increment);
+
+  int32_t GetElixir() const;
+  void SetElixir(int32_t value);
+  void IncElixir(int32_t increment);
+
+  int32_t GetElixirMax() const;
+  void SetElixirMax(int32_t value);
+  void IncElixirMax(int32_t increment);
 
   CombatField *GetCombatField();
   void SetCombatField(CombatField *value);
@@ -68,8 +96,9 @@ class CombatRoleField {
   bool DoMoveAction(const ::protocol::CombatMoveAction &action);
   bool DoLockTargetAction(const ::protocol::CombatLockTargetAction &action);
 
-  uint64_t argent_id_;
-  int32_t camp_id_;
+  ::protocol::CombatRoleFields fields_;
+  // uint64_t argent_id_;
+  // int32_t camp_id_;
   int32_t building_num_;
   std::string name_;
   CombatField *combat_field_;

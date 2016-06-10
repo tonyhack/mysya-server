@@ -12,18 +12,19 @@ namespace gateway {
 namespace server {
 
 struct WarriorConf {
-  int id_;
-  std::string name_;
-  int type_;
-  int num_;
-  int food_need_;
-  int hp_;
-  int attack_;
-  int defence_;
-  int move_speed_;
-  int attack_speed_;
-  int attack_range_;
-  int sight_;
+  int id_;                        // id
+  std::string name_;              // 名称
+  int type_;                      // 类型
+  int num_;                       // 数量
+  int food_need_;                 // 招募粮草需求
+  int supply_need_;               // 招募人口需求
+  int hp_;                        // 生命值
+  int attack_;                    // 攻击力
+  int defence_;                   // 防御力
+  int move_speed_;                // 移动速度
+  int attack_speed_;              // 攻击速度
+  int attack_range_;              // 攻击范围
+  int sight_;                     // 视野范围
 };
 
 class WarriorConfig {

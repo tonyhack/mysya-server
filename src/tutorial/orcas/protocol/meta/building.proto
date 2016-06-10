@@ -12,6 +12,9 @@ message BuildingDescription {
   optional int32 hp = 3;                          // 生命值
   optional int32 pos_x = 4;                       // 坐标x
   optional int32 pos_y = 5;                       // 坐标y
+  optional int32 food_add = 6;                    // 单位时间的粮草供给
+  optional int32 supply = 7;                      // 人口值
+  optional int32 elixir_add = 8;                  // 单位时间的法力值供给
 }
 
 // 建筑战斗属性
@@ -25,4 +28,7 @@ message CombatBuildingFields {
   optional int32 max_hp = 7;                      // 最大生命值
   optional int32 pos_x = 8;                       // 当前坐标x
   optional int32 pos_y = 9;                       // 当前坐标y
+  optional int32 food_add = 10;                   // 单位时间的粮草供给
+  optional int32 supply = 11;                     // 人口值
+  optional int32 elixir_add = 12;                 // 单位时间的法力值供给
 }

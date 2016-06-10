@@ -45,6 +45,8 @@ class CombatField {
 
   void SetSettleTimer();
   void ResetSettleTimer();
+  void SetResourceRecoverTimer();
+  void ResetResourceRecoverTimer();
 
   int32_t GetId() const;
   void SetId(int32_t value);
@@ -74,6 +76,8 @@ class CombatField {
   CombatWarriorField *GetWarrior(int32_t warrior_id);
   const WarriorFieldHashmap &GetWarriors() const;
 
+  void AllocateBuildingSupply();
+
   void ResetAppSession();
   int SendMessage(const ::google::protobuf::Message &message);
 
@@ -85,15 +89,18 @@ class CombatField {
   bool RequireSettle();
 
   void ExportStatusImage(::protocol::CombatStatusImage &image) const;
+  void PrintRoleResources() const;
 
  private:
   void OnTimerSettle(int32_t id);
+  void OnTimerResourceRecover(int32_t id);
 
   int32_t id_;
   int32_t map_id_;
   int32_t id_alloctor_;
   int32_t max_time_;
-  int32_t timer_id_over_;
+  int32_t timer_id_settle_;
+  int32_t timer_id_resource_recover_;
 
   ::mysya::util::Timestamp begin_timestamp_;
 

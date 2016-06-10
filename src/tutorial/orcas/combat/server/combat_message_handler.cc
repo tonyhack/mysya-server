@@ -138,6 +138,10 @@ void CombatMessageHandler::OnMessageCombatDeployRequest(
       }
 
       role_field->SetCampId(camp_data.id());
+      role_field->SetFoodMax(camp_data.max_food());
+      role_field->SetFood(camp_data.init_food());
+      role_field->SetElixirMax(camp_data.max_elixir());
+      role_field->SetElixir(camp_data.init_elixir());
 
       if (CombatRoleFieldManager::GetInstance()->Add(role_field) == false) {
         MYSYA_ERROR("CombatRoleFieldManager::Add() failed.");
@@ -316,7 +320,10 @@ void CombatMessageHandler::OnMessageCombatBeginRequest(
   }
 
   combat_field->SetSettleTimer();
+  combat_field->SetResourceRecoverTimer();
   combat_field->SetBeginTimestamp(this->app_server_->GetTimestamp());
+
+  combat_field->AllocateBuildingSupply();
 
   event::EventCombatBegin combat_event;
   combat_event.set_combat_id(combat_field->GetId());

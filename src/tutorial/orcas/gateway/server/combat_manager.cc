@@ -285,6 +285,10 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   ::tutorial::orcas::combat::protocol::CombatCampData *l_camp_data =
     init_data->add_camp();
   l_camp_data->set_id(left_actor->GetCampId());
+  l_camp_data->set_init_food(200);
+  l_camp_data->set_max_food(300);
+  l_camp_data->set_init_elixir(200);
+  l_camp_data->set_max_elixir(300);
   // 左方角色
   ::tutorial::orcas::combat::protocol::CombatRoleData *l_role_data =
     l_camp_data->add_role();
@@ -310,6 +314,9 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
       building->set_hp(building_conf->hp_);
       building->set_pos_x(building_conf->x_);
       building->set_pos_y(building_conf->y_);
+      building->set_food_add(building_conf->food_add_);
+      building->set_supply(building_conf->supply_);
+      building->set_elixir_add(building_conf->elixir_add_);
     }
   }
 
@@ -318,6 +325,10 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
   ::tutorial::orcas::combat::protocol::CombatCampData *r_camp_data =
     init_data->add_camp();
   r_camp_data->set_id(right_actor->GetCampId());
+  r_camp_data->set_init_food(200);
+  r_camp_data->set_max_food(300);
+  r_camp_data->set_init_elixir(200);
+  r_camp_data->set_max_elixir(300);
   // 右方角色
   ::tutorial::orcas::combat::protocol::CombatRoleData *r_role_data =
     r_camp_data->add_role();
@@ -343,6 +354,9 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
       building->set_hp(building_conf->hp_);
       building->set_pos_x(building_conf->x_);
       building->set_pos_y(building_conf->y_);
+      building->set_food_add(building_conf->food_add_);
+      building->set_supply(building_conf->supply_);
+      building->set_elixir_add(building_conf->elixir_add_);
     }
   }
 

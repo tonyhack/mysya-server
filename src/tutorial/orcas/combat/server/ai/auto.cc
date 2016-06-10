@@ -226,37 +226,17 @@ bool Auto::SearchTarget() {
     return false;
   }
 
-  const ::protocol::WarriorDescription *warrior_description =
-    combat_role_field->GetWarriorDescription(this->host_->GetFields().conf_id());
-  if (warrior_description == NULL) {
-    MYSYA_ERROR("[AI] CombatRoleField::GetWarriorDescription(%d) failed.",
-        this->host_->GetFields().conf_id());
-    return false;
-  }
-
   require::RequireSceneFetch require_message;
   require_message.set_combat_id(combat_field->GetId());
   require_message.set_except_camp_id(this->host_->GetFields().camp_id());
   require_message.mutable_pos()->set_x(this->host_->GetFields().origin_pos_x());
   require_message.mutable_pos()->set_y(this->host_->GetFields().origin_pos_y());
   // TODO: search range
-  require_message.set_range(4);
+  require_message.set_range(this->host_->GetFields().search_range());
   if (AiApp::GetInstance()->GetRequireDispatcher()->Dispatch(
         require::REQUIRE_SCENE_FETCH, &require_message) < 0) {
     MYSYA_ERROR("[AI] Dispatch REQUIRE_SCENE_FETCH failed.");
     return false;
-  }
-
-  for (int i = 0; i < require_message.building_size(); ++i) {
-    int32_t building_id = require_message.building(i);
-    CombatBuildingField *combat_building_field = combat_field->GetBuilding(
-        building_id);
-    if (combat_building_field == NULL) {
-      continue;
-    }
-
-    this->SetTarget(::protocol::COMBAT_ENTITY_TYPE_BUILDING, building_id);
-    return true;
   }
 
   for (int i = 0; i < require_message.warrior_size(); ++i) {
@@ -268,6 +248,18 @@ bool Auto::SearchTarget() {
     }
 
     this->SetTarget(::protocol::COMBAT_ENTITY_TYPE_WARRIOR, warrior_id);
+    return true;
+  }
+
+  for (int i = 0; i < require_message.building_size(); ++i) {
+    int32_t building_id = require_message.building(i);
+    CombatBuildingField *combat_building_field = combat_field->GetBuilding(
+        building_id);
+    if (combat_building_field == NULL) {
+      continue;
+    }
+
+    this->SetTarget(::protocol::COMBAT_ENTITY_TYPE_BUILDING, building_id);
     return true;
   }
 

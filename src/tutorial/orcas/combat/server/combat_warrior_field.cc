@@ -37,6 +37,9 @@ bool CombatWarriorField::Initialize(int32_t id, CombatRoleField *host,
   this->fields_.set_origin_pos_y(0);
   this->fields_.set_dest_pos_x(0);
   this->fields_.set_dest_pos_y(0);
+  this->fields_.set_search_range(description.search_range());
+  this->fields_.set_food_need(description.food_need());
+  this->fields_.set_supply_need(description.supply_need());
 
   this->server_fields_.set_max_hp_add_value(0);
   this->server_fields_.set_max_hp_add_per(0);
@@ -82,10 +85,6 @@ CombatRoleField *CombatWarriorField::GetRoleField() {
 
 ::protocol::CombatWarriorServerFields &CombatWarriorField::GetServerFields() {
   return this->server_fields_;
-}
-
-const ::protocol::WarriorDescription *CombatWarriorField::GetDescription() const {
-  return this->host_->GetWarriorDescription(this->GetFields().conf_id());
 }
 
 void CombatWarriorField::GenerateFields() {
