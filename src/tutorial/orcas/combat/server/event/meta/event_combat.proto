@@ -63,3 +63,14 @@ message EventCombatAttacked {
 message EventCombatSettle {
   required int32 combat_id = 1;                               // 战斗id
 }
+
+// EVENT_COMBAT_BUILDING_SWITCH_STATUS
+message EventCombatBuildingSwitchStatus {
+  required int32 combat_id = 1;                               // 战斗id
+  required int32 building_id = 2;                             // 建筑id
+}
+
+// EVENT_COMBAT_RESOURCE_RECOVER
+message EventCombatResourceRecover {
+  required int32 combat_id = 1;
+}

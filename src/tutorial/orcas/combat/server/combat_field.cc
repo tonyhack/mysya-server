@@ -14,6 +14,8 @@
 #include "tutorial/orcas/combat/server/combat_warrior_field_pool.h"
 #include "tutorial/orcas/combat/server/require/cc/require.pb.h"
 #include "tutorial/orcas/combat/server/require/cc/require_combat.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event.pb.h"
+#include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
 
 namespace tutorial {
 namespace orcas {
@@ -405,8 +407,9 @@ void CombatField::PrintRoleResources() const {
     }
 
     MYSYA_DEBUG("[PRINT_ROLE_RESOURCES] role(%d) food(%d) supply_max(%d) supply(%d) elixir(%d)",
-        combat_role_field->GetArgentId(), combat_role_field->GetFood(), combat_role_field->GetSupplyMax(),
-        combat_role_field->GetSupply(), combat_role_field->GetElixir());
+        combat_role_field->GetArgentId(), combat_role_field->GetFood(),
+        combat_role_field->GetSupplyMax(), combat_role_field->GetSupply(),
+        combat_role_field->GetElixir());
   }
 }
 
@@ -414,58 +417,16 @@ void CombatField::OnTimerSettle(int32_t id) {
   this->RequireSettle();
 }
 
+static void SendEventCombtResourceRecover(int32_t combat_id,
+    EventDispatcher *dispatcher) {
+  event::EventCombatResourceRecover event;
+  event.set_combat_id(combat_id);
+  dispatcher->Dispatch(event::EVENT_COMBAT_RESOURCE_RECOVER, &event);
+}
+
 void CombatField::OnTimerResourceRecover(int32_t id) {
-  typedef std::map<int32_t, int32_t> CampFoodMap;
-  typedef std::map<int32_t, int32_t> CampElixirMap;
-  CampFoodMap camp_foods;
-  CampElixirMap camp_elixirs;
-
-  for (BuildingFieldMap::iterator building_iter = this->buildings_.begin();
-      building_iter != this->buildings_.end(); ++building_iter) {
-    CombatBuildingField *combat_building_field = building_iter->second;
-    int32_t camp_id = combat_building_field->GetFields().camp_id();
-
-    CampFoodMap::iterator camp_food_iter = camp_foods.find(camp_id);
-    if (camp_food_iter == camp_foods.end()) {
-      camp_food_iter = camp_foods.insert(std::make_pair(camp_id, 0)).first;
-    }
-
-    camp_food_iter->second += combat_building_field->GetFields().food_add();
-
-    CampElixirMap::iterator camp_elixir_iter = camp_elixirs.find(camp_id);
-    if (camp_elixir_iter == camp_elixirs.end()) {
-      camp_elixir_iter = camp_elixirs.insert(std::make_pair(camp_id, 0)).first;
-    }
-
-    camp_elixir_iter->second += combat_building_field->GetFields().elixir_add();
-  }
-
-  for (CombatRoleFieldSet::iterator role_iter = this->roles_.begin();
-      role_iter != this->roles_.end(); ++role_iter) {
-    CombatRoleField *combat_role_field =
-      CombatRoleFieldManager::GetInstance()->Get(*role_iter);
-    if (combat_role_field == NULL) {
-      MYSYA_ERROR("CombatRoleFieldManager::Get(%lu) failed.", *role_iter);
-      return;
-    }
-
-    CampFoodMap::iterator camp_food_iter = camp_foods.find(
-        combat_role_field->GetCampId());
-    if (camp_food_iter == camp_foods.end()) {
-      MYSYA_ERROR("camp_id(%d) invalid.", combat_role_field->GetCampId());
-      return;
-    }
-    combat_role_field->IncFood(camp_food_iter->second);
-
-    CampElixirMap::iterator camp_elixir_iter = camp_elixirs.find(
-        combat_role_field->GetCampId());
-    if (camp_elixir_iter == camp_elixirs.end()) {
-      MYSYA_ERROR("camp_id(%d) invalid.", combat_role_field->GetCampId());
-      return;
-    }
-    combat_role_field->IncElixir(camp_elixir_iter->second);
-  }
-
+  SendEventCombtResourceRecover(
+      this->GetId(), this->app_server_->GetEventDispatcher());
   this->PrintRoleResources();
 }
 

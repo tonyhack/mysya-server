@@ -28,6 +28,7 @@ struct BuildingConf {
   int x_;                   // 坐标x
   int y_;                   // 坐标y
   int hp_;                  // 生命值
+  int hp_recovery_;         // 生命恢复值
   int food_add_;            // 单位时间的粮草供给
   int supply_;              // 人口上限值
   int elixir_add_;          // 单位时间的法力值供给

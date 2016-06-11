@@ -317,6 +317,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
       building->set_food_add(building_conf->food_add_);
       building->set_supply(building_conf->supply_);
       building->set_elixir_add(building_conf->elixir_add_);
+      building->set_hp_recovery(building_conf->hp_recovery_);
     }
   }
 
@@ -357,6 +358,7 @@ bool CombatManager::PushCombat(CombatActor *actor, int32_t map_id) {
       building->set_food_add(building_conf->food_add_);
       building->set_supply(building_conf->supply_);
       building->set_elixir_add(building_conf->elixir_add_);
+      building->set_hp_recovery(building_conf->hp_recovery_);
     }
   }
 

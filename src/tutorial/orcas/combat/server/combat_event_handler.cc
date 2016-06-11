@@ -4,6 +4,7 @@
 #include <mysya/ioevent/logger.h>
 
 #include "tutorial/orcas/combat/server/app_server.h"
+#include "tutorial/orcas/combat/server/combat_building_field.h"
 #include "tutorial/orcas/combat/server/combat_field.h"
 #include "tutorial/orcas/combat/server/combat_field_manager.h"
 #include "tutorial/orcas/combat/server/combat_role_field.h"
@@ -24,7 +25,9 @@ CombatEventHandler::CombatEventHandler(AppServer *host)
     event_token_move_action_(0),
     event_token_death_(0),
     event_token_lock_target_(0),
-    event_token_convert_camp_(0) {}
+    event_token_convert_camp_(0),
+    event_token_building_switch_status_(0) {}
+
 CombatEventHandler::~CombatEventHandler() {}
 
 void CombatEventHandler::SetHandlers() {
@@ -43,6 +46,9 @@ void CombatEventHandler::SetHandlers() {
   this->event_token_convert_camp_ =
     this->host_->GetEventDispatcher()->Attach(event::EVENT_COMBAT_CONVERT_CAMP, std::bind(
           &CombatEventHandler::OnEventCombatConvertCamp, this, std::placeholders::_1));
+  this->event_token_building_switch_status_ =
+    this->host_->GetEventDispatcher()->Attach(event::EVENT_COMBAT_BUILDING_SWITCH_STATUS, std::bind(
+          &CombatEventHandler::OnEventCombatBuildingSwitchStatus, this, std::placeholders::_1));
 }
 
 void CombatEventHandler::ResetHandlers() {
@@ -51,6 +57,7 @@ void CombatEventHandler::ResetHandlers() {
   this->host_->GetEventDispatcher()->Detach(this->event_token_death_);
   this->host_->GetEventDispatcher()->Detach(this->event_token_lock_target_);
   this->host_->GetEventDispatcher()->Detach(this->event_token_convert_camp_);
+  this->host_->GetEventDispatcher()->Detach(this->event_token_building_switch_status_);
 }
 
 void CombatEventHandler::OnEventCombatBuildAction(const ProtoMessage *data) {
@@ -214,6 +221,39 @@ void CombatEventHandler::OnEventCombatConvertCamp(const ProtoMessage *data) {
   *convert_camp_action->mutable_host() = event->host();
   convert_camp_action->set_camp_id(event->camp_id());
   convert_camp_action->set_host_id(event->host_id());
+
+  combat_field->PushAction(action);
+
+  ::protocol::MessageCombatActionSync message;
+  *message.mutable_action() = action;
+  combat_field->BroadcastMessage(::protocol::MESSAGE_COMBAT_ACTION_SYNC, message);
+}
+
+void CombatEventHandler::OnEventCombatBuildingSwitchStatus(const ProtoMessage *data) {
+  const event::EventCombatBuildingSwitchStatus *event =
+    (const event::EventCombatBuildingSwitchStatus *)data;
+
+  CombatField *combat_field = CombatFieldManager::GetInstance()->Get(
+      event->combat_id());
+  if (combat_field == NULL) {
+    MYSYA_ERROR("CombatFieldManager::Get(%d) failed.", event->combat_id());
+    return;
+  }
+
+  CombatBuildingField *combat_building_field = combat_field->GetBuilding(event->building_id());
+  if (combat_building_field == NULL) {
+    MYSYA_ERROR("CombatField::GetBuilding(%d) failed.", event->building_id());
+    return;
+  }
+
+  ::protocol::CombatAction action;
+  action.set_type(::protocol::COMBAT_ACTION_TYPE_BUILDING_SWITCH_STATUS);
+  action.set_timestamp(combat_field->GetTimestampMsec());
+
+  ::protocol::CombatBuildingSwitchStatusAction *building_switch_status_action =
+    action.mutable_building_switch_status_action();
+  building_switch_status_action->set_building_id(event->building_id());
+  building_switch_status_action->set_status(combat_building_field->GetFields().status());
 
   combat_field->PushAction(action);
 

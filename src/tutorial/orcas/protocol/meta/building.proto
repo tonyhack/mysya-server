@@ -5,6 +5,12 @@ enum BuildingType {
   BUILDING_TYPE_CAVALRY = 2;
 }
 
+// 建筑状态
+enum BuildingStatusType {
+  BUILDING_STATUE_TYPE_HOST = 1;                  // 归属中
+  BUILDING_STATUE_TYPE_RETRIEVE = 2;              // 半归属
+};
+
 // 建筑描述
 message BuildingDescription {
   optional int32 id = 1;                          // 配置id
@@ -15,6 +21,7 @@ message BuildingDescription {
   optional int32 food_add = 6;                    // 单位时间的粮草供给
   optional int32 supply = 7;                      // 人口值
   optional int32 elixir_add = 8;                  // 单位时间的法力值供给
+  optional int32 hp_recovery = 9;                 // 生命恢复值(单位时间内)
 }
 
 // 建筑战斗属性
@@ -31,4 +38,6 @@ message CombatBuildingFields {
   optional int32 food_add = 10;                   // 单位时间的粮草供给
   optional int32 supply = 11;                     // 人口值
   optional int32 elixir_add = 12;                 // 单位时间的法力值供给
+  optional int32 hp_recovery = 13;                // 生命恢复值(单位时间内)
+  optional BuildingStatusType status = 14;        // 建筑状态(BuildingStatusType)
 }

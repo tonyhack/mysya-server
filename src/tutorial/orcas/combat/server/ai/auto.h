@@ -48,8 +48,8 @@ class Auto {
   bool AttackTarget();
 
  private:
-void StartPresentStatus();
-void StopPresentStatus();
+  void StartPresentStatus();
+  void StopPresentStatus();
 
   CombatWarriorField *host_;
   ::protocol::CombatEntity target_;

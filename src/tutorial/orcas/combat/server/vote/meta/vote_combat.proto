@@ -7,11 +7,16 @@ message VoteCombatBegin {
   required int32 combat_id = 1;                                   // 战斗id
 }
 
-// VOTE_COMBAT_BUILD_ACTION
-message VoteCombatBuildAction {
+// VOTE_COMBAT_BUILD
+message VoteCombatBuild {
+  enum ResultCode {
+    UNKOWN = -1;
+    INCORRECT_STATUS = -2;
+  }
+
   required int32 combat_id = 1;                                   // 战斗id
   required int32 building_id = 2;                                 // 建筑id
-  required int32 warrior_conf_id = 3;                             // 士兵配置id
+  required int32 warrior_id = 3;                                  // 士兵id
 }
 
 // VOTE_COMBAT_ATTACK_ACTION

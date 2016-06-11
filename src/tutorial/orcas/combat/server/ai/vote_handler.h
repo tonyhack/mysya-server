@@ -31,8 +31,10 @@ class VoteHandler {
 
  private:
   int OnVoteSceneMove(const ProtoMessage *data);
+  int OnVoteCombatBuild(const ProtoMessage *data);
 
   uint64_t token_scene_move_;
+  uint64_t token_combat_build_;
 
   MYSYA_DISALLOW_COPY_AND_ASSIGN(VoteHandler);
 };

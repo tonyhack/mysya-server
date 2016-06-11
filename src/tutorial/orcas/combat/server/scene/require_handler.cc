@@ -18,6 +18,7 @@
 #include "tutorial/orcas/combat/server/scene/scene_manager.h"
 #include "tutorial/orcas/combat/server/scene/warrior.h"
 #include "tutorial/orcas/combat/server/vote/cc/vote.pb.h"
+#include "tutorial/orcas/combat/server/vote/cc/vote_combat.pb.h"
 #include "tutorial/orcas/combat/server/vote/cc/vote_scene.pb.h"
 #include "tutorial/orcas/protocol/cc/building.pb.h"
 #include "tutorial/orcas/protocol/cc/warrior.pb.h"
@@ -61,6 +62,18 @@ void RequireHandler::Finalize() {
 
 int RequireHandler::OnRequireSceneBuild(ProtoMessage *data) {
   require::RequireSceneBuild *message = (require::RequireSceneBuild *)data;
+
+  // Vote.
+  vote::VoteCombatBuild vote_message;
+  vote_message.set_combat_id(message->combat_id());
+  vote_message.set_building_id(message->building_id());
+  vote_message.set_warrior_id(message->warrior_id());
+  int result_code = SCENE_APP()->GetHost()->GetVoteDispatcher()->Dispatch(
+      vote::VOTE_COMBAT_BUILD, &vote_message);
+  if (result_code < 0) {
+    MYSYA_ERROR("VOTE_SCENE_MOVE result_code(%d).", result_code);
+    return result_code;
+  }
 
   Scene *scene = SceneManager::GetInstance()->Get(message->combat_id());
   if (scene == NULL) {

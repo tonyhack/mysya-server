@@ -7,100 +7,109 @@ package protocol;
 
 // 战斗实体类型
 enum CombatEntityType {
-  COMBAT_ENTITY_TYPE_BUILDING = 1;
-  COMBAT_ENTITY_TYPE_WARRIOR = 2;
+  COMBAT_ENTITY_TYPE_BUILDING = 1;                                                // 建筑
+  COMBAT_ENTITY_TYPE_WARRIOR = 2;                                                 // 士兵
 }
 
 // 战斗目标
 message CombatEntity {
-  required CombatEntityType type = 1;                           // 类型
-  required int32 id = 2;                                        // id
+  required CombatEntityType type = 1;                                             // 类型
+  required int32 id = 2;                                                          // id
 }
 
 // 战斗描述
 message CombatDescription {
-  optional int32 map_id = 1;                                    // 地图id
-  optional int32 max_time = 2;                                  // 最大用时(秒)
+  optional int32 map_id = 1;                                                      // 地图id
+  optional int32 max_time = 2;                                                    // 最大用时(秒)
 }
 
 // 战斗角色结算结果
 message CombatSettlementRole {
-  optional .protocol.CombatRoleFields role_fields = 1;          // 角色基本数据
-  optional int32 building_num = 2;                              // 建筑数量
+  optional .protocol.CombatRoleFields role_fields = 1;                            // 角色基本数据
+  optional int32 building_num = 2;                                                // 建筑数量
 }
 
 // 战斗结算
 message CombatSettlement {
-  repeated CombatSettlementRole role = 1;                       // 角色结果列表
+  repeated CombatSettlementRole role = 1;                                         // 角色结果列表
 }
 
 // 战斗动作类型
 enum CombatActionType {
-  COMBAT_ACTION_TYPE_BUILD = 1;                                 // 建造
-  COMBAT_ACTION_TYPE_MOVE = 2;                                  // 移动
-  COMBAT_ACTION_TYPE_LOCK_TARGET = 3;                           // 锁定目标
-  COMBAT_ACTION_TYPE_DEATH = 4;                                 // 死亡
-  COMBAT_ACTION_TYPE_CONVERT_CAMP = 5;                          // 转换阵营
+  COMBAT_ACTION_TYPE_BUILD = 1;                                                   // 建造
+  COMBAT_ACTION_TYPE_MOVE = 2;                                                    // 移动
+  COMBAT_ACTION_TYPE_LOCK_TARGET = 3;                                             // 锁定目标
+  COMBAT_ACTION_TYPE_DEATH = 4;                                                   // 死亡
+  COMBAT_ACTION_TYPE_CONVERT_CAMP = 5;                                            // 转换阵营
+  COMBAT_ACTION_TYPE_BUILDING_SWITCH_STATUS = 6;                                  // 建筑转换状态
 }
 
 // 建造指令
 // COMBAT_ACTION_TYPE_BUILD
 message CombatBuildAction {
-  required int32 building_id = 1;                               // 建筑id
-  required int32 warrior_conf_id = 2;                           // 士兵配置id
-  optional .protocol.CombatWarriorFields fields = 3;            // 士兵数据
+  required int32 building_id = 1;                                                 // 建筑id
+  required int32 warrior_conf_id = 2;                                             // 士兵配置id
+  optional .protocol.CombatWarriorFields fields = 3;                              // 士兵数据
 }
 
 // 移动指令
 // COMBAT_ACTION_TYPE_MOVE
 message CombatMoveAction {
-  repeated int32 warrior_id = 1;                                // 士兵id集
-  required .protocol.Position pos = 2;                          // 位置
-  repeated .protocol.Position paths = 3;                        // 路径点
+  repeated int32 warrior_id = 1;                                                  // 士兵id集
+  required .protocol.Position pos = 2;                                            // 位置
+  repeated .protocol.Position paths = 3;                                          // 路径点
 }
 
 // 锁定目标指令
 // COMBAT_ACTION_TYPE_LOCK_TARGET
 message CombatLockTargetAction {
-  required int32 warrior_id = 1;                                // 士兵id
-  required .protocol.CombatEntity target = 2;                   // 目标
+  required int32 warrior_id = 1;                                                  // 士兵id
+  required .protocol.CombatEntity target = 2;                                     // 目标
 }
 
 // 死亡指令
 // COMBAT_ACTION_TYPE_DEATH
 message CombatDeathAction {
-  required .protocol.CombatEntity host = 1;                    // 目标
+  required .protocol.CombatEntity host = 1;                                       // 目标
 }
 
 // 转换阵营指令
 // COMBAT_ACTION_TYPE_CONVERT_CAMP
 message CombatConvertCampAction {
-  required .protocol.CombatEntity host = 1;                     // 主体
-  required int32 camp_id = 2;                                   // 阵营id
-  required int32 host_id = 3;                                   // 宿主id(战斗角色id)
+  required .protocol.CombatEntity host = 1;                                       // 主体
+  required int32 camp_id = 2;                                                     // 阵营id
+  required int32 host_id = 3;                                                     // 宿主id(战斗角色id)
+}
+
+// 建筑转换状态指令
+// COMBAT_ACTION_TYPE_BUILDING_SWITCH_STATUS
+message CombatBuildingSwitchStatusAction {
+  required int32 building_id = 1;                                                 // 建筑id
+  required .protocol.BuildingStatusType status = 2;                               // 建筑状态(building.BuildingStatusType)
 }
 
 // 行动指令
 message CombatAction {
-  required int32 type = 1;                                      // 操作类型(CombatActionType)
-  required int32 timestamp = 2;                                 // 时间戳
-  optional CombatBuildAction build_action = 3;                  // 建造指令
-  optional CombatMoveAction move_action = 4;                    // 移动指令
-  optional CombatLockTargetAction lock_target_action = 5;       // 锁定目标指令
-  optional CombatDeathAction death_action = 6;                  // 死亡指令
-  optional CombatConvertCampAction convert_camp_action = 7;     // 转换阵营指令
+  required int32 type = 1;                                                        // 操作类型(CombatActionType)
+  required int32 timestamp = 2;                                                   // 时间戳
+  optional CombatBuildAction build_action = 3;                                    // 建造指令
+  optional CombatMoveAction move_action = 4;                                      // 移动指令
+  optional CombatLockTargetAction lock_target_action = 5;                         // 锁定目标指令
+  optional CombatDeathAction death_action = 6;                                    // 死亡指令
+  optional CombatConvertCampAction convert_camp_action = 7;                       // 转换阵营指令
+  optional CombatBuildingSwitchStatusAction building_switch_status_action = 8;    // 建筑转换状态指令
 }
 
 // 行动序列
 message CombatActionSequence {
-  repeated CombatAction action = 1;                             // 操作序列
+  repeated CombatAction action = 1;                                               // 操作序列
 }
 
 // 战斗状态镜像数据
 message CombatStatusImage {
-  required int32 elapsed_msec = 1;                              // 战斗已消耗的时间(毫秒)
-  repeated .protocol.CombatBuildingFields building = 2;         // 建筑
-  repeated .protocol.CombatWarriorFields warrior = 3;           // 士兵
-  repeated .protocol.CombatRoleFields role = 4;                 // 角色
-  repeated .protocol.CombatAction action = 5;                   // 正在进行指令
+  required int32 elapsed_msec = 1;                                                // 战斗已消耗的时间(毫秒)
+  repeated .protocol.CombatBuildingFields building = 2;                           // 建筑
+  repeated .protocol.CombatWarriorFields warrior = 3;                             // 士兵
+  repeated .protocol.CombatRoleFields role = 4;                                   // 角色
+  repeated .protocol.CombatAction action = 5;                                     // 正在进行指令
 }

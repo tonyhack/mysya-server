@@ -29,6 +29,8 @@ bool CombatBuildingField::Initialize(int32_t id, CombatField *host_combat,
   this->fields_.set_food_add(description.food_add());
   this->fields_.set_supply(description.supply());
   this->fields_.set_elixir_add(description.elixir_add());
+  this->fields_.set_hp_recovery(description.hp_recovery());
+  this->fields_.set_status(::protocol::BUILDING_STATUE_TYPE_HOST);
 
   return true;
 }

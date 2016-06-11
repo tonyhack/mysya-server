@@ -36,6 +36,11 @@ set(COMBAT_SERVER_AI_SOURCES
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/auto_status_attack.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/auto_status_chase.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/auto_status_search.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/building.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/building_manager.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/building_status.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/building_status_host.cc
+    ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/building_status_retrieve.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/combat_event_handler.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/event_observer.cc
     ${TUTORIAL_SOURCE_DIR}/orcas/combat/server/ai/require_handler.cc

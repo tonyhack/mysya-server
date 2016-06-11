@@ -34,7 +34,8 @@ bool Auto::Initialize(CombatWarriorField *host) {
   this->present_status_ = &this->status_search_;
   this->target_.Clear();
 
-  this->present_status_->Start();
+  // this->present_status_->Start();
+  this->StartPresentStatus();
 
   return true;
 }

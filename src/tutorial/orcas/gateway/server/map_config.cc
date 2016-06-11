@@ -124,6 +124,8 @@ bool MapConfig::LoadBuilding(const std::string &file) {
         conf.y_ = atoi(attr);
       } else if (attr_name_str == "hp") {
         conf.hp_ = atoi(attr);
+      } else if (attr_name_str == "hp_recovery") {
+        conf.hp_recovery_ = atoi(attr);
       } else {
       }
 

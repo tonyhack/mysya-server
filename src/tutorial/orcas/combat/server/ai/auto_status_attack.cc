@@ -9,6 +9,8 @@
 #include "tutorial/orcas/combat/server/combat_warrior_field.h"
 #include "tutorial/orcas/combat/server/ai/ai_app.h"
 #include "tutorial/orcas/combat/server/ai/auto.h"
+#include "tutorial/orcas/combat/server/ai/building.h"
+#include "tutorial/orcas/combat/server/ai/building_manager.h"
 #include "tutorial/orcas/combat/server/event/cc/event.pb.h"
 #include "tutorial/orcas/combat/server/event/cc/event_combat.pb.h"
 #include "tutorial/orcas/combat/server/event/cc/event_scene.pb.h"
@@ -44,9 +46,27 @@ void AutoStatusAttack::Start() {
   event.set_warrior_id(this->host_->GetId());
   *event.mutable_target() = this->host_->GetTarget();
   AiApp::GetInstance()->GetEventDispatcher()->Dispatch(event::EVENT_COMBAT_LOCK_TARGET, &event);
+
+  const ::protocol::CombatEntity &target = this->host_->GetTarget();
+  if (target.type() == ::protocol::COMBAT_ENTITY_TYPE_BUILDING) {
+    Building *building = BuildingManager::GetInstance()->Get(
+        this->host_->GetCombatId(), target.id());
+    if (building != NULL) {
+      building->IncTargetedNum();
+    }
+  }
 }
 
 void AutoStatusAttack::Stop() {
+  const ::protocol::CombatEntity &target = this->host_->GetTarget();
+  if (target.type() == ::protocol::COMBAT_ENTITY_TYPE_BUILDING) {
+    Building *building = BuildingManager::GetInstance()->Get(
+        this->host_->GetCombatId(), target.id());
+    if (building != NULL) {
+      building->DecTargetedNum();
+    }
+  }
+
   this->ResetAttackTimer();
   this->host_->ResetTarget();
 }

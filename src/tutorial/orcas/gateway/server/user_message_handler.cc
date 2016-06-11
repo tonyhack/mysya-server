@@ -121,7 +121,7 @@ void UserMessageHandler::OnMessageCombatRequest(Actor *actor,
   }
 
   // TODO: Magic number 2
-  if (CombatManager::GetInstance()->PushCombat(combat_actor, 2) == false) {
+  if (CombatManager::GetInstance()->PushCombat(combat_actor, 3) == false) {
     MYSYA_ERROR("CombatManager::Push() failed.");
     SendMessageCombatResponse(actor, false);
     return;
